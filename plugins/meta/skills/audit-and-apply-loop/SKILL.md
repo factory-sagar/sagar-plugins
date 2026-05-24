@@ -1,6 +1,18 @@
 ---
 name: audit-and-apply-loop
-description: Methodology for evolving droid or skill prompts using prompt-optimizer (audit) + doc-generator (apply) as an audit-fix-verify cycle, with explicit delegation per phase and re-test verification before each loop iteration. Use when authoring a new droid, diagnosing poor output from an existing droid, comparing prompt versions, cleaning up drift in an existing droid set, or adopting droids from another marketplace. Auto-activates on "audit my prompts", "improve this droid", "fix prompt drift", "iterate on droid prompts", "why is this droid's output weak", "compare prompt v1 vs v2", "make this droid better".
+version: 1.0.0
+description: |
+  Methodology for evolving droid or skill prompts using `prompt-optimizer` (audit) + `doc-generator`
+  (apply) as an audit-fix-verify cycle, with explicit delegation per phase and re-test verification
+  before each loop iteration. The same loop produced the v2-quality prompts in this marketplace.
+  Use when:
+  - Authoring a new droid prompt and want a quality pass before shipping
+  - Diagnosing a droid whose output keeps missing sections, hallucinating, or running forbidden commands
+  - Comparing prompt v1 vs v2 to decide which to ship
+  - Cleaning up drift in an existing droid set
+  - Adopting droids from another marketplace into your own
+  - Auditing a project's `.factory/droids/**` or `AGENTS.md` for quality and consistency
+tags: [meta, prompt-engineering, methodology, droids, agentic-config, iteration]
 ---
 
 # Audit-and-Apply Loop

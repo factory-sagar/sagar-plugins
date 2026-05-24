@@ -1,5 +1,6 @@
 {
   "name": "practices",
+  "version": "1.0.0",
   "description": "Engineering-discipline skills: plan and decompose (spec), TDD workflow, coding standards, verification loop, and agentic-engineering operating principles.",
   "author": {
     "name": "Sagar",

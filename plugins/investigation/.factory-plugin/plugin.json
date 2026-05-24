@@ -1,5 +1,6 @@
 {
   "name": "investigation",
+  "version": "1.0.0",
   "description": "Investigation droid trio: fast triage, thorough repo investigation, and external web research.",
   "author": {
     "name": "Sagar",

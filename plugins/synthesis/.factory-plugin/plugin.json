@@ -1,5 +1,6 @@
 {
   "name": "synthesis",
+  "version": "1.0.0",
   "description": "Synthesis droids: PR description writer and Conventional Commits message writer.",
   "author": {
     "name": "Sagar",

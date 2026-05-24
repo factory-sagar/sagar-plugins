@@ -1,6 +1,19 @@
 ---
 name: verification-loop
-description: Four-phase quality gate (build, type-check, lint, tests with coverage) with explicit worker delegation per phase for long-running commands. Catches regressions before review, surfaces pre-existing issues without blocking on them, and hands the gate-ready diff to change-review and security. Use after completing a feature, before opening a PR, after refactoring, after a TDD loop, or when you want to ensure quality gates pass before merging. Auto-activates on "verify", "quality gates", "pre-merge checks", "is this ready", "check before commit", "did I break anything", "run the checks", "lint and test", "validate this change".
+version: 1.0.0
+description: |
+  Four-phase quality gate (build, type-check, lint, tests with coverage) with explicit worker
+  delegation per phase for long-running commands. Catches regressions before review, surfaces
+  pre-existing issues without blocking on them, and hands the gate-ready diff to `change-review`
+  and `security`.
+  Use when:
+  - Completing a feature or non-trivial change
+  - Preparing to open a PR
+  - Finishing a refactor (suite must stay green; this confirms it)
+  - Finishing a `tdd-workflow` loop (the natural next step)
+  - User asks "is this ready", "did I break anything", "run the checks"
+  - As the regression eval in an `agentic-engineering` eval-first loop
+tags: [quality-gates, verification, testing, ci, build, lint, type-check]
 ---
 
 # Verification Loop

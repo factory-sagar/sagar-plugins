@@ -1,6 +1,19 @@
 ---
 name: coding-standards
-description: Language-agnostic baseline coding conventions covering naming, readability, immutability, function design, file organization, error handling, and a code-smell review checklist. Recommends delegating actual code review to change-review (general correctness) and security (security-shaped concerns), while this skill defines the bar each change must clear. Use when starting a project, reviewing code for quality, refactoring for consistency, sanity-checking AI-generated code, or onboarding a contributor. Auto-activates on "coding standards", "code quality", "naming conventions", "code style", "code review checklist", "is this code clean", "review this for quality", "follow conventions", "best practices for this code".
+version: 1.0.0
+description: |
+  Language-agnostic baseline coding conventions covering naming, readability, immutability, function
+  design, file organization, error handling, and a code-smell review checklist. Defines the bar each
+  change must clear; recommends delegating the actual diff review to `change-review` (general
+  correctness) and `security` (security-shaped concerns).
+  Use when:
+  - Starting a project or new module
+  - Reviewing code for quality and maintainability (yours or AI-generated)
+  - Refactoring existing code to follow consistent conventions
+  - Sanity-checking AI-generated code before committing
+  - Setting up linting, formatting, or type-checking rules
+  - Onboarding a new contributor to project conventions
+tags: [code-quality, standards, conventions, review, naming, readability]
 ---
 
 # Coding Standards

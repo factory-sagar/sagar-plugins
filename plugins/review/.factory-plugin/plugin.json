@@ -1,5 +1,6 @@
 {
   "name": "review",
+  "version": "1.0.0",
   "description": "Pre-merge review droids: strict diff reviewer and security reviewer.",
   "author": {
     "name": "Sagar",

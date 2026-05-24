@@ -1,6 +1,7 @@
 {
   "name": "meta",
-  "description": "Meta droids for working on agentic configs themselves: prompt audit and apply.",
+  "version": "1.0.0",
+  "description": "Meta droids and skills for working on agentic configs themselves: prompt audit (prompt-optimizer), apply (doc-generator), and the audit-and-apply-loop methodology skill.",
   "author": {
     "name": "Sagar",
     "url": "https://github.com/factory-sagar"
