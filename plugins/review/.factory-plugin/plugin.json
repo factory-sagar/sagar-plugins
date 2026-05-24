@@ -1,0 +1,8 @@
+{
+  "name": "review",
+  "description": "Pre-merge review droids: strict diff reviewer and security reviewer.",
+  "author": {
+    "name": "Sagar",
+    "url": "https://github.com/factory-sagar"
+  }
+}

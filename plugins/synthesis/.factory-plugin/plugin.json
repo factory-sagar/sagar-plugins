@@ -1,0 +1,8 @@
+{
+  "name": "synthesis",
+  "description": "Synthesis droids: PR description writer and Conventional Commits message writer.",
+  "author": {
+    "name": "Sagar",
+    "url": "https://github.com/factory-sagar"
+  }
+}

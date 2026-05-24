@@ -1,8 +1,0 @@
-{
-  "name": "sagar",
-  "description": "Multi-model droid toolkit: 9 specialized sub-agents for investigation, review, research, synthesis, and meta-prompt audits.",
-  "author": {
-    "name": "Sagar",
-    "url": "https://github.com/factory-sagar"
-  }
-}

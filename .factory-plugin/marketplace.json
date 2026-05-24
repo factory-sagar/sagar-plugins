@@ -1,15 +1,33 @@
 {
   "name": "sagar-plugins",
-  "description": "Sagar's personal Factory plugins marketplace",
+  "description": "Sagar's personal Factory plugins marketplace — multi-model droid toolkit split into focused plugins.",
   "owner": {
     "name": "Sagar",
     "url": "https://github.com/factory-sagar"
   },
   "plugins": [
     {
-      "name": "sagar",
-      "description": "Sagar's multi-model droid toolkit: investigation (quick-analysis, deep-understanding, deep-research), review (change-review, security), synthesis (pr-describer, commit-message-writer), and meta (prompt-optimizer, doc-generator).",
-      "source": "./plugins/sagar",
+      "name": "investigation",
+      "description": "Investigation droid trio: fast triage (quick-analysis), thorough repo investigation (deep-understanding), and external web research (deep-research).",
+      "source": "./plugins/investigation",
+      "category": "research"
+    },
+    {
+      "name": "review",
+      "description": "Pre-merge review droids: strict diff reviewer (change-review) and security reviewer (security).",
+      "source": "./plugins/review",
+      "category": "quality"
+    },
+    {
+      "name": "synthesis",
+      "description": "Synthesis droids: PR description writer (pr-describer) and Conventional Commits message writer (commit-message-writer).",
+      "source": "./plugins/synthesis",
+      "category": "productivity"
+    },
+    {
+      "name": "meta",
+      "description": "Meta droids for working on agentic configs themselves: prompt audit (prompt-optimizer) and apply (doc-generator).",
+      "source": "./plugins/meta",
       "category": "productivity"
     }
   ]

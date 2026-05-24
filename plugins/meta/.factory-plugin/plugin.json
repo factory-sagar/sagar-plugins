@@ -1,0 +1,8 @@
+{
+  "name": "meta",
+  "description": "Meta droids for working on agentic configs themselves: prompt audit and apply.",
+  "author": {
+    "name": "Sagar",
+    "url": "https://github.com/factory-sagar"
+  }
+}
