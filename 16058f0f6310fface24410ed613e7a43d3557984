@@ -1,0 +1,43 @@
+.factory-plugin/marketplace.json
+  42ef1700ec9a3fa2 29,32-36
+plugins/practices/skills/spec/SKILL.md
+  42ef1700ec9a3fa2 1-185
+plugins/practices/skills/agentic-engineering/SKILL.md
+  42ef1700ec9a3fa2 1-107
+plugins/meta/skills/audit-and-apply-loop/SKILL.md
+  42ef1700ec9a3fa2 1-156
+README.md
+  42ef1700ec9a3fa2 5,19,24,35-59,61,63,65,67,83,85-86,95-99
+plugins/practices/skills/tdd-workflow/SKILL.md
+  42ef1700ec9a3fa2 1-157
+plugins/practices/skills/coding-standards/SKILL.md
+  42ef1700ec9a3fa2 1-124
+plugins/meta/README.md
+  42ef1700ec9a3fa2 19-24
+plugins/practices/.factory-plugin/plugin.json
+  42ef1700ec9a3fa2 1-8
+plugins/practices/skills/verification-loop/SKILL.md
+  42ef1700ec9a3fa2 1-155
+plugins/practices/README.md
+  42ef1700ec9a3fa2 1-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "16058f0f6310fface24410ed613e7a43d3557984",
+  "prompts": {
+    "42ef1700ec9a3fa2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "26b1319b-b8c3-4933-9be1-19947b8013fa",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 990,
+      "total_deletions": 41,
+      "accepted_lines": 990,
+      "overriden_lines": 0
+    }
+  }
+}
