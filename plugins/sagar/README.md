@@ -10,7 +10,7 @@ Multi-model droid toolkit. Nine specialized sub-agents for investigation, review
 | --- | --- | --- | --- | --- |
 | `quick-analysis` | Fast triage of an unfamiliar repo: stack, structure, entry points, anomalies, and which droid to delegate to next. | `glm-5` | default | read-only |
 | `deep-understanding` | Thorough, evidence-based investigation of a repository, subsystem, or focused question. Architecture audits and agentic-config audits. | `gpt-5.4` | `xhigh` | read-only + `Execute` |
-| `deep-research` | External research using WebSearch + FetchUrl. Library evaluations, API references, comparisons, CVE follow-ups. Distinct from `deep-understanding` — this is for questions that live OUTSIDE the repo. | `inherit` (Claude) | `xhigh` | read-only + `WebSearch` + `FetchUrl` |
+| `deep-research` | External research using WebSearch + FetchUrl. Library evaluations, API references, comparisons, CVE follow-ups. Distinct from `deep-understanding` — this is for questions that live OUTSIDE the repo. | `inherit` (Claude) | `xhigh` | read-only + `Execute` + `WebSearch` + `FetchUrl` |
 
 ### Review
 
@@ -31,7 +31,7 @@ Multi-model droid toolkit. Nine specialized sub-agents for investigation, review
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
 | `prompt-optimizer` | Audit a droid or skill prompt and recommend minimal-edit improvements. Use when authoring a new droid or diagnosing poor output. | `gpt-5.4` | `xhigh` | read-only |
-| `doc-generator` | Apply targeted, minimal-edit agentic-doc updates after an approved audit (from `prompt-optimizer` or `deep-understanding`) or explicit request. | `gpt-5.4` | `xhigh` | read-only + `Edit` + `Create` + `ApplyPatch` |
+| `doc-generator` | Apply targeted, minimal-edit agentic-doc updates after an approved audit (from `prompt-optimizer` or `deep-understanding`) or explicit request. | `gpt-5.4` | `xhigh` | read-only + `Execute` + `Edit` + `Create` + `ApplyPatch` |
 
 ## Composition patterns
 
@@ -56,7 +56,7 @@ This is the whole point of the marketplace: **delegate to the right model for th
 
 ## Output format note
 
-`change-review` emits a label-list output (`Summary:`, `Assessment:`, `Findings:`, `Validation Notes:`) rather than the H2-heading template the prompt also describes. This is `kimi-2.6`'s natural format ceiling, accepted after extensive prompt iteration. Substance (procedure, risk dimensions, anti-patterns, hand-offs) is preserved.
+`change-review` uses a label-list output format (`Summary:`, `Assessment:`, `Findings:`, `Validation Notes:`). This is `kimi-2.6`'s natural format ceiling, accepted after extensive prompt iteration. Substance (procedure, risk dimensions, anti-patterns, hand-offs) is preserved.
 
 ## Customizing models
 

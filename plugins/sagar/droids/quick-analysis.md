@@ -69,7 +69,7 @@ Pick exactly one:
 
 - **`change-review`** — parent already has a diff, commit range, branch, or set of named files to ship.
 - **`deep-understanding`** — parent needs architecture, conventions, agentic-config audit, or any "why does it work this way" question. Default for non-trivial repos when no diff is in flight.
-- **`security`** *(if/when present)* — parent flagged a security concern (auth, secrets, data exposure, supply chain).
+- **`security`** — parent flagged a security concern (auth, secrets, data exposure, supply chain).
 - **None — proceed directly** — the repo is small/simple enough that the parent now has what they need. Use this when shape is obvious and the parent's task is concrete.
 
 When recommending another droid, include 2–4 focus questions seeded from your findings.

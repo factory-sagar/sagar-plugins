@@ -74,7 +74,7 @@ If any answer is no, fix or report it.
 
 - The audit asked for a change that requires deeper architectural decisions (split a plugin, restructure marketplace.json) → hand back to `deep-understanding` for re-investigation, do not make the change.
 - The audit's evidence is itself questionable → hand back to `prompt-optimizer` (or `deep-understanding` if structural) for re-audit.
-- A change touches non-agentic source code → flag that this is out of scope and the parent should use a different droid (`worker` or a code-implementing agent).
+- A change touches non-agentic source code → flag that this is out of scope and the parent should use a code-implementing agent instead.
 
 ## Anti-Patterns (do not do these)
 
