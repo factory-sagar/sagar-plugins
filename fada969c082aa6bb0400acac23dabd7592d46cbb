@@ -1,0 +1,41 @@
+.factory-plugin/marketplace.json
+  42ef1700ec9a3fa2 11
+plugins/sagar/droids/prompt-optimizer.md
+  42ef1700ec9a3fa2 1-162
+plugins/sagar/.factory-plugin/plugin.json
+  42ef1700ec9a3fa2 3
+plugins/sagar/droids/deep-research.md
+  42ef1700ec9a3fa2 1-167
+plugins/sagar/droids/security.md
+  42ef1700ec9a3fa2 1-165
+plugins/sagar/README.md
+  42ef1700ec9a3fa2 3,7-30,33-36,38,40-44,46,48,50-53,55,57,59,63-65,67
+plugins/sagar/droids/pr-describer.md
+  42ef1700ec9a3fa2 1-140
+plugins/sagar/droids/doc-generator.md
+  42ef1700ec9a3fa2 1-153
+plugins/sagar/droids/commit-message-writer.md
+  42ef1700ec9a3fa2 1-121
+README.md
+  42ef1700ec9a3fa2 50-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "fada969c082aa6bb0400acac23dabd7592d46cbb",
+  "prompts": {
+    "42ef1700ec9a3fa2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "26b1319b-b8c3-4933-9be1-19947b8013fa",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 974,
+      "total_deletions": 28,
+      "accepted_lines": 968,
+      "overriden_lines": 0
+    }
+  }
+}
