@@ -26,8 +26,14 @@
     },
     {
       "name": "meta",
-      "description": "Meta droids for working on agentic configs themselves: prompt audit (prompt-optimizer) and apply (doc-generator).",
+      "description": "Meta droids and skills for working on agentic configs themselves: prompt audit (prompt-optimizer), apply (doc-generator), and the audit-and-apply-loop methodology skill.",
       "source": "./plugins/meta",
+      "category": "productivity"
+    },
+    {
+      "name": "practices",
+      "description": "Engineering-discipline skills: spec (plan and decompose), TDD workflow, coding standards, verification loop, and agentic-engineering operating principles.",
+      "source": "./plugins/practices",
       "category": "productivity"
     }
   ]

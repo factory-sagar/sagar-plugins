@@ -16,6 +16,12 @@ Two droids for working on agentic configurations themselves. `prompt-optimizer` 
 3. `doc-generator` applies the recommended edits
 4. Re-test the droid; iterate
 
+## Skills
+
+| Skill | Triggers on | What it does |
+| --- | --- | --- |
+| `audit-and-apply-loop` | "audit my prompts", "improve this droid", "fix prompt drift", "iterate on droid prompts" | Methodology for using `prompt-optimizer` + `doc-generator` together as an audit-fix-verify cycle. |
+
 ## Boundary with `deep-understanding`
 
 `prompt-optimizer` is **prompt-local**: identity, hard constraints, anti-pattern coverage, output template adherence, prompt verbosity, single-prompt or pairwise audits.

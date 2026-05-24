@@ -2,14 +2,12 @@
 
 Sagar's personal [Factory](https://factory.ai) plugins marketplace.
 
-Multi-model droid toolkit split into four focused plugins. Each plugin is independently installable; install all four for the full delegation experience.
+Multi-model droid toolkit + engineering-discipline skills, split into five focused plugins. Each plugin is independently installable; install all five for the full delegation + procedure experience.
 
 ## Concepts
 
 - **Skills** = repeatable flows. Markdown SOPs Droid auto-loads when a task matches.
 - **Droids** = sub-agents you delegate to. Each has a model and a reasoning budget.
-
-This marketplace ships droids today (9 of them). Skills come in a later phase.
 
 ## Install
 
@@ -18,11 +16,12 @@ Add the marketplace and install the plugins you want:
 ```bash
 droid plugin marketplace add https://github.com/factory-sagar/sagar-plugins
 
-# Install all four for the full toolkit:
+# Install all five for the full toolkit:
 droid plugin install investigation@sagar-plugins
 droid plugin install review@sagar-plugins
 droid plugin install synthesis@sagar-plugins
 droid plugin install meta@sagar-plugins
+droid plugin install practices@sagar-plugins
 ```
 
 Or browse via the interactive UI:
@@ -33,18 +32,39 @@ Or browse via the interactive UI:
 
 ## Plugins
 
-| Plugin | Droids | Marketplace category |
-| --- | --- | --- |
-| [`investigation`](./plugins/investigation/) | `quick-analysis`, `deep-understanding`, `deep-research` | research |
-| [`review`](./plugins/review/) | `change-review`, `security` | quality |
-| [`synthesis`](./plugins/synthesis/) | `pr-describer`, `commit-message-writer` | productivity |
-| [`meta`](./plugins/meta/) | `prompt-optimizer`, `doc-generator` | productivity |
+| Plugin | Droids | Skills | Marketplace category |
+| --- | --- | --- | --- |
+| [`investigation`](./plugins/investigation/) | `quick-analysis`, `deep-understanding`, `deep-research` | — | research |
+| [`review`](./plugins/review/) | `change-review`, `security` | — | quality |
+| [`synthesis`](./plugins/synthesis/) | `pr-describer`, `commit-message-writer` | — | productivity |
+| [`meta`](./plugins/meta/) | `prompt-optimizer`, `doc-generator` | `audit-and-apply-loop` | productivity |
+| [`practices`](./plugins/practices/) | — | `spec`, `agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop` | productivity |
 
-## Why split into four plugins?
+**Total: 9 droids + 6 skills.**
 
-Different jobs, different cadences. You may want `review` and `synthesis` on every workstation but `meta` only when you're authoring agentic configs. Splitting also surfaces each plugin under its proper marketplace category instead of bundling everything under one.
+## The full delegation + procedure loop
 
-The droids still compose across plugins — see each plugin's README for hand-off chains. Install all four for the full delegation experience.
+```
+spec                  → defines what done looks like AND decomposes work into droid-tagged units
+  │
+  ▼
+(for each unit)
+  ├── investigation:   quick-analysis / deep-understanding / deep-research
+  ├── implementation:  tdd-workflow + coding-standards (skills the main agent runs)
+  ├── verification:    verification-loop (skill)
+  └── review:          change-review + security (droids)
+  │
+  ▼
+synthesis: pr-describer + commit-message-writer
+```
+
+Plus a meta loop for the droid prompts themselves: `prompt-optimizer` audits, `doc-generator` applies, governed by the `audit-and-apply-loop` skill.
+
+## Why split into focused plugins?
+
+Different jobs, different cadences. You may want `review` and `synthesis` on every workstation but `meta` only when authoring agentic configs. Splitting also surfaces each plugin under its proper marketplace category instead of bundling everything under one.
+
+The droids and skills compose across plugins. Install everything for the full experience.
 
 ## Why multiple models
 
@@ -60,9 +80,10 @@ Delegate to the right model for the job, not "the best model" for everything.
 ## Roadmap
 
 - **Phase 0** ✅ — marketplace structure, three baseline droids.
-- **Phase 1** ✅ — six new droids across investigation / review / synthesis / meta categories with deliberate per-droid model assignment.
+- **Phase 1** ✅ — six new droids across investigation / review / synthesis / meta with deliberate per-droid model assignment.
 - **Phase 1.5** ✅ — split into four focused plugins by category.
-- **Phase 2** — skills layer: mine [`affaan-m/ECC`](https://github.com/affaan-m/ECC/tree/main/skills) for repeatable flows worth lifting, dedupe against `Factory-AI/factory-plugins`.
+- **Phase 2** ✅ — skills layer: `practices` plugin (5 skills) + `audit-and-apply-loop` skill in `meta`. Lifted/adapted from [`affaan-m/ECC`](https://github.com/affaan-m/ECC), de-duplicated against [`Factory-AI/factory-plugins`](https://github.com/Factory-AI/factory-plugins), generalized away from any specific harness.
+- **Phase 3+** — author additional original skills as patterns emerge from real usage.
 
 ## Layout
 
@@ -71,29 +92,9 @@ sagar-plugins/
 ├── .factory-plugin/
 │   └── marketplace.json
 └── plugins/
-    ├── investigation/
-    │   ├── .factory-plugin/plugin.json
-    │   ├── droids/
-    │   │   ├── quick-analysis.md       # glm-5
-    │   │   ├── deep-understanding.md   # gpt-5.4 xhigh
-    │   │   └── deep-research.md        # inherit (Claude) xhigh
-    │   └── README.md
-    ├── review/
-    │   ├── .factory-plugin/plugin.json
-    │   ├── droids/
-    │   │   ├── change-review.md        # kimi-2.6 xhigh
-    │   │   └── security.md             # gpt-5.4 xhigh
-    │   └── README.md
-    ├── synthesis/
-    │   ├── .factory-plugin/plugin.json
-    │   ├── droids/
-    │   │   ├── pr-describer.md         # inherit (Claude) high
-    │   │   └── commit-message-writer.md  # glm-5
-    │   └── README.md
-    └── meta/
-        ├── .factory-plugin/plugin.json
-        ├── droids/
-        │   ├── prompt-optimizer.md     # gpt-5.4 xhigh
-        │   └── doc-generator.md        # gpt-5.4 xhigh
-        └── README.md
+    ├── investigation/   # 3 droids
+    ├── review/          # 2 droids
+    ├── synthesis/       # 2 droids
+    ├── meta/            # 2 droids + 1 skill
+    └── practices/       # 5 skills
 ```
