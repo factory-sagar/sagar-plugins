@@ -1,25 +1,53 @@
-# sagar-skills
+# sagar-plugins
 
-Personal [Factory](https://factory.ai) droids and skills.
+Sagar's personal [Factory](https://factory.ai) plugins marketplace.
 
-## Contents
+## Concepts
 
-**Droids** (`.factory/droids/`)
-- `deep-analysis` — evidence-backed repo and agentic-config analysis
-- `change-review` — strict reviewer for diffs, commits, or scoped files
+- **Skills** = repeatable flows. Markdown SOPs Droid auto-loads when a task matches.
+- **Droids** = sub-agents you delegate to. Each has a model and a reasoning budget.
 
-**Skills** (`.factory/skills/`)
-- `simplify` — parallel review for reuse, quality, and efficiency, then fix
-- `follow-up-on-pr` — rebase, address feedback, run checks, push, reply
+This marketplace ships droids today. Skills come in a later phase.
 
 ## Install
 
-Global:
+Add the marketplace and install the plugin:
+
 ```bash
-cp -R .factory/droids/* ~/.factory/droids/
-cp -R .factory/skills/*  ~/.factory/skills/
+droid plugin marketplace add https://github.com/factory-sagar/sagar-plugins
+droid plugin install sagar@sagar-plugins
 ```
 
-Project-local: copy `.factory/` into your project root.
+Or browse via the interactive UI:
 
-Droids pin `model: gpt-5.4` — change to `inherit` in the front-matter if you don't have access.
+```
+/plugins
+```
+
+## Plugins
+
+| Plugin | What you get |
+| --- | --- |
+| [`sagar`](./plugins/sagar/) | Three analysis and review droids: `quick-analysis`, `deep-understanding`, `change-review` |
+
+## Roadmap
+
+- **Phase 0** (current) — droid toolkit, marketplace shape, no skills.
+- **Phase 1** — mine [`affaan-m/ECC`](https://github.com/affaan-m/ECC/tree/main/skills) for skills worth lifting, dedupe against `Factory-AI/factory-plugins`.
+- **Phase 2+** — split `sagar` into focused plugins (e.g. `sagar-research`, `sagar-ops`) once we have meaningful skill clusters.
+
+## Layout
+
+```
+sagar-plugins/
+├── .factory-plugin/
+│   └── marketplace.json
+└── plugins/
+    └── sagar/
+        ├── .factory-plugin/plugin.json
+        ├── droids/
+        │   ├── quick-analysis.md
+        │   ├── deep-understanding.md
+        │   └── change-review.md
+        └── README.md
+```

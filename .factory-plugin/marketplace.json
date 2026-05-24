@@ -1,0 +1,16 @@
+{
+  "name": "sagar-plugins",
+  "description": "Sagar's personal Factory plugins marketplace",
+  "owner": {
+    "name": "Sagar",
+    "url": "https://github.com/factory-sagar"
+  },
+  "plugins": [
+    {
+      "name": "sagar",
+      "description": "Sagar's analysis and review droid toolkit: quick-analysis, deep-understanding, change-review",
+      "source": "./plugins/sagar",
+      "category": "productivity"
+    }
+  ]
+}
