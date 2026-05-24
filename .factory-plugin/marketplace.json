@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "sagar",
-      "description": "Sagar's analysis and review droid toolkit: quick-analysis, deep-understanding, change-review",
+      "description": "Sagar's multi-model droid toolkit: investigation (quick-analysis, deep-understanding, deep-research), review (change-review, security), synthesis (pr-describer, commit-message-writer), and meta (prompt-optimizer, doc-generator).",
       "source": "./plugins/sagar",
       "category": "productivity"
     }

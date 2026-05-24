@@ -28,13 +28,14 @@ Or browse via the interactive UI:
 
 | Plugin | What you get |
 | --- | --- |
-| [`sagar`](./plugins/sagar/) | Three analysis and review droids: `quick-analysis`, `deep-understanding`, `change-review` |
+| [`sagar`](./plugins/sagar/) | Nine multi-model droids: `quick-analysis`, `deep-understanding`, `deep-research`, `change-review`, `security`, `pr-describer`, `commit-message-writer`, `prompt-optimizer`, `doc-generator` |
 
 ## Roadmap
 
-- **Phase 0** (current) — droid toolkit, marketplace shape, no skills.
-- **Phase 1** — mine [`affaan-m/ECC`](https://github.com/affaan-m/ECC/tree/main/skills) for skills worth lifting, dedupe against `Factory-AI/factory-plugins`.
-- **Phase 2+** — split `sagar` into focused plugins (e.g. `sagar-research`, `sagar-ops`) once we have meaningful skill clusters.
+- **Phase 0** ✅ — marketplace structure, three baseline droids.
+- **Phase 1** ✅ — six new droids across investigation / review / synthesis / meta categories with deliberate per-droid model assignment (`glm-5`, `gpt-5.4`, `kimi-2.6`, Claude via `inherit`).
+- **Phase 2** — skills layer: mine [`affaan-m/ECC`](https://github.com/affaan-m/ECC/tree/main/skills) for repeatable flows worth lifting, dedupe against `Factory-AI/factory-plugins`.
+- **Phase 3+** — split `sagar` into focused plugins (e.g. `sagar-investigation`, `sagar-review`, `sagar-synthesis`) once we cross ~12 droids.
 
 ## Layout
 
@@ -46,8 +47,14 @@ sagar-plugins/
     └── sagar/
         ├── .factory-plugin/plugin.json
         ├── droids/
-        │   ├── quick-analysis.md
-        │   ├── deep-understanding.md
-        │   └── change-review.md
+        │   ├── quick-analysis.md          # glm-5
+        │   ├── deep-understanding.md      # gpt-5.4 xhigh
+        │   ├── deep-research.md           # inherit (Claude) xhigh
+        │   ├── change-review.md           # kimi-2.6 xhigh
+        │   ├── security.md                # gpt-5.4 xhigh
+        │   ├── pr-describer.md            # inherit (Claude) high
+        │   ├── commit-message-writer.md   # glm-5
+        │   ├── prompt-optimizer.md        # gpt-5.4 xhigh
+        │   └── doc-generator.md           # gpt-5.4 xhigh
         └── README.md
 ```

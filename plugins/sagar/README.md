@@ -1,35 +1,67 @@
 # sagar
 
-Analysis and review droid toolkit. Three sub-agents you delegate to from a parent session.
+Multi-model droid toolkit. Nine specialized sub-agents for investigation, review, research, synthesis, and meta-prompt audits. Designed for delegation: each droid has a fixed role, a phased procedure, anti-patterns, edge cases, and a hand-off contract to other droids in the set.
 
 ## Droids
 
+### Investigation
+
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `quick-analysis` | Fast triage of an unfamiliar repo: stack, structure, entry points, anomalies. Use first when you don't know the lay of the land. | `glm-5` | default | read-only |
-| `deep-understanding` | Thorough, evidence-backed investigation of a repository, subsystem, or focused question. Use when `quick-analysis` says "go deeper", or for architecture / agentic-configuration audits. | `gpt-5.4` | `xhigh` | read-only + `Execute` |
-| `change-review` | Strict last-gate reviewer for diffs, commits, branches, or named files. Finds correctness, consent / auth, rollback, and event-reliability risks before merge. | `kimi-2.6` | `xhigh` | read-only + `Execute` |
+| `quick-analysis` | Fast triage of an unfamiliar repo: stack, structure, entry points, anomalies, and which droid to delegate to next. | `glm-5` | default | read-only |
+| `deep-understanding` | Thorough, evidence-based investigation of a repository, subsystem, or focused question. Architecture audits and agentic-config audits. | `gpt-5.4` | `xhigh` | read-only + `Execute` |
+| `deep-research` | External research using WebSearch + FetchUrl. Library evaluations, API references, comparisons, CVE follow-ups. Distinct from `deep-understanding` — this is for questions that live OUTSIDE the repo. | `inherit` (Claude) | `xhigh` | read-only + `WebSearch` + `FetchUrl` |
 
-## Typical flow
+### Review
 
-1. New repo or unclear scope → `quick-analysis` (60-second triage with hand-off questions)
-2. `quick-analysis` recommends going deeper → `deep-understanding`
-3. Have a diff to ship → `change-review`
+| Droid | When to delegate | Model | Reasoning | Tools |
+| --- | --- | --- | --- | --- |
+| `change-review` | Strict last-gate reviewer for diffs, commits, branches, or named files. General correctness, consent / auth, rollback, event reliability. | `kimi-2.6` | `xhigh` | read-only + `Execute` |
+| `security` | Evidence-based security reviewer using STRIDE + OWASP. Verifies CVEs against trusted sources. Pairs with `change-review`. | `gpt-5.4` | `xhigh` | read-only + `Execute` + `WebSearch` + `FetchUrl` |
 
-The droids are designed to compose: each one's output is shaped to seed the next, and each labels its findings with confidence.
+### Synthesis
 
-## Why three different models
+| Droid | When to delegate | Model | Reasoning | Tools |
+| --- | --- | --- | --- | --- |
+| `pr-describer` | Write a PR title and body from a diff. Structured what / why / testing / breaking changes / follow-ups. | `inherit` (Claude) | `high` | read-only + `Execute` |
+| `commit-message-writer` | Write a Conventional Commits message from staged or specified changes. Fast and format-mechanical. | `glm-5` | default | read-only + `Execute` |
 
-Different model families catch different bugs:
+### Meta
 
-- **`glm-5`** is fast and cheap — perfect for the under-60-second triage.
-- **`gpt-5.4 xhigh`** has strong architectural reasoning — best for deep investigations.
-- **`kimi-2.6 xhigh`** has a different training distribution from the gpt family — it has consistently caught regulatory and consent-related issues that gpt models miss.
+| Droid | When to delegate | Model | Reasoning | Tools |
+| --- | --- | --- | --- | --- |
+| `prompt-optimizer` | Audit a droid or skill prompt and recommend minimal-edit improvements. Use when authoring a new droid or diagnosing poor output. | `gpt-5.4` | `xhigh` | read-only |
+| `doc-generator` | Apply targeted, minimal-edit agentic-doc updates after an approved audit (from `prompt-optimizer` or `deep-understanding`) or explicit request. | `gpt-5.4` | `xhigh` | read-only + `Edit` + `Create` + `ApplyPatch` |
 
-## Output format notes
+## Composition patterns
 
-`change-review` emits a label-list format (`Summary:`, `Assessment:`, `Findings:`, `Validation Notes:`) rather than the full eight-section template the prompt suggests. This is a model-trained-output ceiling that we accepted after extensive prompt iteration. The investigation procedure (risk dimension sweep, scope discipline, hand-off concept) all run as designed; only the final output template is shorter than the other two droids.
+The droids compose. Common chains:
+
+- **New repo → understand → ship**: `quick-analysis` → `deep-understanding` → (you implement) → `change-review` → `pr-describer`
+- **External-question pipeline**: `deep-research` → (you decide) → implement → `commit-message-writer`
+- **Audit-and-apply for the agentic config itself**: `deep-understanding` (audit `.factory/**`) → `doc-generator` (apply)
+- **Prompt iteration**: write a droid → `prompt-optimizer` (audit) → `doc-generator` (apply) → re-test
+- **Pre-merge gate**: `change-review` + `security` in parallel → resolve findings → `pr-describer`
+
+## Why multiple models
+
+Different model families catch different things:
+
+- **`glm-5`** — fast and cheap; perfect for triage and format-mechanical work (`quick-analysis`, `commit-message-writer`).
+- **`gpt-5.4 xhigh`** — strong architectural reasoning; best for investigations and audits (`deep-understanding`, `security`, `prompt-optimizer`, `doc-generator`).
+- **`kimi-2.6 xhigh`** — different training distribution from gpt; consistently catches regulatory / consent / subtle correctness issues that gpt misses (`change-review`).
+- **`inherit` (Claude Opus)** — strongest natural prose; best for prose synthesis and external research (`pr-describer`, `deep-research`).
+
+This is the whole point of the marketplace: **delegate to the right model for the job, not "the best model" for everything**.
+
+## Output format note
+
+`change-review` emits a label-list output (`Summary:`, `Assessment:`, `Findings:`, `Validation Notes:`) rather than the H2-heading template the prompt also describes. This is `kimi-2.6`'s natural format ceiling, accepted after extensive prompt iteration. Substance (procedure, risk dimensions, anti-patterns, hand-offs) is preserved.
 
 ## Customizing models
 
-Models are pinned. If you don't have access to one, change the `model:` field in the droid's frontmatter to `inherit` to fall back to your session's default model.
+Models are pinned. If you don't have access to a model, change the `model:` field in the droid's frontmatter to `inherit` to fall back to your session's default.
+
+## Tool surface
+
+Several droids expose `WebSearch` / `FetchUrl` / `Edit` / `Create` / `ApplyPatch`. Each droid's prompt explicitly constrains how those tools may be used (e.g., `security` may only WebSearch trusted CVE sources; `doc-generator` may only Edit agentic-config files). Read the droid's `Hard Constraints` section before installing in environments with sensitive policies.
