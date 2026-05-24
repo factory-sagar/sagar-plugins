@@ -1,0 +1,35 @@
+plugins/sagar/.factory-plugin/plugin.json
+  42ef1700ec9a3fa2 1-8
+README.md
+  42ef1700ec9a3fa2 1,3,5,7-8,10,14-15,17-24,27,29-31,33-53
+plugins/sagar/droids/deep-understanding.md
+  42ef1700ec9a3fa2 1-73
+plugins/sagar/droids/quick-analysis.md
+  42ef1700ec9a3fa2 1-2,4-6,8,30-31,33,36-40,44-55,57-61,63,65-66,68
+.factory-plugin/marketplace.json
+  42ef1700ec9a3fa2 1-16
+plugins/sagar/README.md
+  42ef1700ec9a3fa2 1-21
+plugins/sagar/droids/change-review.md
+  42ef1700ec9a3fa2 1-2,6-7,9,11,14,16,20,22,33-35,40-42,44,46,48-49,52-54,56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "7c82fb31a818ddfab9990b3e1619dc6be52e0108",
+  "prompts": {
+    "42ef1700ec9a3fa2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "26b1319b-b8c3-4933-9be1-19947b8013fa",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 955,
+      "total_deletions": 525,
+      "accepted_lines": 219,
+      "overriden_lines": 34
+    }
+  }
+}
