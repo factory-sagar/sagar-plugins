@@ -1,0 +1,43 @@
+plugins/practices/skills/agentic-engineering/SKILL.md
+  e946ccd34244294c 69
+plugins/review/README.md
+  e946ccd34244294c 9,19,23
+plugins/review/droids/change-review.md
+  e946ccd34244294c 4
+  ab4d4593f03dc9f5 19,50,77,126
+README.md
+  e946ccd34244294c 75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "2f79dc307214a1317aae20832e0078397441ae09",
+  "prompts": {
+    "ab4d4593f03dc9f5": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4ae0d56c-1113-4f42-9c77-aa4f25dddad6",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 1,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "e946ccd34244294c": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1d4dafdf-9ab5-4dad-966f-1e83429b5c8e",
+        "model": "claude-opus-4-8-fast"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
