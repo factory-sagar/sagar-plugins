@@ -72,7 +72,7 @@ Different model families catch different things:
 
 - **`glm-5`** (fast/cheap) — triage and format-mechanical work (`quick-analysis`, `commit-message-writer`).
 - **`gpt-5.4 xhigh`** (deep reasoning) — investigations and audits (`deep-understanding`, `security`, `prompt-optimizer`, `doc-generator`).
-- **`kimi-2.6 xhigh`** (different distribution) — catches regulatory / consent / subtle correctness issues `gpt-5.4` misses (`change-review`).
+- **`kimi-k2.6 xhigh`** (different distribution) — catches regulatory / consent / subtle correctness issues `gpt-5.4` misses (`change-review`).
 - **`inherit` (Claude Opus)** — strongest natural prose; synthesis and external research (`pr-describer`, `deep-research`).
 
 Delegate to the right model for the job, not "the best model" for everything.

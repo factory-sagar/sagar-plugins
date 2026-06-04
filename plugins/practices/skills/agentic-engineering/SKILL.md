@@ -66,7 +66,7 @@ Different models for different jobs. The sagar marketplace uses this matrix:
 | Implementation, refactors, focused single-file edits | Strong reasoning (e.g. `gpt-5.4`) | (worker with reasoning-capable model) | Needs to reason about invariants without blowing budget |
 | Architecture, root-cause, multi-file invariants, deep audits | Deep reasoning (e.g. `gpt-5.4 xhigh`) | `deep-understanding`, `security`, `prompt-optimizer`, `doc-generator` | Needs to hold multiple things in working memory |
 | Long-form prose synthesis, external research | Strongest natural prose (e.g. Claude Opus via `inherit`) | `pr-describer`, `deep-research` | Output quality dominates token cost |
-| Catching what gpt misses (regulatory, consent, subtle correctness) | Different training distribution (e.g. `kimi-2.6`) | `change-review` | Distributional diversity catches different bugs |
+| Catching what gpt misses (regulatory, consent, subtle correctness) | Different training distribution (e.g. `kimi-k2.6`) | `change-review` | Distributional diversity catches different bugs |
 
 **Apply this:** when picking a delegate in a `spec` decomposition or when orchestrating ad-hoc, consult this matrix. Don't default to "the best model" — default to the right tier.
 
