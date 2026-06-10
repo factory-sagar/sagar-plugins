@@ -19,7 +19,7 @@ tags: [testing, tdd, workflow, quality, red-green-refactor, coverage]
 
 Test-first discipline for every behavior change. The loop: write a failing test, watch it fail for the right reason, implement the smallest thing that makes it pass, then optionally refactor under the safety net.
 
-This skill assumes the main agent is orchestrating the loop; the **actual test and implementation writing should be delegated to a `worker`** (Factory built-in) with self-contained prompts. The main agent is the project manager; the worker is the engineer. This separation keeps the main context clean and uses the worker for what it's best at: focused, scope-bound code work.
+This skill assumes the main agent is orchestrating the loop; the **actual test and implementation writing should be delegated to a `worker`** (Factory built-in) with self-contained prompts. When the `build` plugin is installed, prefer its specialized delegates: `test-engineer` (tdd-red mode) for step 2 and `implementer` for steps 4 and 6 — the same templates apply. The main agent is the project manager; the worker is the engineer. This separation keeps the main context clean and uses the worker for what it's best at: focused, scope-bound code work.
 
 ## When to Activate
 
@@ -265,11 +265,11 @@ Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready*
 | Step | Delegate to | Why |
 |---|---|---|
 | 1. Write user journey | `<self>` | Short, inline, agent-driven |
-| 2. Write failing tests | `worker` | Self-contained code work with a clear deliverable |
+| 2. Write failing tests | `test-engineer` (tdd-red mode), else `worker` | Pins behavior; fails for the right reason by contract |
 | 3. RED commit | `<self>` | Mechanical, agent runs git |
-| 4. Implement | `worker` | Self-contained code work; fresh context avoids over-engineering |
+| 4. Implement | `implementer`, else `worker` | Minimal-diff discipline; fresh context avoids over-engineering |
 | 5. GREEN commit | `<self>` | Mechanical |
-| 6. Refactor (if needed) | `worker` | Self-contained code work with explicit smell list |
+| 6. Refactor (if needed) | `implementer`, else `worker` | Scope-bound code work with explicit smell list |
 | 7. REFACTOR commit | `<self>` | Mechanical |
 | After loop: verification | `<self>` guided by `verification-loop` skill | Mechanical command runs |
 | After loop: code review | `change-review` (droid) | Specialized model for review |

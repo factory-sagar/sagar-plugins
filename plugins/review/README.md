@@ -25,6 +25,7 @@ Two pre-merge gate droids. One catches general correctness regressions, the othe
 ## Companion plugins (recommended)
 
 - **[`investigation`](../investigation/)** — both reviewers hand architectural questions off to `deep-understanding`.
+- **[`build`](../build/)** — findings from both reviewers feed `implementer` for the fix pass; re-review the delta after.
 - **[`synthesis`](../synthesis/)** — once review passes, `pr-describer` synthesizes the PR body from the same diff.
 
 Cross-plugin hand-offs are just naming suggestions; if you haven't installed the companion plugin the hand-off is a no-op recommendation, not an error.

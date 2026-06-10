@@ -70,6 +70,7 @@ Pick exactly one:
 - **`change-review`** — parent already has a diff, commit range, branch, or set of named files to ship.
 - **`deep-understanding`** — parent needs architecture, conventions, agentic-config audit, or any "why does it work this way" question. Default for non-trivial repos when no diff is in flight.
 - **`security`** — parent flagged a security concern (auth, secrets, data exposure, supply chain).
+- **`debugger`** — parent arrived with a concrete failing behavior (failing test, stack trace, regression) that needs root cause, not triage.
 - **`deep-research`** — the parent's question cannot be answered from the repo at all (library evaluation, external API contract, CVE follow-up, ecosystem best practice). Rare from triage; pick only when the repo itself is not the subject.
 - **None — proceed directly** — the repo is small/simple enough that the parent now has what they need. Use this when shape is obvious and the parent's task is concrete.
 
@@ -143,7 +144,7 @@ Use clean markdown, compact. No filler.
 - ...
 
 ## Best Next Step
-- Recommended: <`change-review` | `deep-understanding` | `security` | `deep-research` | None — proceed directly>
+- Recommended: <`change-review` | `deep-understanding` | `security` | `debugger` | `deep-research` | None — proceed directly>
 - Reason:
 - Focus to hand off (2–4 questions, omit if "None"):
   - ...

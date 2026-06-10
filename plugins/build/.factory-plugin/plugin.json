@@ -1,0 +1,9 @@
+{
+  "name": "build",
+  "version": "1.0.0",
+  "description": "Hands-on droids that change code: implementer (applies approved review findings, spec units, or fix lists) and test-engineer (finds the riskiest untested behavior and writes the missing tests).",
+  "author": {
+    "name": "Sagar",
+    "url": "https://github.com/factory-sagar"
+  }
+}

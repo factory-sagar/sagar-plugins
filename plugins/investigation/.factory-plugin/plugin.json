@@ -1,7 +1,7 @@
 {
   "name": "investigation",
-  "version": "1.0.0",
-  "description": "Investigation droid trio: fast triage, thorough repo investigation, and external web research.",
+  "version": "1.1.0",
+  "description": "Investigation droids: fast triage, thorough repo investigation, external web research, and root-cause debugging.",
   "author": {
     "name": "Sagar",
     "url": "https://github.com/factory-sagar"

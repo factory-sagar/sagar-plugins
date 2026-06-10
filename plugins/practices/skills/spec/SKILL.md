@@ -165,7 +165,10 @@ For each unit shape, here's the recommended delegate. Use exact names — these 
 | Repo is unfamiliar; need stack/structure/entry points | `quick-analysis` | investigation | Fast triage, designed for this |
 | Need architecture or agentic-config understanding | `deep-understanding` | investigation | Thorough, evidence-anchored |
 | Need external research (library docs, CVE, best practices, comparisons) | `deep-research` | investigation | WebSearch + FetchUrl, source-tier hierarchy |
-| Implement a feature / refactor / bug fix in code | `worker` | Factory built-in | General-purpose; main agent provides full context |
+| Apply an approved change set (review findings, `debugger` fix plan, spec unit) | `implementer` | build | Minimal-diff discipline with targeted verification |
+| Find untested behavior / write missing tests (incl. TDD RED) | `test-engineer` | build | Pins behavior; risk-ordered gap analysis |
+| Root-cause a failing behavior before fixing it | `debugger` | investigation | Evidence-ranked hypotheses; hands fix plan to `implementer` |
+| Implement open-ended feature work in code | `worker` | Factory built-in | General-purpose; main agent provides full context |
 | Implement a feature using TDD discipline | `worker` + the `tdd-workflow` skill auto-loads | Factory built-in + practices plugin | Worker writes test first, then implementation |
 | Run quality gates (build, type-check, lint, tests) | inline, guided by `verification-loop` skill | practices | Mechanical; the main agent can run commands directly |
 | Strict pre-merge correctness review of a diff | `change-review` | review | Catches what tests miss |

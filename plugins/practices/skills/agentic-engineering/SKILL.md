@@ -63,8 +63,8 @@ Different models for different jobs. The sagar marketplace uses this matrix:
 | Task shape | Model tier | Example droid | Reason |
 |---|---|---|---|
 | Triage, classification, format-mechanical work | Fast / cheap (e.g. `glm-5.1`) | `quick-analysis`, `commit-message-writer` | Output is short and constrained; speed wins |
-| Implementation, refactors, focused single-file edits | Strong reasoning (e.g. `gpt-5.4`) | (worker with reasoning-capable model) | Needs to reason about invariants without blowing budget |
-| Architecture, root-cause, multi-file invariants, deep audits | Deep reasoning (e.g. `gpt-5.4 xhigh`) | `deep-understanding`, `security`, `prompt-optimizer`, `doc-generator` | Needs to hold multiple things in working memory |
+| Implementation, refactors, focused single-file edits | Strong reasoning (e.g. `gpt-5.4`) | `implementer`, `test-engineer` | Needs to reason about invariants without blowing budget |
+| Architecture, root-cause, multi-file invariants, deep audits | Deep reasoning (e.g. `gpt-5.4 xhigh`) | `deep-understanding`, `debugger`, `security`, `prompt-optimizer`, `doc-generator` | Needs to hold multiple things in working memory |
 | Long-form prose synthesis, external research | Strongest natural prose (e.g. Claude Opus via `inherit`) | `pr-describer`, `deep-research` | Output quality dominates token cost |
 | Catching what gpt misses (regulatory, consent, subtle correctness) | Different training distribution (e.g. `kimi-k2.6`) | `change-review` | Distributional diversity catches different bugs |
 
@@ -147,7 +147,7 @@ verification-loop (skill, may delegate phases to worker)
   ↓
 change-review (droid)  +  security (droid, if applicable)  [parallel]
   ↓
-resolve findings; may loop back to worker for fixes
+resolve findings; loop back to implementer (or worker) for fixes
   ↓
 pr-describer (droid) — synthesizes PR body from the diff + reviewer hand-offs
   ↓
@@ -183,6 +183,9 @@ The `audit-and-apply-loop` skill (in the `meta` plugin) documents this loop in f
 | Conventional Commits message | `commit-message-writer` | synthesis |
 | Audit a droid/skill prompt | `prompt-optimizer` | meta |
 | Apply audit findings to agentic-config | `doc-generator` | meta |
+| Apply an approved change set to code (findings, fix plan, spec unit) | `implementer` | build |
+| Find untested behavior / write the missing tests | `test-engineer` | build |
+| Root-cause a failing behavior (no fix applied) | `debugger` | investigation |
 | Implement code that doesn't fit a specialized droid | `worker` (Factory built-in) | — |
 | Procedural step the main agent runs (asking user, drafting prose for context, picking a delegate) | `<self>` | — |
 

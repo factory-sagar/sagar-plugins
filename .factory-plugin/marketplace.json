@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "investigation",
-      "description": "Investigation droid trio: fast triage (quick-analysis), thorough repo investigation (deep-understanding), and external web research (deep-research).",
+      "description": "Investigation droids: fast triage (quick-analysis), thorough repo investigation (deep-understanding), external web research (deep-research), and root-cause debugging (debugger).",
       "source": "./plugins/investigation",
       "category": "research"
     },
@@ -32,8 +32,14 @@
     },
     {
       "name": "practices",
-      "description": "Engineering-discipline skills: spec (plan and decompose), TDD workflow, coding standards, verification loop, and agentic-engineering operating principles.",
+      "description": "Engineering-discipline skills: spec (plan and decompose), TDD workflow, coding standards, verification loop, demo prep, and agentic-engineering operating principles.",
       "source": "./plugins/practices",
+      "category": "productivity"
+    },
+    {
+      "name": "build",
+      "description": "Hands-on droids that change code: implementer (applies approved review findings, spec units, or fix lists) and test-engineer (finds the riskiest untested behavior and writes the missing tests).",
+      "source": "./plugins/build",
       "category": "productivity"
     }
   ]
