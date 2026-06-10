@@ -6,7 +6,7 @@ Three droids you delegate to when you need to understand something — a repo, a
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `quick-analysis` | Fast triage of an unfamiliar repo: stack, structure, entry points, anomalies. Use first when you don't know the lay of the land. | `glm-5` | default | read-only |
+| `quick-analysis` | Fast triage of an unfamiliar repo: stack, structure, entry points, anomalies. Use first when you don't know the lay of the land. | `glm-5.1` | default | read-only |
 | `deep-understanding` | Thorough, evidence-based investigation of a repository, subsystem, or focused question. Architecture audits and agentic-config audits. | `gpt-5.4` | `xhigh` | read-only + `Execute` |
 | `deep-research` | External research using WebSearch + FetchUrl. Library evaluations, API references, comparisons, CVE follow-ups. For questions that live OUTSIDE the repo. | `inherit` (Claude) | `xhigh` | read-only + `Execute` + `WebSearch` + `FetchUrl` |
 
@@ -27,7 +27,7 @@ Cross-plugin hand-offs are just naming suggestions; if you haven't installed the
 
 ## Models pinned per droid
 
-- `glm-5` — fast/cheap triage
+- `glm-5.1` — fast/cheap triage
 - `gpt-5.4 xhigh` — strong architectural reasoning
 - `inherit` (Claude Opus) — strongest natural prose for synthesizing external sources
 

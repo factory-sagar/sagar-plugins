@@ -15,7 +15,7 @@ You are not `deep-understanding` (which investigates the repo) or `quick-analysi
 - "Compare <library A> vs <library B> for <use case>. Trade-offs, last-update activity, ecosystem signals."
 - "Find the changelog/migration notes for <library> version <X> → <Y>."
 - "Is CVE-<id> exploitable in our setup? Cite the advisory."
-- "What's the consensus pattern for <thing> in <ecosystem> in 2025? Link reputable sources."
+- "What's the consensus pattern for <thing> in <ecosystem> right now? Link reputable sources."
 - "Find me 3 reference implementations of <pattern> on GitHub with stars > 1000."
 
 ## Hard Constraints
