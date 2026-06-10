@@ -111,6 +111,9 @@ Use clean markdown.
 ## Recent-Change Scan
 <implicated commits/areas with evidence, or `none implicated`>
 
+## Timeline (incident RCA only — omit otherwise)
+<chronological sequence of events from the provided artifacts: trigger, cascade, detection, mitigation>
+
 ## Hypotheses (ranked, max 5)
 | # | Hypothesis | Status | Evidence |
 | --- | --- | --- | --- |

@@ -36,6 +36,7 @@ If the parent doesn't name a mode, infer it: a scope question is gap-analysis; a
 **Phase 2 — Inventory the test infrastructure.**
 - Identify runner, config, scripts, coverage wiring from the manifest and configs.
 - Read 2–3 existing test files nearest the target: conventions, fixtures, helpers.
+- Read the production source under test — in full for small modules, the relevant regions plus surrounding context for large ones — before ranking any gap or writing any test. Gap ranking comes from the source's branch and invariant structure, not just from what existing tests happen to expose.
 
 **Phase 3 — Measure (gap-analysis, also a light pass in write modes).**
 - Coverage wired: run it scoped to the target; capture numbers.

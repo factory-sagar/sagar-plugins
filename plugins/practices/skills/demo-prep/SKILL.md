@@ -61,7 +61,8 @@ Look for `.factory/demo-prep.md` in the repo root. Expected shape:
 - Startup failure is a hard stop: report it as the P0 blocker; offer to hand it to `debugger`.
 
 **Phase 2 — Smoke the critical paths.**
-- Drive each critical path through the browser (use the `droid-control` / browser automation skill), in config order, P0 first.
+- Drive each critical path through the browser using the `droid-control` skill (fall back to `agent-browser`/`browser-navigation` only if `droid-control` is unavailable), in config order, P0 first.
+- If no browser-automation capability is available at all, **stop and report blocked** — never substitute `curl` checks or claim a smoke pass that didn't happen through the UI.
 - At each waypoint: screenshot, check the console for errors, watch for failed network requests.
 - A path fails: record it with evidence and move to the next path. Time-to-demo beats completeness of any single investigation.
 
@@ -102,6 +103,35 @@ Look for `.factory/demo-prep.md` in the repo root. Expected shape:
 - **Flaky third-party dependency:** verify the fallback (mock, cached response, talking point) and note it in the report.
 - **Multiple demo apps in one session:** prep sequentially, separate reports, separate restart one-liners.
 - **Under 10 minutes to demo:** run P0 paths only, report what was skipped.
+
+## Output
+
+Use clean markdown.
+
+# Demo Prep Report
+
+## Status
+<ready | ready-with-warts | blocked — one line>
+
+## Config
+<`.factory/demo-prep.md` followed | discovered (offer to create config) | created/updated this run>
+
+## Critical Paths
+| # | Path | Result | Evidence |
+| --- | --- | --- | --- |
+| 1 | <path> | pass / fail | <screenshot ref + console state> |
+
+## Blockers
+- P0 (demo-breaking): <items or `none`>
+- P1 (visible wart): <items or `none`>
+- P2 (cosmetic): <items or `none`>
+
+## Restart One-Liner
+- Start: `<command>` → <URL> — login: <demo account / none>
+
+## Hand-off
+- To `debugger` / `implementer`: <failed paths needing work, else `none`>
+- Config file action: <created | updated | offered — user declined | up to date>
 
 ## Self-Check
 
