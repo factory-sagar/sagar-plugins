@@ -40,6 +40,32 @@ Injects [`fleet-cheatsheet.md`](./hooks/fleet-cheatsheet.md) (~400 tokens) into 
 | `GUARDRAILS_STOP_GATE=off` (env) | Disables only the verification gate |
 | `.factory/guardrails-off` (marker file in project root) | Disables the verification gate for that project |
 
+## Known limitation: hook shadowing by higher scopes
+
+As of droid v0.144.x, the settings merger (`mergeHooks`) applies per-event-type **override**, not concatenation: if your user or project `hooks.json` defines any hooks for an event type, plugin hooks for that same event type are silently dropped (this contradicts the documented "plugin hooks run alongside your custom hooks" behavior).
+
+Practical impact: if you have any user-level `PreToolUse` hooks (e.g. a git-ai checkpoint hook), this plugin's command policy will not load. Workaround: add the policy directly to `~/.factory/hooks/hooks.json` alongside your existing entries, pointing at the marketplace clone (stable across plugin updates):
+
+```json
+{
+  "matcher": "Execute",
+  "hooks": [
+    {
+      "type": "command",
+      "command": "/Users/<you>/.factory/plugins/marketplaces/sagar-plugins/plugins/guardrails/hooks/pretooluse-policy.py",
+      "timeout": 10
+    }
+  ]
+}
+```
+
+The same applies to `Stop` and `SessionStart` if you ever add user-level hooks for those events.
+
+## Autonomy interaction
+
+- **deny** rules block at every autonomy level, including Auto (High) "allow all commands" and headless `droid exec --auto high`. Verified live.
+- **ask** rules surface a confirmation dialog at Off/Low/Medium autonomy. At Auto (High) "allow all commands", the host auto-approves ask escalations; only deny rules are absolute there.
+
 ## Limitations
 
 - Hook scripts require `python3` and a POSIX shell (macOS/Linux; not Windows).
