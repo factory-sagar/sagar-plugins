@@ -1,0 +1,37 @@
+plugins/guardrails/.factory-plugin/plugin.json
+  9dc148e98c9eefaf 1-11
+plugins/guardrails/hooks/stop-gate.py
+  9dc148e98c9eefaf 1-175
+plugins/guardrails/hooks/fleet-cheatsheet.md
+  9dc148e98c9eefaf 1-27
+.factory-plugin/marketplace.json
+  9dc148e98c9eefaf 44-49
+plugins/guardrails/hooks/hooks.json
+  9dc148e98c9eefaf 1-40
+README.md
+  9dc148e98c9eefaf 5,11,20,27,38-46,48,68-69,95-96,110-111
+plugins/guardrails/README.md
+  9dc148e98c9eefaf 1-54
+plugins/guardrails/hooks/pretooluse-policy.py
+  9dc148e98c9eefaf 1-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "77d2939e25c7bc9fb9705c0c73e332e26f11380d",
+  "prompts": {
+    "9dc148e98c9eefaf": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3dadea72-c632-4b01-9f50-698fdccd96ab",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 468,
+      "total_deletions": 29,
+      "accepted_lines": 452,
+      "overriden_lines": 0
+    }
+  }
+}
