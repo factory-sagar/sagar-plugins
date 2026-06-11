@@ -41,12 +41,6 @@
       "description": "Hands-on droids that change code: implementer (applies approved review findings, spec units, or fix lists) and test-engineer (finds the riskiest untested behavior and writes the missing tests).",
       "source": "./plugins/build",
       "category": "productivity"
-    },
-    {
-      "name": "guardrails",
-      "description": "Enforcement hooks: destructive-command policy (deny/ask), stop-time verification gate, and session-start fleet router. Pure lifecycle hooks — no droids, no skills, no MCP.",
-      "source": "./plugins/guardrails",
-      "category": "quality"
     }
   ]
 }
