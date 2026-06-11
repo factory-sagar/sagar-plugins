@@ -3,8 +3,11 @@
 
 If files were modified this session and no verification command (tests,
 lint, typecheck, build) ran after the last edit, block the stop once and
-tell Droid to run verification. The nudge fires at most once per stop
-cycle: when stop_hook_active is true the gate always allows.
+tell Droid to run verification. The nudge fires at most once per batch of
+edits: a per-session marker (in $TMPDIR/guardrails-stop-gate) records the
+edit index that was already nudged, so later turns in the same session
+stay quiet until new edits appear. Within a single stop cycle,
+stop_hook_active is the first defense against loops.
 
 Allows immediately when:
 - GUARDRAILS_DISABLE=1 or GUARDRAILS_STOP_GATE=off is set
@@ -22,7 +25,9 @@ import json
 import os
 import re
 import sys
+import tempfile
 
+STATE_DIR = os.path.join(tempfile.gettempdir(), "guardrails-stop-gate")
 EDIT_TOOLS = {"Edit", "Create", "ApplyPatch", "MultiEdit"}
 EDITING_SUBAGENTS = {"implementer", "test-engineer"}
 DOC_SUFFIXES = (".md", ".mdx", ".txt", ".rst")
@@ -46,6 +51,9 @@ VERIFY_PATTERNS = [
     r"\bmix\s+test\b",
     r"\brspec\b",
     r"\bphpunit\b",
+    r"\brun[-_]?tests?\b",
+    r"\b[\w-]*test[\w-]*\.(sh|py|ts|js)\b",
+    r"\b(verify|check|gate)\.sh\b",
 ]
 
 NUDGE = (
@@ -54,7 +62,7 @@ NUDGE = (
     "last edit. Run the project's verification now, fix anything it surfaces, "
     "then finish. If this project has no verification commands or they are "
     "genuinely not applicable, state that briefly and finish. This gate "
-    "nudges only once."
+    "nudges once per batch of edits."
 )
 
 
@@ -166,6 +174,26 @@ def main():
     for cand_idx, tool_use_id in candidates:
         if cand_idx > last_edit_idx and not result_failed(results.get(tool_use_id)):
             allow()
+
+    # Nudge at most once per batch of edits: if this session was already
+    # nudged at or past the current edit index, stay quiet until new edits
+    # appear in the transcript.
+    key = re.sub(r"[^\w.-]", "_", str(
+        data.get("session_id")
+        or os.path.splitext(os.path.basename(transcript))[0]))
+    marker = os.path.join(STATE_DIR, key)
+    try:
+        with open(marker) as fh:
+            if int(fh.read().strip() or -1) >= last_edit_idx:
+                allow()
+    except (OSError, ValueError):
+        pass
+    try:
+        os.makedirs(STATE_DIR, exist_ok=True)
+        with open(marker, "w") as fh:
+            fh.write(str(last_edit_idx))
+    except OSError:
+        pass
 
     print(json.dumps({"decision": "block", "reason": NUDGE}))
     sys.exit(0)

@@ -21,12 +21,12 @@ Parses the session transcript when Droid tries to finish. If files were modified
 
 Design properties:
 
-- **Single nudge.** When `stop_hook_active` is true the gate always allows, so it can never loop.
+- **Single nudge per batch of edits.** When `stop_hook_active` is true the gate always allows, so it can never loop. A per-session marker in `$TMPDIR/guardrails-stop-gate/` records the edit index that was already nudged, so subsequent turns in a long session stay quiet until new edits appear.
 - **Research sessions pass.** No edits, no gate.
 - **Docs-only edits pass.** Sessions touching only `.md`/`.mdx`/`.txt`/`.rst` files are exempt.
 - **Self-resolving.** If the project has no verification commands, Droid states that and the next stop passes.
 
-Verification evidence: an `Execute` call matching common test/lint/typecheck/build invocations (npm/pnpm/yarn/bun scripts, pytest, go test, cargo test/check, make test, tsc, eslint, ruff, gradle/mvn, etc.) that did not fail, or a `Task` delegation whose prompt clearly runs verification.
+Verification evidence: an `Execute` call matching common test/lint/typecheck/build invocations (npm/pnpm/yarn/bun scripts, pytest, go test, cargo test/check, make test, tsc, eslint, ruff, gradle/mvn, etc.), custom harness scripts (`run-tests*`, `*test*.sh/.py/.ts/.js`, `verify.sh`, `check.sh`, `gate.sh`), or a `Task` delegation whose prompt clearly runs verification, provided it did not fail.
 
 ### 3. Fleet router (`SessionStart` on `startup|clear|compact`)
 
