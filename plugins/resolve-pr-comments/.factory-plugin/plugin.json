@@ -1,9 +1,0 @@
-{
-  "name": "resolve-pr-comments",
-  "version": "1.0.0",
-  "description": "Fetch and resolve all review comments on a PR: apply code suggestions, verify, and push.",
-  "author": {
-    "name": "Sagar",
-    "url": "https://github.com/factory-sagar"
-  }
-}

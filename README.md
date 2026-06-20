@@ -1,8 +1,8 @@
 # sagar-plugins
 
-> Multi-model droid toolkit and engineering-discipline skills for [Factory](https://factory.ai), in seven focused plugins.
+> Multi-model droid toolkit and engineering-discipline skills for [Factory](https://factory.ai), in six focused plugins.
 
-Sagar's personal Factory plugins marketplace. Each plugin is independently installable; install all seven for the full delegation and procedure workflow.
+Sagar's personal Factory plugins marketplace. Each plugin is independently installable; install all six for the full delegation and procedure workflow.
 
 ## Install
 
@@ -11,14 +11,13 @@ Add the marketplace, then install the plugins you want:
 ```bash
 droid plugin marketplace add https://github.com/factory-sagar/sagar-plugins
 
-# Install all seven for the full toolkit:
+# Install all six for the full toolkit:
 droid plugin install investigation@sagar-plugins
 droid plugin install review@sagar-plugins
 droid plugin install synthesis@sagar-plugins
 droid plugin install meta@sagar-plugins
 droid plugin install practices@sagar-plugins
 droid plugin install build@sagar-plugins
-droid plugin install resolve-pr-comments@sagar-plugins
 ```
 
 Or browse interactively with `/plugins`.
@@ -32,8 +31,7 @@ Or browse interactively with `/plugins`.
 | [`synthesis`](./plugins/synthesis/) | Droids: `pr-describer`, `commit-message-writer` | productivity |
 | [`meta`](./plugins/meta/) | Droids: `prompt-optimizer`, `doc-generator`; Skill: `audit-and-apply-loop` | productivity |
 | [`practices`](./plugins/practices/) | Skills: `spec`, `agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop` | productivity |
-| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer` | productivity |
-| [`resolve-pr-comments`](./plugins/resolve-pr-comments/) | Skill `resolve-pr-comments` + `/resolve-pr-comments` command | productivity |
+| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skill: `resolve-pr-comments` (+ `/resolve-pr-comments` command) | productivity |
 
 Total: 12 droids, 7 skills, 1 command.
 
@@ -86,6 +84,5 @@ sagar-plugins/
     ├── synthesis/            # 2 droids
     ├── meta/                 # 2 droids + 1 skill
     ├── practices/            # 5 skills
-    ├── build/                # 2 droids
-    └── resolve-pr-comments/  # 1 skill + 1 command
+    └── build/                # 2 droids + 1 skill + 1 command
 ```

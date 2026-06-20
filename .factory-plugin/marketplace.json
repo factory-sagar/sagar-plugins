@@ -32,20 +32,14 @@
     },
     {
       "name": "practices",
-      "description": "Engineering-discipline skills: spec (plan and decompose), TDD workflow, coding standards, verification loop, demo prep, and agentic-engineering operating principles.",
+      "description": "Engineering-discipline skills: spec (plan and decompose), TDD workflow, coding standards, verification loop, and agentic-engineering operating principles.",
       "source": "./plugins/practices",
       "category": "productivity"
     },
     {
       "name": "build",
-      "description": "Hands-on droids that change code: implementer (applies approved review findings, spec units, or fix lists) and test-engineer (finds the riskiest untested behavior and writes the missing tests).",
+      "description": "Hands-on tools that change code: implementer (applies approved review findings, spec units, or fix lists), test-engineer (finds the riskiest untested behavior and writes the missing tests), and the resolve-pr-comments skill plus /resolve-pr-comments command (fetch, apply, verify, and push fixes for PR review comments).",
       "source": "./plugins/build",
-      "category": "productivity"
-    },
-    {
-      "name": "resolve-pr-comments",
-      "description": "Fetch and resolve all review comments on a PR: apply code suggestions, verify, and push. Includes a /resolve-pr-comments slash command.",
-      "source": "./plugins/resolve-pr-comments",
       "category": "productivity"
     }
   ]
