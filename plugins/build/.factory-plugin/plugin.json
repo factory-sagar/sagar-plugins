@@ -1,7 +1,7 @@
 {
   "name": "build",
   "version": "1.0.0",
-  "description": "Hands-on tools that change code: implementer (applies approved review findings, spec units, or fix lists), test-engineer (finds the riskiest untested behavior and writes the missing tests), and the resolve-pr-comments skill plus /resolve-pr-comments command (fetch, apply, verify, and push fixes for PR review comments).",
+  "description": "Hands-on tools that change code: implementer (applies approved review findings, spec units, or fix lists), test-engineer (finds the riskiest untested behavior and writes the missing tests), and the fix-pr skill plus /fix-pr command (fetch, reason about, fix, reply, resolve, wait for CI, and approve PRs end-to-end).",
   "author": {
     "name": "Sagar",
     "url": "https://github.com/factory-sagar"

@@ -31,7 +31,7 @@ Or browse interactively with `/plugins`.
 | [`synthesis`](./plugins/synthesis/) | Droids: `pr-describer`, `commit-message-writer` | productivity |
 | [`meta`](./plugins/meta/) | Droids: `prompt-optimizer`, `doc-generator`; Skill: `audit-and-apply-loop` | productivity |
 | [`practices`](./plugins/practices/) | Skills: `spec`, `agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop` | productivity |
-| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skill: `resolve-pr-comments` (+ `/resolve-pr-comments` command) | productivity |
+| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skill: `fix-pr` (+ `/fix-pr` command) | productivity |
 
 Total: 12 droids, 7 skills, 1 command.
 
