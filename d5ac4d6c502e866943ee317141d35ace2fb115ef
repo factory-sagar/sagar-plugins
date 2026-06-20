@@ -1,0 +1,31 @@
+.factory-plugin/marketplace.json
+  83b39681bd0399dc 35,41
+README.md
+  83b39681bd0399dc 3,5,14,34,87
+plugins/build/README.md
+  83b39681bd0399dc 3,5,20-27,33-34,38,42
+plugins/build/.factory-plugin/plugin.json
+  83b39681bd0399dc 4
+plugins/practices/.factory-plugin/plugin.json
+  83b39681bd0399dc 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "d5ac4d6c502e866943ee317141d35ace2fb115ef",
+  "prompts": {
+    "83b39681bd0399dc": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4f7e6105-b66b-4d70-a7d0-5478e06e1843",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 23,
+      "accepted_lines": 23,
+      "overriden_lines": 0
+    }
+  }
+}
