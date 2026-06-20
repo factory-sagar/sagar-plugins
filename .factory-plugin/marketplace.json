@@ -41,6 +41,12 @@
       "description": "Hands-on droids that change code: implementer (applies approved review findings, spec units, or fix lists) and test-engineer (finds the riskiest untested behavior and writes the missing tests).",
       "source": "./plugins/build",
       "category": "productivity"
+    },
+    {
+      "name": "resolve-pr-comments",
+      "description": "Fetch and resolve all review comments on a PR: apply code suggestions, verify, and push. Includes a /resolve-pr-comments slash command.",
+      "source": "./plugins/resolve-pr-comments",
+      "category": "productivity"
     }
   ]
 }
