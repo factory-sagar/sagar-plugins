@@ -62,7 +62,7 @@ Different models for different jobs. The sagar marketplace uses this matrix:
 
 | Task shape | Model tier | Example droid | Reason |
 |---|---|---|---|
-| Triage, classification, format-mechanical work | Fast / cheap (e.g. `glm-5.1`) | `quick-analysis`, `commit-message-writer` | Output is short and constrained; speed wins |
+| Triage, classification, format-mechanical work | Fast / cheap (e.g. `glm-5.2`) | `quick-analysis`, `commit-message-writer` | Output is short and constrained; speed wins |
 | Implementation, refactors, focused single-file edits | Strong reasoning (e.g. `gpt-5.4`) | `implementer`, `test-engineer` | Needs to reason about invariants without blowing budget |
 | Architecture, root-cause, multi-file invariants, deep audits | Deep reasoning (e.g. `gpt-5.4 xhigh`) | `deep-understanding`, `debugger`, `security`, `prompt-optimizer`, `doc-generator` | Needs to hold multiple things in working memory |
 | Long-form prose synthesis, external research | Strongest natural prose (e.g. Claude Opus via `inherit`) | `pr-describer`, `deep-research` | Output quality dominates token cost |

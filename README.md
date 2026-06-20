@@ -1,53 +1,53 @@
 # sagar-plugins
 
-Sagar's personal [Factory](https://factory.ai) plugins marketplace.
+> Multi-model droid toolkit and engineering-discipline skills for [Factory](https://factory.ai), in seven focused plugins.
 
-Multi-model droid toolkit + engineering-discipline skills, split into six focused plugins. Each plugin is independently installable; install all six for the full delegation + procedure experience.
-
-## Concepts
-
-- **Skills** = repeatable flows. Markdown SOPs Droid auto-loads when a task matches.
-- **Droids** = sub-agents you delegate to. Each has a model and a reasoning budget.
+Sagar's personal Factory plugins marketplace. Each plugin is independently installable; install all seven for the full delegation and procedure workflow.
 
 ## Install
 
-Add the marketplace and install the plugins you want:
+Add the marketplace, then install the plugins you want:
 
 ```bash
 droid plugin marketplace add https://github.com/factory-sagar/sagar-plugins
 
-# Install all six for the full toolkit:
+# Install all seven for the full toolkit:
 droid plugin install investigation@sagar-plugins
 droid plugin install review@sagar-plugins
 droid plugin install synthesis@sagar-plugins
 droid plugin install meta@sagar-plugins
 droid plugin install practices@sagar-plugins
 droid plugin install build@sagar-plugins
+droid plugin install resolve-pr-comments@sagar-plugins
 ```
 
-Or browse via the interactive UI:
-
-```
-/plugins
-```
+Or browse interactively with `/plugins`.
 
 ## Plugins
 
-| Plugin | Droids | Skills | Marketplace category |
-| --- | --- | --- | --- |
-| [`investigation`](./plugins/investigation/) | `quick-analysis`, `deep-understanding`, `deep-research`, `debugger` | — | research |
-| [`review`](./plugins/review/) | `change-review`, `security` | — | quality |
-| [`synthesis`](./plugins/synthesis/) | `pr-describer`, `commit-message-writer` | — | productivity |
-| [`meta`](./plugins/meta/) | `prompt-optimizer`, `doc-generator` | `audit-and-apply-loop` | productivity |
-| [`practices`](./plugins/practices/) | — | `spec`, `agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`, `demo-prep` | productivity |
-| [`build`](./plugins/build/) | `implementer`, `test-engineer` | — | productivity |
+| Plugin | Contents | Category |
+| --- | --- | --- |
+| [`investigation`](./plugins/investigation/) | Droids: `quick-analysis`, `deep-understanding`, `deep-research`, `debugger` | research |
+| [`review`](./plugins/review/) | Droids: `change-review`, `security` | quality |
+| [`synthesis`](./plugins/synthesis/) | Droids: `pr-describer`, `commit-message-writer` | productivity |
+| [`meta`](./plugins/meta/) | Droids: `prompt-optimizer`, `doc-generator`; Skill: `audit-and-apply-loop` | productivity |
+| [`practices`](./plugins/practices/) | Skills: `spec`, `agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop` | productivity |
+| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer` | productivity |
+| [`resolve-pr-comments`](./plugins/resolve-pr-comments/) | Skill `resolve-pr-comments` + `/resolve-pr-comments` command | productivity |
 
-**Total: 12 droids + 7 skills.**
+Total: 12 droids, 7 skills, 1 command.
 
-## The full delegation + procedure loop
+## Concepts
+
+- **Skills**: repeatable procedures the main agent runs inline. Markdown SOPs that Droid auto-loads when a task matches.
+- **Droids**: sub-agents you delegate to. Each has a pinned model and a reasoning budget.
+
+## Usage
+
+The plugins compose into one delegation and procedure loop:
 
 ```
-spec                  → defines what done looks like AND decomposes work into droid-tagged units
+spec                  → defines what "done" looks like AND decomposes work into droid-tagged units
   │
   ▼
 (for each unit)
@@ -60,35 +60,19 @@ spec                  → defines what done looks like AND decomposes work into 
 synthesis: pr-describer + commit-message-writer
 ```
 
-Plus a meta loop for the droid prompts themselves: `prompt-optimizer` audits, `doc-generator` applies, governed by the `audit-and-apply-loop` skill.
+A separate meta loop improves the droid prompts themselves: `prompt-optimizer` audits, `doc-generator` applies, governed by the `audit-and-apply-loop` skill.
 
-## Why split into focused plugins?
+## Models
 
-Different jobs, different cadences. You may want `review` and `synthesis` on every workstation but `meta` only when authoring agentic configs. Splitting also surfaces each plugin under its proper marketplace category instead of bundling everything under one.
+Each droid is pinned to the right model for its job rather than "the best model" for everything, because different model families catch different things.
 
-The droids and skills compose across plugins. Install everything for the full experience.
-
-## Why multiple models
-
-Different model families catch different things:
-
-- **`glm-5.1`** (fast/cheap) — triage and format-mechanical work (`quick-analysis`, `commit-message-writer`).
-- **`gpt-5.4 high`** (strong reasoning) — code implementation and test writing (`implementer`, `test-engineer`).
-- **`gpt-5.4 xhigh`** (deep reasoning) — investigations, root-cause, and audits (`deep-understanding`, `debugger`, `security`, `prompt-optimizer`, `doc-generator`).
-- **`kimi-k2.6 xhigh`** (different distribution) — catches regulatory / consent / subtle correctness issues `gpt-5.4` misses (`change-review`).
-- **`inherit` (Claude Opus)** — strongest natural prose; synthesis and external research (`pr-describer`, `deep-research`).
-
-Delegate to the right model for the job, not "the best model" for everything.
-
-## Roadmap
-
-- **Phase 0** ✅ — marketplace structure, three baseline droids.
-- **Phase 1** ✅ — six new droids across investigation / review / synthesis / meta with deliberate per-droid model assignment.
-- **Phase 1.5** ✅ — split into four focused plugins by category.
-- **Phase 2** ✅ — skills layer: `practices` plugin (5 skills) + `audit-and-apply-loop` skill in `meta`. Lifted/adapted from [`affaan-m/ECC`](https://github.com/affaan-m/ECC), de-duplicated against [`Factory-AI/factory-plugins`](https://github.com/Factory-AI/factory-plugins), generalized away from any specific harness.
-- **Phase 3** ✅ — close the apply gap: `build` plugin (`implementer`, `test-engineer`), `debugger` in investigation, `demo-prep` skill in practices. The fleet now finds, fixes, and verifies.
-- **Phase 4** ✅ (since removed) — enforcement layer: `guardrails` plugin with three lifecycle hooks (destructive-command policy, stop-time verification gate, session-start fleet router). Removed after trial; the advisory loop stays skill-driven.
-- **Phase 5+** — skill bundles (supporting files, gate scripts), pipeline commands, marketplace CI, and prompt eval harness.
+| Model | Tier | Used by |
+| --- | --- | --- |
+| `glm-5.2` | Fast and cheap; triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
+| `gpt-5.4` (high) | Strong reasoning; code implementation and test writing | `implementer`, `test-engineer` |
+| `gpt-5.4` (xhigh) | Deep reasoning; investigations, root-cause, audits | `deep-understanding`, `debugger`, `security`, `prompt-optimizer`, `doc-generator` |
+| `kimi-k2.6` (xhigh) | Different distribution; catches regulatory, consent, and subtle correctness issues `gpt-5.4` misses | `change-review` |
+| `inherit` (Claude Opus) | Strongest natural prose; synthesis and external research | `pr-describer`, `deep-research` |
 
 ## Layout
 
@@ -97,10 +81,11 @@ sagar-plugins/
 ├── .factory-plugin/
 │   └── marketplace.json
 └── plugins/
-    ├── investigation/   # 4 droids
-    ├── review/          # 2 droids
-    ├── synthesis/       # 2 droids
-    ├── meta/            # 2 droids + 1 skill
-    ├── practices/       # 6 skills
-    └── build/           # 2 droids
+    ├── investigation/        # 4 droids
+    ├── review/               # 2 droids
+    ├── synthesis/            # 2 droids
+    ├── meta/                 # 2 droids + 1 skill
+    ├── practices/            # 5 skills
+    ├── build/                # 2 droids
+    └── resolve-pr-comments/  # 1 skill + 1 command
 ```
