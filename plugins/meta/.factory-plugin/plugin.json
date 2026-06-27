@@ -1,6 +1,6 @@
 {
   "name": "meta",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Meta droids and skills for working on agentic configs themselves: prompt audit (prompt-optimizer), apply (doc-generator), and the audit-and-apply-loop methodology skill.",
   "author": {
     "name": "Sagar",

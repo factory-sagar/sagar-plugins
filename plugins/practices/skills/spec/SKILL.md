@@ -23,6 +23,19 @@ A repeatable flow that converts a fuzzy request into two artifacts the user can 
 
 The user should be able to read the output and either (a) approve the whole thing and run unit 1 immediately, or (b) push back on a specific unit, or (c) copy a single line of the decomposition and delegate it directly.
 
+This skill owns scope and decomposition. Before writing implementation-facing details, load `../coding-standards/SKILL.md` plus the topic docs that match the request so acceptance criteria and units line up with the repo's standards:
+
+- `../coding-standards/DESIGNING_MODULES.md` for modules, interfaces, seams, adapters, ownership, or dependency boundaries.
+- `../coding-standards/BOUNDARIES_AND_PARSING.md` for external input, DTOs, config, storage rows, runtime payloads, or projections.
+- `../coding-standards/ERROR_HANDLING.md` for expected failures, catch/classification, not-found behavior, or typed error contracts.
+- `../coding-standards/TESTING_AND_VERIFICATION.md` for acceptance criteria, test seams, coverage, or risk-matched evidence.
+- `../coding-standards/ASYNC_AND_WORKFLOWS.md` for cancellation, promise ownership, retries, idempotency, transactions, or workflows.
+- `../coding-standards/TYPE_CONTRACTS.md` for exported contracts, casts, `any`, object shape, optionality, or toolchain constraints.
+- `../coding-standards/OBSERVABILITY.md` for logging, tracing, metrics, safe summaries, or redaction.
+- `../coding-standards/VOCABULARY.md` for shared failure, boundary, module, runtime, and adoption language.
+
+When the approved plan needs typed contracts, seams, call stacks, or architecture alternatives, hand it to `tech-spec`. When the question is "what should we refactor or where should this live?", use `architecture-scan` first. When the plan itself needs stress-testing, use `grilling` or `grill-me`.
+
 ## When to Activate
 
 - User says any of: "spec this out", "plan this", "decompose", "break this into steps", "give me a spec for", "draft a plan", "scope this", "let me think through", "what would it take to", "how should we approach", "outline what we need to do".
@@ -35,6 +48,7 @@ The user should be able to read the output and either (a) approve the whole thin
 
 - Task is concrete and ≤ 1 step. Just do it directly.
 - Task is purely understanding an existing system → **delegate to `deep-understanding`** (in the `investigation` plugin) instead.
+- Task is deciding refactor candidates, ownership boundaries, or "where should this code live?" across existing code → **delegate to `architecture-scan`** first.
 - Task is a question with an external answer (library docs, CVE, best practice) → **delegate to `deep-research`**.
 - Task is reviewing a diff already in flight → **delegate to `change-review`**.
 - Task is fixing an obvious single-file bug with the cause already identified. Just write the fix.
@@ -61,6 +75,7 @@ Goal: ground the spec in what already exists. A spec written without knowing the
 
 **Delegation rule:**
 - If the user gave a path to a repo or said "in this codebase" and you have not seen it before → **delegate to `quick-analysis`** for a 60-second triage. Pass the repo path. Use the output to populate "constraints" in the spec.
+- If the real question is "what are the best refactor candidates here?" or "which architecture direction should we explore?" → **delegate to `architecture-scan`** first, then bring the chosen candidate back into this skill or `tech-spec`.
 - If the repo is non-trivial and the work spans subsystems → **delegate to `deep-understanding`** with focus questions like "where does <subsystem> live", "what conventions govern <area>", "what existing tests cover <feature>".
 - If the question is about something external (a library's API, a known pattern, a CVE applicability) → **delegate to `deep-research`** with the focused question.
 - If the system is already familiar (you've worked in it this session) → skip this phase.
@@ -152,6 +167,7 @@ Goal: tell the user what runs first, what can run in parallel, and what to watch
 
 Recommend the next action explicitly:
 - "Approve this spec and I'll start by delegating unit 1 to `<delegate>`."
+- OR: "Approve this spec, then run `tech-spec` if you want typed contracts and call stacks before implementation."
 - OR: "Push back on any unit before I proceed."
 - OR: "I'll run units 1–3 inline; delegate unit 4 to `<droid>` when ready."
 ```

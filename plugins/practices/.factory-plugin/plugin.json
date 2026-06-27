@@ -1,7 +1,7 @@
 {
   "name": "practices",
-  "version": "1.1.0",
-  "description": "Engineering-discipline skills: plan and decompose (spec), TDD workflow, coding standards, verification loop, and agentic-engineering operating principles.",
+  "version": "1.2.0",
+  "description": "Planning and engineering-discipline skills: spec, tech-spec, architecture-scan, grilling, grill-me, TDD workflow, coding standards, verification loop, and agentic-engineering operating principles.",
   "author": {
     "name": "Sagar",
     "url": "https://github.com/factory-sagar"

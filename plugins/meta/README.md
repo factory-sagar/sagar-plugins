@@ -14,7 +14,7 @@ droid plugin install meta@sagar-plugins
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `prompt-optimizer` | Audit a droid or skill prompt and recommend minimal-edit improvements. Use when authoring a new droid, diagnosing poor output, or comparing prompt versions. Single-prompt or pairwise scope. | `gpt-5.4` | `xhigh` | read-only |
+| `prompt-optimizer` | Audit a droid or skill prompt and recommend minimal-edit improvements. Use when authoring a new droid, diagnosing poor output, or comparing prompt versions. Single-prompt or pairwise scope. | `claude-opus-4-8` | `xhigh` | read-only |
 | `doc-generator` | Apply targeted, minimal-edit agentic-doc updates after an approved audit (from `prompt-optimizer` or `deep-understanding`) or an explicit request. The only droid in this marketplace with edit tools. | `gpt-5.4` | `xhigh` | read-only + `Execute` + `Edit` + `Create` + `ApplyPatch` |
 
 ## Skills
@@ -32,7 +32,7 @@ droid plugin install meta@sagar-plugins
 
 ## Models
 
-Both droids run `gpt-5.4` at `xhigh`. Prompt audits and minimal-edit application are high-stakes reasoning tasks where the deep-reasoning tier earns its cost.
+`prompt-optimizer` runs `claude-opus-4-8` at `xhigh` for prompt critique and adherence diagnosis. `doc-generator` runs `gpt-5.4` at `xhigh` for minimal-edit application.
 
 ## Related plugins
 

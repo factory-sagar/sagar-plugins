@@ -1,6 +1,6 @@
 {
   "name": "build",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Hands-on tools that change code: implementer (applies approved review findings, spec units, or fix lists), test-engineer (finds the riskiest untested behavior and writes the missing tests), and the fix-pr skill plus /fix-pr command (fetch, reason about, fix, reply, resolve, wait for CI, and approve PRs end-to-end).",
   "author": {
     "name": "Sagar",

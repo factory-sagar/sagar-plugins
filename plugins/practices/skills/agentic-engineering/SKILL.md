@@ -63,8 +63,10 @@ Different models for different jobs. The sagar marketplace uses this matrix:
 | Task shape | Model tier | Example droid | Reason |
 |---|---|---|---|
 | Triage, classification, format-mechanical work | Fast / cheap (e.g. `glm-5.2`) | `quick-analysis`, `commit-message-writer` | Output is short and constrained; speed wins |
-| Implementation, refactors, focused single-file edits | Strong reasoning (e.g. `gpt-5.4`) | `implementer`, `test-engineer` | Needs to reason about invariants without blowing budget |
-| Architecture, root-cause, multi-file invariants, deep audits | Deep reasoning (e.g. `gpt-5.4 xhigh`) | `deep-understanding`, `debugger`, `security`, `prompt-optimizer`, `doc-generator` | Needs to hold multiple things in working memory |
+| Implementation, refactors, focused code edits | Highest implementation reasoning (e.g. `gpt-5.5 xhigh`) | `implementer` | Needs to reason about invariants and repo conventions before editing |
+| Test gap analysis and test writing | Strong reasoning (e.g. `gpt-5.4 high`) | `test-engineer` | Needs focused behavior coverage without overpaying for every test |
+| Architecture, root-cause, multi-file invariants, deep audits | Deep reasoning (e.g. `gpt-5.4 xhigh`) | `deep-understanding`, `debugger`, `security`, `doc-generator` | Needs to hold multiple things in working memory |
+| Prompt critique and adherence diagnosis | Strong natural-language judgment (e.g. `claude-opus-4-8 xhigh`) | `prompt-optimizer` | Prompt quality benefits from language-model diversity |
 | Long-form prose synthesis, external research | Strongest natural prose (e.g. Claude Opus via `inherit`) | `pr-describer`, `deep-research` | Output quality dominates token cost |
 | Catching what gpt misses (regulatory, consent, subtle correctness) | Different training distribution (e.g. `kimi-k2.6`) | `change-review` | Distributional diversity catches different bugs |
 

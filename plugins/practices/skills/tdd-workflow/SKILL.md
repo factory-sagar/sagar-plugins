@@ -21,6 +21,8 @@ Test-first discipline for every behavior change. The loop: write a failing test,
 
 This skill assumes the main agent is orchestrating the loop; the **actual test and implementation writing should be delegated to a `worker`** (Factory built-in) with self-contained prompts. When the `build` plugin is installed, prefer its specialized delegates: `test-engineer` (tdd-red mode) for step 2 and `implementer` for steps 4 and 6 — the same templates apply. The main agent is the project manager; the worker is the engineer. This separation keeps the main context clean and uses the worker for what it's best at: focused, scope-bound code work.
 
+Before planning tests, load `../coding-standards/SKILL.md` plus `../coding-standards/TESTING_AND_VERIFICATION.md`. Also load `../coding-standards/DESIGNING_MODULES.md` when modules, seams, or interfaces change, `../coding-standards/ASYNC_AND_WORKFLOWS.md` when the change touches retries, cancellation, concurrency, or detached work, `../coding-standards/TYPE_CONTRACTS.md` when seams or exported contracts change, and `../coding-standards/OBSERVABILITY.md` when safe summaries or telemetry are part of the behavior. This skill owns RED, GREEN, and REFACTOR sequencing; the standards topics own the detailed bar.
+
 ## When to Activate
 
 - Writing new features or functionality.
@@ -59,7 +61,7 @@ Aim for **many unit, fewer integration, fewest E2E**. E2E covers critical paths 
 
 ## Procedure
 
-The loop has 7 steps. Steps 2, 4, and 6 (writing tests, writing implementation, refactoring) **should be delegated to a `worker`** with the prompts described below. Steps 1, 3, 5, and 7 (planning, commits, verification) are inline.
+The loop has 7 steps. Repeat steps 2 through 5 as vertical slices: one behavior test or tightly related behavior cluster goes RED, then the smallest implementation goes GREEN, then the next slice starts. Do not write every test for the whole feature before any implementation unless the whole feature is genuinely one behavior. Steps 2, 4, and 6 (writing tests, writing implementation, refactoring) **should be delegated to a `worker`** with the prompts described below. Steps 1, 3, 5, and 7 (planning, commits, verification) are inline.
 
 ### Step 1 — Write the user journey or behavior statement (inline)
 
@@ -83,7 +85,7 @@ Write this down — it anchors the tests in Step 2.
 
 ### Step 2 — Write failing test cases (delegate to `worker`)
 
-Goal: produce a complete test file that covers the happy path, edge cases, and error paths. The test file should be reviewable as a behavior specification on its own.
+Goal: produce the next failing test slice that covers one observable behavior or one tightly related cluster. The test should be reviewable as a behavior specification on its own.
 
 **Delegation template** — pass this to a fresh `worker` invocation:
 
@@ -104,7 +106,8 @@ Existing file structure (relevant):
 - Repo conventions: <e.g., uses describe/it; mocks via vi.mock; coverage via vitest --coverage>
 
 Requirements:
-- Cover happy path, edge cases (empty input, null, max), boundary conditions, and error paths.
+- Cover the next behavior slice, including its happy path, edge cases, boundary conditions, and error paths.
+- Do NOT write tests for later slices yet. Return a short list of later slices to cover after this one goes GREEN.
 - Each test asserts on observable behavior (return value, thrown error, side effect), not internal call sequences.
 - Tests must be runnable individually (no order dependencies).
 - DO NOT write the implementation. Stub the function/module with a placeholder that throws "not implemented" if needed.
@@ -112,7 +115,8 @@ Requirements:
 
 Deliverables:
 - The test file content.
-- Confirmation that running the suite shows N new failing tests, with the exact failure messages.
+- Confirmation that running the suite shows N new failing tests for this slice, with the exact failure messages.
+- The next 1-3 behavior slices to run after this one is GREEN.
 - A list of any edge cases you considered but decided to skip, with reason.
 ```
 

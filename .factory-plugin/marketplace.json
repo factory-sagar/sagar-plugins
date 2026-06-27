@@ -32,7 +32,7 @@
     },
     {
       "name": "practices",
-      "description": "Engineering-discipline skills: spec (plan and decompose), TDD workflow, coding standards, verification loop, and agentic-engineering operating principles.",
+      "description": "Planning and engineering-discipline skills: spec, tech-spec, architecture-scan, grilling, grill-me, TDD workflow, coding standards, verification loop, and agentic-engineering operating principles.",
       "source": "./plugins/practices",
       "category": "productivity"
     },

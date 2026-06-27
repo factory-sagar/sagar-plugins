@@ -14,7 +14,7 @@ droid plugin install build@sagar-plugins
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `implementer` | Apply an approved change set: `change-review` / `security` findings, a `spec` unit, or an explicit fix list. Makes the smallest change that closes each item, with targeted verification. | `gpt-5.4` | `high` | full read/write + `Execute` (verification only) |
+| `implementer` | Apply an approved change set: `change-review` / `security` findings, a `spec` unit, or an explicit fix list. Makes the smallest change that closes each item, with targeted verification. | `gpt-5.5` | `xhigh` | full read/write + `Execute` (verification only) |
 | `test-engineer` | Find the riskiest untested behavior (gap analysis) or write the missing tests (write mode, including TDD RED). Pins current behavior; never encodes guesses. | `gpt-5.4` | `high` | full read/write + `Execute` (test runs only) |
 
 ## Skills
@@ -35,7 +35,7 @@ Command: `/fix-pr <PR URL or number>` runs the skill directly.
 
 ## Models
 
-The two droids run `gpt-5.4` at `high`, the marketplace's implementation tier: strong enough to reason about invariants and repo conventions without paying the `xhigh` audit premium on every edit. Deep reasoning stays where it belongs, in `debugger`, `deep-understanding`, and the reviewers. The `fix-pr` skill runs inline on your session model.
+`implementer` runs `gpt-5.5` at `xhigh` for high-stakes code changes where invariants and repo conventions matter. `test-engineer` stays on `gpt-5.4` at `high` for focused test gap analysis and test writing. The `fix-pr` skill runs inline on your session model.
 
 ## Related plugins
 

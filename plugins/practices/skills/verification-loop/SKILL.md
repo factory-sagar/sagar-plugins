@@ -20,6 +20,8 @@ tags: [quality-gates, verification, testing, ci, build, lint, type-check]
 
 A four-phase quality gate to run after any non-trivial change. Each phase has a hard pass/fail signal. Do not skip a phase. Do not move on while a phase is failing. Each phase that runs a potentially long command **should be delegated to a `worker`** (Factory built-in) so the main agent's context isn't filled with command output — the worker returns a summary, the main agent decides the next move.
 
+Before running the loop, load `../coding-standards/SKILL.md` and `../coding-standards/TESTING_AND_VERIFICATION.md`. Also load `../coding-standards/TYPE_CONTRACTS.md` when exported contracts or type safety changed, `../coding-standards/ASYNC_AND_WORKFLOWS.md` when async ownership changed, and `../coding-standards/OBSERVABILITY.md` when verification must cover telemetry or safe error surfaces. This skill owns command discovery and gate sequencing; the standards topics own the detailed bar.
+
 ## When to Activate
 
 - After completing a feature or non-trivial change.
@@ -32,8 +34,8 @@ A four-phase quality gate to run after any non-trivial change. Each phase has a 
 ## When NOT to Activate
 
 - Mid-debug, when partial failures are expected. Wait until the change is complete enough to evaluate.
-- Pure docs / config / asset changes that don't run through build, type-check, or tests.
-- The repo has no validation tooling at all. That's itself a finding — surface it (recommend setting up `coding-standards` baseline tooling) and stop.
+- Trivial prose-only docs or asset changes with no prompt, manifest, config, generated artifact, or plugin-discovery impact.
+- The repo has no validation tooling at all and no static file formats to validate. If manifests, config files, prompt files, markdown, YAML, JSON, or lockfiles changed, run the applicable static checks instead of stopping.
 
 ## Procedure
 
@@ -55,6 +57,15 @@ Inline. Use these signals:
 If commands genuinely aren't declared, look for the framework defaults (`pnpm exec tsc --noEmit` for TypeScript, `ruff check .` for Python ruff, etc.) — and **note the inferred command** in the output so the user can confirm.
 
 If you can't determine the command for a phase, mark that phase `n/a (no tooling detected)` in the output. Don't fabricate a command.
+
+For prompt, plugin, config, and documentation repositories with no build/test tooling, still run applicable static checks based on changed files:
+
+- JSON manifests or config: parse every changed JSON file.
+- YAML frontmatter or config: validate frontmatter delimiters and parse YAML when a parser is available.
+- Markdown/prompt diffs: run `git diff --check` and inspect changed links or relative paths that affect plugin discovery.
+- Plugin marketplaces: verify root and per-plugin manifest counts/descriptions match the files on disk.
+
+Report these under the closest applicable phase or a `Static checks` note. Do not call the repository green just because no tests exist.
 
 ### Phase 1 — Build / Compile
 

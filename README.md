@@ -30,10 +30,10 @@ Or browse interactively with `/plugins`.
 | [`review`](./plugins/review/) | Droids: `change-review`, `security` | quality |
 | [`synthesis`](./plugins/synthesis/) | Droids: `pr-describer`, `commit-message-writer` | productivity |
 | [`meta`](./plugins/meta/) | Droids: `prompt-optimizer`, `doc-generator`; Skill: `audit-and-apply-loop` | productivity |
-| [`practices`](./plugins/practices/) | Skills: `spec`, `agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop` | productivity |
+| [`practices`](./plugins/practices/) | Skills: planning (`spec`, `tech-spec`, `architecture-scan`, `grilling`, `grill-me`) + discipline (`agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`) | productivity |
 | [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skill: `fix-pr` (+ `/fix-pr` command) | productivity |
 
-Total: 12 droids, 7 skills, 1 command.
+Total: 12 droids, 11 skills, 1 command.
 
 ## Concepts
 
@@ -45,7 +45,10 @@ Total: 12 droids, 7 skills, 1 command.
 The plugins compose into one delegation and procedure loop:
 
 ```
-spec                  → defines what "done" looks like AND decomposes work into droid-tagged units
+spec / architecture-scan  → scope the work or rank refactor candidates
+  │
+  ├── optionally grilling  → stress-test the plan
+  └── optionally tech-spec → typed contracts, seams, call stacks
   │
   ▼
 (for each unit)
@@ -60,6 +63,10 @@ synthesis: pr-describer + commit-message-writer
 
 A separate meta loop improves the droid prompts themselves: `prompt-optimizer` audits, `doc-generator` applies, governed by the `audit-and-apply-loop` skill.
 
+## Evals
+
+Prompt upgrades are checked against the golden-task pack in [`evals/golden-tasks/`](./evals/golden-tasks/). Critical goldens must all pass, and the overall pack must score at least 85% before a prompt rewrite is considered ready.
+
 ## Models
 
 Each droid is pinned to the right model for its job rather than "the best model" for everything, because different model families catch different things.
@@ -67,8 +74,10 @@ Each droid is pinned to the right model for its job rather than "the best model"
 | Model | Tier | Used by |
 | --- | --- | --- |
 | `glm-5.2` | Fast and cheap; triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
-| `gpt-5.4` (high) | Strong reasoning; code implementation and test writing | `implementer`, `test-engineer` |
-| `gpt-5.4` (xhigh) | Deep reasoning; investigations, root-cause, audits | `deep-understanding`, `debugger`, `security`, `prompt-optimizer`, `doc-generator` |
+| `gpt-5.4` (high) | Strong reasoning; test writing | `test-engineer` |
+| `gpt-5.5` (xhigh) | Highest-reasoning implementation tier | `implementer` |
+| `gpt-5.4` (xhigh) | Deep reasoning; investigations, root-cause, security, prompt application | `deep-understanding`, `debugger`, `security`, `doc-generator` |
+| `claude-opus-4-8` (xhigh) | Strong prompt critique and adherence diagnosis | `prompt-optimizer` |
 | `kimi-k2.6` (xhigh) | Different distribution; catches regulatory, consent, and subtle correctness issues `gpt-5.4` misses | `change-review` |
 | `inherit` (Claude Opus) | Strongest natural prose; synthesis and external research | `pr-describer`, `deep-research` |
 
@@ -78,11 +87,13 @@ Each droid is pinned to the right model for its job rather than "the best model"
 sagar-plugins/
 ├── .factory-plugin/
 │   └── marketplace.json
+├── evals/
+│   └── golden-tasks/        # prompt regression tasks and rubrics
 └── plugins/
     ├── investigation/        # 4 droids
     ├── review/               # 2 droids
     ├── synthesis/            # 2 droids
     ├── meta/                 # 2 droids + 1 skill
-    ├── practices/            # 5 skills
+    ├── practices/            # 9 skills
     └── build/                # 2 droids + 1 skill + 1 command
 ```

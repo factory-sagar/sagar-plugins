@@ -1,194 +1,84 @@
 ---
 name: coding-standards
-version: 1.0.0
+version: 1.1.0
 description: |
-  Language-agnostic baseline coding conventions covering naming, readability, immutability, function
-  design, file organization, error handling, and a code-smell review checklist. Defines the bar each
-  change must clear; recommends delegating the actual diff review to `change-review` (general
-  correctness) and `security` (security-shaped concerns).
+  Standards router for naming/layout, module design, boundaries, error handling, async workflows,
+  testing, observability, and type contracts. Load the topic docs that match the code you are touching.
   Use when:
-  - Starting a project or new module
-  - Reviewing code for quality and maintainability (yours or AI-generated)
-  - Refactoring existing code to follow consistent conventions
-  - Sanity-checking AI-generated code before committing
-  - Setting up linting, formatting, or type-checking rules
-  - Onboarding a new contributor to project conventions
-tags: [code-quality, standards, conventions, review, naming, readability]
+  - Another engineering skill needs the user's coding standards
+  - Reviewing or refactoring code against a shared rubric
+  - Shaping naming, layout, boundaries, seams, errors, async flows, tests, or observability
+  - Establishing code review criteria before implementation or review
+tags: [standards, code-quality, design, review, testing, architecture]
 ---
 
 # Coding Standards
 
-Baseline conventions that apply across languages and frameworks. This is the shared floor; language-specific or framework-specific patterns (TypeScript-only style, Django-only conventions, etc.) live elsewhere and override these defaults when they conflict with project-specific norms.
+Use these standards while designing and editing code. They encode the user's taste: correctness first, boundary parsing, precise contracts, deep modules, typed failures, real-seam tests, explicit async ownership, and boring operational safety.
 
-This skill defines the **bar** each piece of code must clear. **The actual review** of a diff against the bar is best delegated to `change-review` (general correctness) and `security` (security-shaped concerns). This skill is the rubric; those droids are the reviewers.
+This skill is a router. Load the topic files that match the code you are touching. Do not treat this summary as the whole standard.
 
-## When to Activate
+## Core tenets
 
-- Starting a new project or new module.
-- Reviewing code for quality and maintainability (yours or AI-generated).
-- Refactoring existing code to follow consistent conventions.
-- Setting up linting, formatting, or type-checking rules for a new repo.
-- Onboarding a new contributor to project conventions.
-- Sanity-checking AI-generated code before committing.
+- Correctness, safety, debuggability, boundary integrity, and test integrity come before convenience.
+- Local conventions matter when they are compatible with these standards.
+- Parse boundary input before it reaches core logic; pass refined values inward.
+- Model invariants in types, constructors, parsers, and transitions.
+- Keep expected failures visible in typed channels; reserve throws for defects and boundary translation.
+- Design deep modules with intentional seams, small interfaces, and explicit dependencies.
+- Verify observable behavior through real seams.
+- Keep type contracts strict, local, documented, and boring.
+- Improve changed paths without forcing broad migrations unless explicitly requested.
+- Do not add backwards-compatibility, rollout, backfill, dual-write/read, or deployment sequencing work unless the user explicitly asks.
 
-## When NOT to Activate
+## Non-negotiables
 
-- A language-specific style guide is more relevant and present in the project (e.g., a `typescript-patterns` or `python-patterns` skill, or a project-level `.editorconfig`/`prettierrc`/`ruff.toml` that defines stricter rules — those win).
-- The change is purely mechanical (formatter run, codemod, automated import sort) — no convention judgment needed.
-- The user wants framework-specific guidance (React composition, Django ORM patterns, Spring DI). This skill is generalist; defer to framework-specific guidance.
+- Untrusted, serialized, persisted, or framework-shaped input is parsed before core logic sees it.
+- Decoded data is not trusted with `as SomeType`.
+- Expected failures are visible in typed return channels, not hidden throws or rejected promises.
+- Secrets do not enter errors, logs, traces, metrics, snapshots, or panic summaries.
+- Raw platform and framework bindings stay at composition seams or tightly local adapters.
+- Dependencies are explicit; hidden globals and ambient time/randomness/IDs do not drive service behavior.
+- Tests prove observable behavior through module interfaces or real seams; module mocks and method spies are out.
+- Type escape hatches are local, justified with `SAFETY:`, and hidden behind precise interfaces.
+- Promises are owned: awaited, returned, collected, or handed to explicit detached-work machinery.
+- Broad migrations require explicit user intent.
 
-## Core Principles
+## How to apply the standards
 
-### 1. Readability First
+1. Audit the local codebase before choosing a new pattern, library, adapter, schema style, error representation, test strategy, or module shape.
+2. Classify the change by concern: modules, boundaries, errors, observability, async, tests, or type contracts.
+3. Load every relevant topic file. The top-level summary is only the routing layer.
+4. Apply safety standards before local convention. When local convention violates a non-negotiable, isolate compatibility at the boundary and improve the changed path.
+5. Prefer the smallest coherent improvement. Do not start unrelated migrations or speculative abstraction.
+6. Verify through the right seam. Tests should observe outcomes at the interface callers use.
+7. Name trade-offs. If a standard cannot be fully applied without broad migration, state the constraint and the local improvement made.
 
-Code is read **far more** than it's written. Optimize for the next reader, who often has no context — including a future you in 6 months.
+## Topic routing
 
-- Clear, descriptive identifiers (variables, functions, types, files).
-- Self-documenting code beats clever code beats heavily-commented clever code.
-- Consistent formatting — use a formatter; don't argue about whitespace in PRs.
-- Comments explain **why**, not **what**. The code shows what.
+| If the change touches... | Load... |
+|---|---|
+| Shared standards terms, failure language, boundary vocabulary, module/runtime terminology | [`VOCABULARY.md`](VOCABULARY.md) |
+| Names, booleans, file layout, cohesive modules, comments, generated or vendored code boundaries | [`NAMING_AND_LAYOUT.md`](NAMING_AND_LAYOUT.md) |
+| Module depth, interfaces, seams, adapters, dependency ownership, functional core vs imperative shell | [`DESIGNING_MODULES.md`](DESIGNING_MODULES.md) |
+| HTTP/RPC/queue/storage/env parsing, DTOs, codecs, projections, config | [`BOUNDARIES_AND_PARSING.md`](BOUNDARIES_AND_PARSING.md) |
+| Expected failures, custom errors, not-found semantics, catch/classification | [`ERROR_HANDLING.md`](ERROR_HANDLING.md) |
+| Tracing, logging, telemetry, redaction, safe summaries | [`OBSERVABILITY.md`](OBSERVABILITY.md) |
+| Cancellation, promise ownership, concurrency, retries, transactions, workflows | [`ASYNC_AND_WORKFLOWS.md`](ASYNC_AND_WORKFLOWS.md) |
+| Tests, properties, real seams, runtime verification, risk-matched evidence | [`TESTING_AND_VERIFICATION.md`](TESTING_AND_VERIFICATION.md) |
+| Casts, `any`, readonly contracts, collections, optionality, exports, JSDoc, toolchain | [`TYPE_CONTRACTS.md`](TYPE_CONTRACTS.md) |
 
-### 2. KISS — Keep It Simple, Stupid
+## Strong defaults
 
-The simplest solution that meets the acceptance criteria wins. Premature abstraction is more expensive than the duplication it tries to prevent.
+Use the repository's established choice when it exists and satisfies these standards. When no established choice exists, load the topic file that owns the concern and follow its strong defaults.
 
-- "Could this be simpler?" — ask before merging.
-- A clever 3-line solution that takes 20 minutes to understand is worse than a boring 10-line one.
+Do not treat this root file as enough context for boundary, error, async, testing, observability, or type-contract choices.
 
-### 3. DRY — Don't Repeat Yourself, but…
+## Rejected framings
 
-Extract common logic when **the duplication has the same reason to change**. Two pieces of code that look alike but evolve independently are **not** duplication — they're parallel.
-
-The test: would a bug fix to A also need to apply to B? If yes, they're true duplicates — extract. If no (they happen to look similar today but their requirements come from different sources), leave them apart.
-
-### 4. YAGNI — You Aren't Gonna Need It
-
-Don't build for hypothetical futures. Add complexity when you actually need it. The biggest source of dead code is "we might want this later". The second biggest is "let me add this hook just in case."
-
-### 5. Immutability by Default
-
-Prefer creating new values to mutating existing ones:
-- Returns from functions are new objects, not mutated inputs.
-- Caller's data is treated as read-only unless the API explicitly takes ownership.
-- State updates go through a single channel (reducer, store, repository) instead of being scattered across the codebase.
-
-This is not a hard rule — performance-critical inner loops often need mutation. The rule is: **mutation is opt-in and visible**, not the default.
-
-## Naming
-
-Names carry the intent of the code. Bad names are technical debt that compounds.
-
-| Kind | Convention (typical) | Good | Bad |
-|---|---|---|---|
-| Variables | descriptive nouns | `totalRevenue`, `pendingItems`, `apiKeyHash` | `x`, `data`, `result`, `obj` |
-| Booleans | `is/has/should/can/did/will` prefix | `isAuthenticated`, `hasItems`, `shouldRetry` | `flag`, `auth`, `check`, `active` |
-| Functions | verb + noun | `fetchUserProfile`, `validateEmail`, `parseSemver` | `process`, `handle`, `do`, `manage` |
-| Classes / Types | nouns | `User`, `OrderRepository`, `RateLimitDecision` | `Manager`, `Helper`, `Util`, `Processor` |
-| Constants | `SCREAMING_SNAKE` (most langs) | `MAX_RETRIES`, `DEFAULT_TIMEOUT_MS` | `max`, `value`, `cfg` |
-| Files | match the dominant export | `user-profile.tsx`, `order_repository.py`, `rate-limit.ts` | `index.ts`, `utils.py`, `helpers.js` |
-| Test files | mirror source + `.test.` | `rate-limit.test.ts` | `tests.ts` |
-
-A name describing **what** something does or is is better than one describing **where** it lives in the architecture. `UserService` tells you nothing; `UserRepository` (it does data access for users) is better; `findUserByEmail` (it's a specific operation) is best.
-
-## Function Design
-
-- **One function does one thing.** The "thing" may be at a high level of abstraction, but the function should not braid two unrelated concerns.
-- **Functions ≤ ~50 lines.** Above that, look for steps that want to be their own functions. Hard ceiling: 80 lines.
-- **Pure functions** (same input → same output, no side effects) are easier to test and reason about. Push side effects to the edges of the system.
-- **Boolean parameters often signal a missing function.** `processOrder(order, isRefund)` is usually two functions: `processOrder(order)` and `refundOrder(order)`.
-- **Return early on guard conditions** rather than wrapping the happy path in deep nesting.
-
-## Error Handling
-
-- **Validate at boundaries.** Untrusted input (HTTP request body, file I/O, external API response) is parsed and validated **once** at entry, then passed as a typed value through the rest of the system. Schema-based validation (zod, pydantic, marshmallow, etc.) is the cleanest way.
-- **Fail fast with clear messages.** Don't silently coerce; throw an error or return an Err type.
-- **Never swallow errors silently.** `catch (e) { /* nothing */ }` is a bug magnet. At minimum log; usually re-throw or wrap with additional context.
-- **User-facing messages don't leak internals.** Stack traces, file paths, internal IDs stay server-side. Users get a stable, friendly message.
-- **Error boundaries are explicit.** A single try/catch in a 500-line function buries failure modes. Place catches close to the operation that can fail, with specific error types.
-- **Distinguish expected errors from unexpected errors.** Expected (validation failure, 404) are part of the contract; unexpected (database down, OOM) deserve different handling and observability.
-
-## File Organization
-
-- **Many small files beat few mega-files.** 200–400 lines is typical; 800 is the upper limit before you should split.
-- **Organize by feature/domain, not by file type.** `users/` (with model + view + controller + tests) beats `models/` + `views/` + `controllers/` + `tests/`.
-- **High cohesion within a module, low coupling between modules.** Test: if you change one feature, how many modules do you touch? Should be ≤ 3 in most cases.
-- **One responsibility per file.** A file mixing `getUserById`, `parseCsvForUpload`, and `computeBilling` is three files waiting to happen.
-
-## Code Smell Checklist (use this for review)
-
-When reviewing code (your own or an AI's), look for:
-
-| Smell | Signal | Fix |
-|---|---|---|
-| Long parameter lists | > 4 positional args | Introduce an options object or split the function |
-| Deep nesting | > 3 levels of `if`/`for`/`try` | Early-return guard clauses, extract inner blocks |
-| Magic numbers | `if (status === 7)` | Named constants with semantic meaning |
-| Hidden side effects | `getUser` that also writes a log to the DB | Split or rename to expose the side effect |
-| Stale comments | comment contradicts the code | Either update or delete; stale comments lie |
-| Dead code | unreachable branches, unused imports/vars | Delete; git remembers |
-| TODO without owner/date | `// TODO: fix this` | Either fix now or file an issue with a link |
-| Mutating inputs | function modifies its arg | Return a new value, or document the mutation in the API |
-| God function | one function > 80 lines doing many things | Split by responsibility |
-| God module | one module doing many things | Split by feature/concern |
-| Coupling via globals | shared mutable state across modules | Encapsulate in a service / DI container |
-| Boolean blindness | `func(true, false, true)` at call site | Use enums or named parameters |
-| Premature abstraction | interface with one implementation | Inline until you need the second implementation |
-| Inconsistent naming | `getUser`, `fetchAccount`, `loadOrder` | Pick one verb per operation type, apply consistently |
-
-## After the Standards Pass
-
-Once code is written or modified, the standards review should happen, but **the actual review of the diff should be delegated**. This skill defines what to look for; the droids find it.
-
-1. **Run `verification-loop`** (skill, inline): catches anything tooling can catch (lint, type errors, test failures).
-2. **Delegate to `change-review`** (droid, in `review` plugin): strict correctness pass through the code-smell checklist above plus correctness/migration/rollback risks.
-3. **Delegate to `security`** (droid, in `review` plugin): if the change touches auth, secrets, consent, untrusted input, or dependencies.
-4. Resolve findings.
-5. **Delegate to `pr-describer`** (droid, in `synthesis` plugin) for the PR body.
-
-The standards review is one of the lenses `change-review` uses. Don't try to do it inline on a large diff — that's what the droid is for.
-
-## Delegation Map
-
-| Task | Delegate to | Reason |
-|---|---|---|
-| Apply standards rubric to a diff | `change-review` (droid) | Specialized model + procedure for diff review |
-| Check security-shaped standards (input validation, secrets handling, auth boundaries) | `security` (droid) | Specialized for security lens |
-| Refactor a function to apply standards (extract, rename, simplify) | `worker` (Factory built-in) with explicit smell list | Self-contained code work |
-| Set up linter / formatter / type-checker for a new repo | `worker` with the chosen toolchain | One-time setup, mechanical |
-| Decide which language-specific overrides apply | `<self>` or hand off to `deep-understanding` | Project-architecture decision |
-| Establish the standards baseline for a new codebase | `<self>` (write the docs/configs); then `doc-generator` if updating an existing AGENTS.md | Foundational decision |
-
-## Anti-Patterns
-
-- **Style debates without a formatter.** The conversation should be "is the formatter set up?" not "tabs vs spaces". Adopt prettier/biome/ruff/gofmt and move on.
-- **Treating standards as pixel-perfect law.** Standards are heuristics; sometimes the right answer is "violate this here, with a comment explaining why".
-- **Long deprecation comments instead of deletion.** Delete; git history is the deprecation comment.
-- **One mega-utility file** (`utils.py`, `helpers.ts`, `common.js`). It will swallow everything. Use focused, named modules.
-- **DRY extraction across boundaries that should remain independent.** Two services with similar code that evolve independently should not share a library; the shared library becomes a coupling source.
-- **Blanket "no comments" or "lots of comments" rules.** Add a comment when the code can't reasonably explain itself (a hidden constraint, a workaround for a specific bug, behavior that would surprise a reader). Remove comments that just paraphrase the code.
-- **Reviewing a giant diff inline.** Delegate to `change-review` — that's what it's for. Inline review of > 100 lines burns context and misses patterns.
-- **Applying standards retroactively in unrelated PRs.** "While I'm here, let me fix all the naming" balloons review and obscures the real change. Surface as a follow-up issue.
-- **Lecturing the AI/contributor on standards instead of running the standards.** Set up the linter; let the tool tell them.
-
-## Edge Cases
-
-- **Generated code** (codegen output, schema-derived types, etc.): exempt from standards review beyond "does it compile and tests pass". The generator owns the style.
-- **Vendored / third-party code in-tree**: exempt; standards apply to your code, not theirs. Mark the directory in lint config.
-- **Performance-critical inner loop** that violates KISS or immutability for measurable reason: leave a comment with the benchmark result. Standards yield to evidence-based performance needs.
-- **Test code**: looser standards on test files are acceptable (longer functions, more setup code, named test helpers). The bar is "the test is correct and readable", not "the test follows production conventions to the letter".
-- **Migration code that's run once**: standards still apply to readability and correctness; less to long-term maintainability.
-- **Single-developer prototype**: defer most standards until the code survives 2 weeks. Premature standards on throwaway code is wasted effort. Note: be honest about whether it's actually throwaway.
-- **Code from an AI agent that violates standards**: don't fix it inline before review. Either ask the worker to redo with a constraint added ("rewrite using guard clauses, max nesting 2"), or surface it as a `change-review` finding for the human reviewer to decide.
-- **Project explicitly opts out of a standard** (e.g., team prefers `class` over functional components in React): override this skill's defaults with the project decision. Document the override.
-
-## Self-Check (before declaring code "passes standards")
-
-1. Did I use a formatter to handle whitespace/style, not human judgment?
-2. Are names descriptive (would a new reader understand the intent)?
-3. Are functions doing one thing?
-4. Are errors handled at boundaries, not swallowed?
-5. Are files appropriately sized and organized by feature?
-6. Did I delegate the actual diff review to `change-review` (and `security` if relevant) rather than try to review inline?
-7. For violations of standards, did I either fix them or leave a justifying comment?
-
-If any answer is no, address it before declaring the change ready for `change-review`.
+- "The existing code throws, so new expected failures can throw." Preserve compatibility at boundaries; do not copy unsafe contracts inward.
+- "Validation is enough." Parsing must return the refined value and pass it inward.
+- "A wrapper is architecture." A pass-through module earns its keep only when it hides complexity, owns policy, or translates across a real seam.
+- "Mocks make tests isolated." Replace behavior through real seams.
+- "Future flexibility justifies an interface." A seam is real when behavior varies, a boundary translates, or tests substitute through an intentional seam.
+- "A lint suppression is a fix." Suppressions must be targeted and explain the safety invariant.
