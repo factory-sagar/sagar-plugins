@@ -1,0 +1,90 @@
+plugins/practices/skills/grilling/SKILL.md
+  d19d272ebdcfb38a 14
+plugins/practices/skills/tech-spec/SKILL.md
+  d19d272ebdcfb38a 200,205-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "c4f6df0dc7e19fa8489c9fefc5e08d0243494328",
+  "prompts": {
+    "42ef1700ec9a3fa2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "26b1319b-b8c3-4933-9be1-19947b8013fa",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 85,
+      "total_deletions": 7,
+      "accepted_lines": 1233,
+      "overriden_lines": 0
+    },
+    "83b39681bd0399dc": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4f7e6105-b66b-4d70-a7d0-5478e06e1843",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 23,
+      "accepted_lines": 88,
+      "overriden_lines": 0
+    },
+    "9291b0c6cb34d378": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3ddd1bd9-92ca-41ee-863c-e86a0e4258f6",
+        "model": "glm-5.2"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 284,
+      "total_deletions": 59,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    },
+    "ab4d4593f03dc9f5": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4ae0d56c-1113-4f42-9c77-aa4f25dddad6",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 1,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "d19d272ebdcfb38a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "feebb660-7fff-4aae-9c43-71dbe8ecfb29",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 5,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    },
+    "e946ccd34244294c": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1d4dafdf-9ab5-4dad-966f-1e83429b5c8e",
+        "model": "claude-opus-4-8-fast"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
