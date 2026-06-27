@@ -197,10 +197,19 @@ Completion criterion: the output follows the outline below and is implementation
 
 1. Do not write a full spec yet.
    - State that there is not enough context for an implementation-ready tech spec.
+   - Do not include skeleton types, example APIs, provisional call stacks, file maps, or TDD slices. Those are spec content and must wait for Path A.
    - Completion criterion: the agent has not invented requirements, APIs, files, or call stacks.
 2. Start a grilling interview.
    - Use `../grill-me/`.
    - Ask one question at a time and provide the recommended answer with each question.
+   - One question means one actual ask with one missing fact. The `Question` line must contain exactly one question mark and must not contain " and " or " or ". Do not append secondary asks, shopping lists, repo-path requests, stack-constraint lists, or "also tell me" bullets in the same turn. If several core facts are missing, ask for the repo or codebase path first.
+   - Use this exact compact shape for the first turn:
+     ```md
+     I don't have enough context for an implementation-ready tech spec yet, so I'm grilling first instead of inventing requirements.
+
+     **Question:** <one question>
+     **Recommended answer:** <one recommended answer>
+     ```
    - If a question can be answered by exploring the codebase, inspect the codebase instead of asking.
    - Completion criterion: the interview has enough context for Path A: problem, users or callers, constraints, affected systems, desired behavior, boundaries, likely APIs, invariants, risks, and acceptance tests.
 3. Convert to the spec.
