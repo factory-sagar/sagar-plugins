@@ -1,0 +1,35 @@
+plugins/review/skills/review-fix/SKILL.md
+  ee4f4870cc41a170 1-357
+plugins/review/skills/review-fix/discover-conventions.md
+  ee4f4870cc41a170 1-197
+plugins/review/commands/review-fix.md
+  ee4f4870cc41a170 1-18
+plugins/review/.factory-plugin/plugin.json
+  ee4f4870cc41a170 3-4
+plugins/review/skills/review-fix/review-notes-format.md
+  ee4f4870cc41a170 1-133
+plugins/review/skills/review-fix/review-worker.md
+  ee4f4870cc41a170 1-266
+plugins/review/README.md
+  ee4f4870cc41a170 3,5,20-29,34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "186b9153054b316c1b92386e9fed5e0f5a04deec",
+  "prompts": {
+    "ee4f4870cc41a170": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f1fa740a-8960-457a-9dd6-99d4c6fbd5cf",
+        "model": "claude-opus-4-8-fast"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 1076,
+      "total_deletions": 94,
+      "accepted_lines": 986,
+      "overriden_lines": 0
+    }
+  }
+}
