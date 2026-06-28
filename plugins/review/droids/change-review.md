@@ -1,7 +1,7 @@
 ---
 name: change-review
 description: Strict last-gate reviewer for diffs, commits, branches, or explicitly scoped files. Finds correctness, contract, rollback, and obvious security-shaped hand-off risks before merge.
-model: kimi-k2.6
+model: glm-5.2
 reasoningEffort: xhigh
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]
 ---

@@ -78,7 +78,7 @@ Each droid is pinned to the right model for its job rather than "the best model"
 | `gpt-5.5` (xhigh) | Highest-reasoning implementation tier | `implementer` |
 | `gpt-5.4` (xhigh) | Deep reasoning; investigations, root-cause, security, prompt application | `deep-understanding`, `debugger`, `security`, `doc-generator` |
 | `claude-opus-4-8` (xhigh) | Strong prompt critique and adherence diagnosis | `prompt-optimizer` |
-| `kimi-k2.6` (xhigh) | Different distribution; catches regulatory, consent, and subtle correctness issues `gpt-5.4` misses | `change-review` |
+| `glm-5.2` (xhigh) | Different distribution at max reasoning; strict last-gate correctness review that complements `gpt-5.4` | `change-review` |
 | `inherit` (Claude Opus) | Strongest natural prose; synthesis and external research | `pr-describer`, `deep-research` |
 
 ## Layout

@@ -14,7 +14,7 @@ droid plugin install review@sagar-plugins
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `change-review` | Strict last-gate reviewer for diffs, commits, branches, or named files. Correctness, consent and auth gates, rollback, event reliability. | `kimi-k2.6` | `xhigh` | read-only + `Execute` |
+| `change-review` | Strict last-gate reviewer for diffs, commits, branches, or named files. Correctness, consent and auth gates, rollback, event reliability. | `glm-5.2` | `xhigh` | read-only + `Execute` |
 | `security` | Evidence-based security reviewer using STRIDE and OWASP. Verifies CVEs against trusted sources (NVD, GHSA). | `gpt-5.4` | `xhigh` | read-only + `Execute` + `WebSearch` + `FetchUrl` |
 
 ## Skills
@@ -35,7 +35,7 @@ The deep tier ships three supporting files in the skill directory: `review-notes
 
 ## Models
 
-`change-review` runs on `kimi-k2.6` and `security` runs on `gpt-5.4`. Different model families with different training distributions catch different bugs. In this marketplace's testing, `kimi-k2.6` consistently caught regulatory and consent-related issues that `gpt-5.4` missed, while `gpt-5.4` consistently caught attack-path and cross-domain issues `kimi-k2.6` reasoned about less concretely. Running both in parallel gives broader coverage than running either twice.
+`change-review` runs on `glm-5.2` at max reasoning (`xhigh`) and `security` runs on `gpt-5.4`. Different model families with different training distributions catch different bugs, so running both in parallel gives broader coverage than running either twice. `change-review` carries the strict label-list output contract and `[P<n>·<conf>]` confidence labels; `security` focuses on attack-path and cross-domain issues through STRIDE and OWASP lenses.
 
 ## Related plugins
 
@@ -47,4 +47,4 @@ Cross-plugin hand-offs are naming suggestions. If you haven't installed the comp
 
 ## Notes
 
-`change-review` returns a label-list format (`Summary:`, `Assessment:`, `What This Change Does:`, `Coverage:`, `Findings:`, `Validation Notes:`, in that exact order). This is the output contract defined in the droid prompt and the format `kimi-k2.6` produces reliably. Every finding carries a mandatory `[P<n>·<conf>]` confidence label (for example `[P1·high]`).
+`change-review` returns a label-list format (`Summary:`, `Assessment:`, `What This Change Does:`, `Coverage:`, `Findings:`, `Validation Notes:`, in that exact order). This is the output contract defined in the droid prompt and the format the droid produces reliably. Every finding carries a mandatory `[P<n>·<conf>]` confidence label (for example `[P1·high]`).
