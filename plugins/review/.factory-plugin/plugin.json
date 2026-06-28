@@ -1,7 +1,7 @@
 {
   "name": "review",
-  "version": "1.1.0",
-  "description": "Pre-merge review droids: strict diff reviewer and security reviewer.",
+  "version": "1.2.0",
+  "description": "Pre-merge review droids (strict diff reviewer and security reviewer) plus the review-fix skill and /review-fix command: review a change read-only (light single-pass or deep exhaustive multi-pass, auto-escalated for risky diffs), apply the fixes, verify, and commit locally before push.",
   "author": {
     "name": "Sagar",
     "url": "https://github.com/factory-sagar"
