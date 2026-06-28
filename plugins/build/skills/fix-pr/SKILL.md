@@ -1,6 +1,6 @@
 ---
 name: fix-pr
-version: 2.0.0
+version: 2.1.0
 description: |
   End-to-end PR fix workflow: fetch a PR, read every review comment, reason about whether
   each one is a real bug, fix the valid ones, reply to every comment, resolve the threads,
@@ -45,6 +45,13 @@ If `gh` is not available or returns insufficient data, fall back to `FetchUrl` o
 URL. The FetchUrl output may be truncated; if so, read the artifact file for the full
 content and search for `User:` or `Comment` markers.
 
+#### If the PR fixes a specific bug
+
+Before reviewing comments, confirm the fix still addresses the real problem. Read the linked
+issue / error report and the root cause. PRs go stale: the underlying bug may have already
+been fixed by another merge into the base branch, making this PR a no-op or a conflict. If
+so, surface that to the user before doing further work.
+
 #### Comment sources to check
 
 1. **Inline review comments** (line-level): these are the primary target. Pull them via:
@@ -87,6 +94,32 @@ Ensure the working tree is clean before making changes:
 ```bash
 git status --porcelain
 ```
+
+#### Bring the branch up to date (conditional)
+
+Only rebase when the branch is **behind the base branch** or **CI is failing for
+staleness-related reasons** (e.g. checks that pass on base but fail here). Do not rebase a
+branch that is up to date and green: it rewrites history for no benefit.
+
+Check how far behind the branch is:
+```bash
+git fetch origin <base-branch>
+git rev-list --left-right --count origin/<base-branch>...HEAD
+```
+The first number is commits on base not in the branch (how far behind).
+
+If behind, rebase:
+```bash
+git pull origin <base-branch> --rebase
+```
+
+**If conflicts occur:**
+1. Read each conflicted file to understand both sides
+2. Resolve conflicts, preserving the PR's intent while incorporating base changes
+3. `git add <resolved-files>` then `git rebase --continue`
+
+After a rebase you must push with `--force-with-lease` in step 6. If you did NOT rebase, use
+a plain push.
 
 ### 3. Triage: Reason About Each Comment
 
@@ -187,7 +220,13 @@ Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.g
 EOF
 ```
 
-Push to the PR branch:
+Push to the PR branch. If you rebased in step 2, history was rewritten, so use
+`--force-with-lease` (safer than `--force`: it refuses to overwrite if the remote moved):
+```bash
+git push origin <branch-name> --force-with-lease
+```
+
+If you did NOT rebase, use a plain push:
 ```bash
 git push origin <branch-name>
 ```
@@ -197,31 +236,34 @@ git push origin <branch-name>
 For **every** triaged comment, post a short reply on GitHub. Use `gh` to reply to review
 threads. The reply should be one sentence, never more than two.
 
+The `/comments/<comment-id>/replies` endpoint posts a threaded reply to the original review
+comment. `<comment-id>` is the REST comment ID (`databaseId` in GraphQL).
+
 **For fixed comments:**
 ```bash
-gh api repos/<owner>/<repo>/pulls/<number>/comments \
-  --field in_reply_to=<comment-id> \
+gh api repos/<owner>/<repo>/pulls/<number>/comments/<comment-id>/replies \
+  -X POST \
   --field body="Fixed in <short-sha>."
 ```
 
 **For false positives (skipped):**
 ```bash
-gh api repos/<owner>/<repo>/pulls/<number>/comments \
-  --field in_reply_to=<comment-id> \
+gh api repos/<owner>/<repo>/pulls/<number>/comments/<comment-id>/replies \
+  -X POST \
   --field body="Skipping - <one sentence reason, e.g. variable is guaranteed non-null by the schema validation in line 12>."
 ```
 
 **For style nits (skipped):**
 ```bash
-gh api repos/<owner>/<repo>/pulls/<number>/comments \
-  --field in_reply_to=<comment-id> \
+gh api repos/<owner>/<repo>/pulls/<number>/comments/<comment-id>/replies \
+  -X POST \
   --field body="Skipping - <e.g. repo convention uses let in this pattern; see other files in dir/>."
 ```
 
 **For questions (not resolved):**
 ```bash
-gh api repos/<owner>/<repo>/pulls/<number>/comments \
-  --field in_reply_to=<comment-id> \
+gh api repos/<owner>/<repo>/pulls/<number>/comments/<comment-id>/replies \
+  -X POST \
   --field body="<brief answer>."
 ```
 
@@ -278,9 +320,15 @@ gh pr checks <url> --watch --interval 30
 This blocks until all checks complete. If any check fails:
 
 1. Read the failure logs: `gh pr checks <url> --json name,state,link` then fetch logs
-2. Determine if the failure is caused by your changes or is a pre-existing flake
+2. Determine whether the failure is caused by your changes or pre-existing:
+   - If the failing file/area is **not touched by the PR**, check whether the same check
+     fails on the base branch before spending time on it.
+   - Do not assume a failure is flaky. Read the log first, and check the check's recent pass
+     rate. If it passes consistently elsewhere, treat it as real and investigate.
+   - If the branch is behind base, a rebase (step 2) may clear staleness failures.
 3. If caused by your changes: fix the issue, commit, push, and re-watch
-4. If pre-existing flake: note it and proceed (but do not approve if a required check is failing)
+4. If genuinely pre-existing / flaky: note it and proceed (but do not approve if a required
+   check is failing)
 
 **Max retries: 3.** If CI fails 3 times due to your changes, stop, report the failure, and
 ask the user for guidance. Do not keep pushing fixes in a loop.
@@ -290,20 +338,39 @@ after your push.
 
 ### 9. Approve or Say Done
 
-Once CI is green:
+The goal of this skill is a **fully fixed, merge-ready PR**. Do not approve (or declare done)
+until every one of these is true, verified against the live API:
 
-**If the PR author is NOT `factory-droid[bot]`** (someone else's PR):
+- [ ] Every actionable comment (real bug / valid improvement) has a corresponding code fix
+- [ ] Every triaged comment has a reply (fixed / skipped+reason / answered)
+- [ ] Every fixed and false-positive/nit thread is resolved (questions left open)
+- [ ] All local checks pass (format, lint, typecheck, tests)
+- [ ] Changes are committed and pushed to the PR branch
+- [ ] CI is green (all required checks passing)
+
+Only when the PR is fully fixed and CI is green do you finalize:
+
+**If the PR author is NOT `factory-droid[bot]`** (someone else's PR), approve it:
 ```bash
-gh pr review <url> --approve --body "All review comments addressed, CI is green."
+gh pr review <url> --approve --body "All review comments addressed and resolved, CI is green. PR is merge-ready."
 ```
 
 **If the PR author IS `factory-droid[bot]`** (your own PR):
-Do not approve your own PR. Simply report "Done" in the conversation to the user.
+Do not approve your own PR (GitHub disallows self-approval and it is not meaningful). The
+end state is still a fully fixed, green PR; simply report "Done" to the user.
 
 To determine authorship, check the `author.login` field captured in step 1. The
 factory-droid bot author is `factory-droid[bot]`.
 
+If any checklist item cannot be satisfied (e.g. CI stays red after 3 attempts, or a comment
+needs the user's decision), do NOT approve. Report the PR as **Blocked** with the specific
+reason and what is needed to unblock.
+
 ### 10. Report
+
+Verify comment, thread, CI, and approval state from the **live API immediately before
+reporting it** (re-run the relevant `gh` / GraphQL queries). Never report from memory of an
+earlier fetch: threads get resolved, CI flips, and reviewers act while you work.
 
 Summarize the full workflow result:
 - PR number and title
@@ -319,7 +386,11 @@ Summarize the full workflow result:
 ## What Not to Do
 
 - Do not blindly apply suggestions without reasoning about whether they are correct.
-- Do not rebase or restructure the PR. Only apply the fixes requested by comments.
+- Do not rebase a branch that is already up to date and green. Rebase only when behind base
+  or when staleness is causing CI failures.
+- Do not restructure the PR beyond the fixes requested by comments (and a conditional rebase).
+- Do not use `git push --force`; use `--force-with-lease` after a rebase.
+- Do not report comment/thread/CI/approval state from memory; re-verify against the live API.
 - Do not add tests unless a comment explicitly asks for them.
 - Do not push if any verification check (format, lint, typecheck, test) fails.
 - Do not apply suggestions that would introduce bugs or break existing behavior. Skip,
