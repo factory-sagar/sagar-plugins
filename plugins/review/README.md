@@ -27,6 +27,8 @@ Command: `/review-fix <PR URL, branch, range, or staged>` runs the skill directl
 
 The deep tier ships three supporting files in the skill directory: `review-notes-format.md` (shared notes-doc and finding format), `review-worker.md` (Review subagent prompt templates), and `discover-conventions.md` (convention enumeration procedure). When the `practices` plugin is installed, deep-tier discovery is backed by `coding-standards`; otherwise it falls back to the target repo's own docs.
 
+The deep tier treats the notes doc as the single source of truth: it verifies each pass by checking for new notes-doc entries, not the subagent reply, and if the resumed-session mechanism stops writing (or for very large diffs), it falls back to one comprehensive worker that walks every Discovery pattern-check in a single session. The escalation heuristic leans light: a small, well-tested touch to a risk-sensitive path stays light; deep is reserved for large diffs or new/rewritten risk-sensitive logic.
+
 ## Usage
 
 1. Diff staged → invoke `change-review` and `security` in parallel.

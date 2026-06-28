@@ -1,6 +1,6 @@
 ---
 name: review-fix
-version: 1.0.0
+version: 1.1.0
 description: |
   Review a change end-to-end, then fix it. Runs a read-only review (light by default,
   deep on demand), consolidates findings, applies the fixes in code, verifies, commits
@@ -95,10 +95,19 @@ If the user explicitly passed `light` or `deep`, honor it and skip the heuristic
 Otherwise default to **light**, and auto-suggest **deep** when ANY of these hold:
 
 - **Size**: more than ~50 changed files OR more than ~2000 added+removed lines.
-- **Risk-sensitive paths**: the diff touches authentication / authorization, session or consent
-  handling, secrets/credentials, database migrations or schema, payments/billing, public API
-  contracts or shared types, or concurrency/locking primitives.
-- **User signal**: the user described the change as risky, security-relevant, or "important".
+- **New/rewritten risk-sensitive logic**: the diff touches authentication / authorization,
+  session or consent handling, secrets/credentials, database migrations or schema,
+  payments/billing, public API contracts or shared types, or concurrency/locking primitives —
+  **AND that sensitive logic is genuinely new or substantially rewritten**, not a small edit to
+  existing, well-tested code.
+- **User signal**: the user explicitly asked for deep, or described the change as risky.
+
+**A small, well-tested touch to a risk-sensitive path is NOT enough on its own.** In practice
+that over-escalates: deep then runs many sequential passes only to return convention nits at high
+latency. When a risk-sensitive path is touched but the change is small and the existing code is
+already well-built and tested, prefer **light** — `change-review` + `security` in parallel surface
+the same findings at a fraction of the cost — and note why. Reserve deep for diffs that are also
+large, or where the risk-sensitive logic itself is new or rewritten.
 
 When the heuristic suggests deep, confirm before escalating:
 
@@ -158,6 +167,30 @@ notes doc and never read the PR or load convention docs yourself. Read `<FORMAT_
 
 Capture the `task_id` from the initial Review call and reuse it as `resume` everywhere after.
 Each resume adds ONLY what is new for that pass; do not re-send context it already has.
+
+#### Resume reliability — verify the notes doc, and fall back if resume is not writing
+
+The resumed-session pattern is leaky in two observed ways. Guard against both:
+
+1. **The reply body is not the deliverable.** A resume often echoes the PREVIOUS pass's summary
+   text in its reply even though the new pass wrote correctly to the notes doc. Trust the notes
+   doc, not the reply. After each pass do ONE targeted check: read the notes-doc sections the pass
+   should have appended to and confirm NEW entries exist. Do not re-read or re-grep the reply body
+   to "confirm" work landed — that burns calls for nothing.
+
+2. **Resume can silently no-op.** In some environments a resume returns the prior turn's cached
+   output and writes NOTHING new to the notes doc. Detect this via the audit in Step 3b-iii.4: if a
+   pass added zero new codepath notes / verdicts / findings, the resume did not actually execute —
+   do NOT trust its `completed`-looking summary.
+
+   **Sanctioned fallback (comprehensive worker):** when resume is verified not to be writing to
+   the notes doc, stop resuming. Spawn ONE fresh `worker` that loads the diff once and, in a single
+   session, walks ALL pattern-checks already enumerated in the notes doc by Discovery PLUS the
+   mandatory model-driven concerns (Functional Correctness, Impact, Completeness), appending every
+   codepath note and finding to the notes doc in the normal format. This preserves the deep tier's
+   thoroughness and is far more reliable than many broken resume round-trips. For very large diffs
+   (20+ categories), prefer this fallback proactively — the per-category round-trip model is
+   expensive and brittle, and one comprehensive worker reading Discovery's output is a better fit.
 
 #### Step 3b-i — Create the notes doc and launch Discovery + initial Review (in parallel)
 
@@ -242,7 +275,9 @@ For each pass, in order:
 - Do not batch-mark multiple passes `completed`; one update per pass, after its summary.
 - Do not mark a pass `completed` to satisfy a system reminder. If reminders reveal pending TODOs,
   go execute them.
-- Do not spawn a fresh Review per pass; always `resume` the Step 3b-i Review session.
+- Do not spawn a fresh Review per pass **while resume is working**. The one exception is the
+  sanctioned comprehensive-worker fallback when resume is verified not to be writing to the notes
+  doc (see "Resume reliability" above).
 - A legitimately empty pass still needs a summary ("Considered: none — <why>").
 
 #### Step 3b-iv — Final reconciliation
@@ -271,6 +306,21 @@ Merge findings from whichever tier ran. De-duplicate. Triage each (do not blindl
 
 The reviewers are read-only; fixes happen in Step 5, not during review.
 
+**Verify before classifying.** Check each finding against the ACTUAL diff and its tests before
+calling it a bug. Behavior that looks like a regression is often intentional and test-enforced
+(e.g. a status code newly asserted by added route tests, or intra-file clone records a
+duplicate-checker deliberately relies on). If the tests assert the "new" behavior, it is not a
+bug — mark it a false positive. Blindly applying these would break tests and CI.
+
+**Product decisions are not bugs.** A finding that challenges a product/design choice (a widened
+capability, a visibility flag) is a decision for the operator, not an auto-fix. Check peer
+implementations and intent (comments, ticket) first; if it is a genuine product choice, surface it
+and do not revert it.
+
+**When a finding admits two valid fixes** (e.g. "render or remove the unused field"), default to
+the lowest-risk option (YAGNI: remove the unused path) rather than adding unrequested product
+surface. If the choice is genuinely a product-direction call, surface it instead of deciding it.
+
 ### 5. Fix the actionable findings
 
 For each **real bug** / **valid improvement** (and accepted nits):
@@ -285,11 +335,19 @@ If the `build` plugin is installed and the fix set is substantial, you may deleg
 
 ### 6. Verify
 
-Discover and run the project's checks (read `package.json`, `Makefile`, `pyproject.toml`, or
-`.github/workflows/`). Typical:
+Discover the project's checks (read `package.json`, `Makefile`, `pyproject.toml`, or
+`.github/workflows/`). Typical: format, lint, typecheck, tests — plus any repo-specific validators
+the diff implicates (e.g. knip for unused exports, a duplicate-code checker, an `AGENTS.md` /
+frontmatter validator when you edited those files). Run validators for the file types you actually
+touched.
+
+Run in an efficient order: the **affected/changed-area tests first** (fast feedback on your
+fixes), then the **full suite** and the repo-specific validators.
 
 ```bash
-npm run format && npm run lint && npm run typecheck && npm test
+npm run format && npm run lint && npm run typecheck
+npm test -- <changed area>     # affected tests first
+npm test                       # then the full suite
 ```
 
 Fix any failure your changes introduced before committing. Do not commit broken code.
@@ -333,6 +391,16 @@ Only push if confirmed:
 git push origin <branch-name>
 ```
 
+### 9. Close the loop on a PR (optional)
+
+This skill's core scope ends at push. If the target is a PR and the user wants the loop closed
+(post a summary comment, reply to and resolve review threads, approve, merge), that is the `fix-pr`
+skill's job, not this one. After a confirmed push, offer the handoff:
+
+- Comment / resolve threads / approve / merge → run the `fix-pr` skill (or `gh` CLI) on the same PR.
+
+Do not auto-merge. Merging is an explicit, separate user decision.
+
 ## Severity discipline
 
 - **Blocking**: must be fixed before merge (data loss, auth bypass, crash on common path, secret leak).
@@ -348,7 +416,13 @@ bias the filter's closed-list reasons exist to prevent.
 - Do not let reviewer subagents edit code. Review is read-only; fixes are a separate phase.
 - Do not push. The skill stops at a local commit and asks first.
 - Do not run the deep tier on a small routine diff. Default light; escalate only on the heuristic.
+- Do not escalate to deep on a small, well-tested touch to a risk-sensitive path alone. Escalate
+  only when the diff is also large or the risk-sensitive logic is new/rewritten.
 - Do not escalate to deep without confirming via AskUser (unless the user asked for deep).
+- Do not trust a resume's `completed`-looking summary or reply body. Confirm new entries actually
+  landed in the notes doc; if a resume wrote nothing, switch to the comprehensive-worker fallback.
+- Do not auto-fix a finding that challenges a product/design decision; surface it to the operator.
+- Do not treat test-enforced behavior as a regression. Verify findings against the tests first.
 - Do not lead the review with style/naming. Functional correctness comes first.
 - Do not widen scope: fix the reviewed change, not pre-existing issues outside it.
 - Do not blindly apply suggestions; triage each one and skip false positives with a reason.
