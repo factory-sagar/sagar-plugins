@@ -1,6 +1,6 @@
 ---
 name: fix-pr
-version: 2.1.0
+version: 2.1.1
 description: |
   End-to-end PR fix workflow: fetch a PR, read every review comment, reason about whether
   each one is a real bug, fix the valid ones, reply to every comment, resolve the threads,
@@ -282,7 +282,7 @@ Use the GraphQL API to resolve review threads:
 ```bash
 gh api graphql -f query='
 mutation {
-  resolveReviewThread(input: {threadID: "<thread-id>"}) {
+  resolveReviewThread(input: {threadId: "<thread-id>"}) {
     thread { id isResolved }
   }
 }'
