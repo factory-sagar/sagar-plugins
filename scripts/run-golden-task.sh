@@ -1,25 +1,46 @@
 #!/usr/bin/env bash
 # Run one golden task headlessly and (optionally) judge the transcript.
 #
-#   scripts/run-golden-task.sh evals/golden-tasks/05-standards-backed-review.md [--judge]
+#   scripts/run-golden-task.sh <task-file> [--judge] [--droid <droid.md> --model <id> [--effort <level>]] [--label <name>]
 #
 # What it does:
 #   1. Extracts the task's Target, optional ```bash Setup block, and ```text Prompt block.
 #   2. Creates a scratch git repo, runs Setup inside it.
-#   3. Invokes `droid exec` against the scratch repo with the composed prompt.
-#   4. Writes the transcript to evals/runs/<timestamp>-<task>/transcript.md.
-#   5. With --judge: scores the transcript against the task rubric via JUDGE.md.
-#   6. Diffs against evals/baselines/<task>.md when a baseline exists.
+#   3. With --droid/--model: writes a model-variant copy of that droid into the scratch
+#      repo's .factory/droids/ (project droids shadow installed ones) — this is the A/B
+#      mechanism for trialing a model swap on one droid without touching the plugin.
+#   4. Invokes `droid exec` against the scratch repo with the composed prompt.
+#   5. Writes the transcript to evals/runs/<timestamp>-<task>[-<label>]/transcript.md.
+#   6. With --judge: scores the transcript against the task rubric via JUDGE.md.
+#   7. Diffs against evals/baselines/<task>.md when a baseline exists.
+#
+# A/B example (implementer on gpt-5.5 vs claude-fable-5, golden 08):
+#   scripts/run-golden-task.sh evals/golden-tasks/08-implementer-minimal-fix.md --judge --label a-gpt55
+#   scripts/run-golden-task.sh evals/golden-tasks/08-implementer-minimal-fix.md --judge --label b-fable \
+#     --droid plugins/build/droids/implementer.md --model claude-fable-5 --effort xhigh
 #
 # Requires: droid CLI on PATH, the relevant plugins installed.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TASK_FILE="${1:?usage: run-golden-task.sh <task-file> [--judge]}"
-JUDGE="${2:-}"
+TASK_FILE="${1:?usage: run-golden-task.sh <task-file> [--judge] [--droid <file> --model <id> [--effort <level>]] [--label <name>]}"
+shift
+JUDGE="" DROID_FILE="" MODEL="" EFFORT="" LABEL=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --judge) JUDGE="--judge" ;;
+    --droid) DROID_FILE="$2"; shift ;;
+    --model) MODEL="$2"; shift ;;
+    --effort) EFFORT="$2"; shift ;;
+    --label) LABEL="-$2"; shift ;;
+    *) echo "unknown flag: $1" >&2; exit 2 ;;
+  esac
+  shift
+done
+if [ -n "$DROID_FILE" ] && [ -z "$MODEL" ]; then echo "--droid requires --model" >&2; exit 2; fi
 TASK_NAME="$(basename "$TASK_FILE" .md)"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-RUN_DIR="$ROOT/evals/runs/$STAMP-$TASK_NAME"
+RUN_DIR="$ROOT/evals/runs/$STAMP-$TASK_NAME$LABEL"
 mkdir -p "$RUN_DIR"
 
 # Extract the first fenced block that follows a given H2 heading.
@@ -41,6 +62,17 @@ git -C "$SCRATCH" init -q
 if [ -n "$SETUP" ]; then
   (cd "$SCRATCH" && bash -euo pipefail -c "$SETUP")
   git -C "$SCRATCH" add -A && git -C "$SCRATCH" -c user.email=eval@local -c user.name=eval commit -qm "golden-task setup" || true
+fi
+
+if [ -n "$DROID_FILE" ]; then
+  mkdir -p "$SCRATCH/.factory/droids"
+  VARIANT="$SCRATCH/.factory/droids/$(basename "$DROID_FILE")"
+  awk -v model="$MODEL" -v effort="$EFFORT" '
+    /^model: / { print "model: " model; if (effort != "") { print "reasoningEffort: " effort; skip_effort = 1 }; next }
+    /^reasoningEffort: / && skip_effort { next }
+    { print }
+  ' "$ROOT/$DROID_FILE" > "$VARIANT"
+  echo "droid variant: $(basename "$DROID_FILE" .md) -> $MODEL${EFFORT:+ ($EFFORT)} (project override in scratch repo)"
 fi
 
 {

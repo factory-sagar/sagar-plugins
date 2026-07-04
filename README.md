@@ -30,10 +30,10 @@ Or browse interactively with `/plugins`.
 | [`review`](./plugins/review/) | Droids: `change-review`, `security`; Skill: `review-fix` (+ `/review-fix` command) | quality |
 | [`synthesis`](./plugins/synthesis/) | Droids: `pr-describer`, `commit-message-writer` | productivity |
 | [`meta`](./plugins/meta/) | Droids: `prompt-optimizer`, `doc-generator`; Skill: `audit-and-apply-loop` | productivity |
-| [`practices`](./plugins/practices/) | Skills: planning (`spec`, `tech-spec`, `architecture-scan`, `grilling`, `grill-me`) + discipline (`agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`) | productivity |
+| [`practices`](./plugins/practices/) | Skills: planning (`spec`, `tech-spec`, `architecture-scan`, `grilling`, `grill-me`, `discovering-unknowns`) + discipline (`agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`) | productivity |
 | [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skill: `fix-pr` (+ `/fix-pr` command) | productivity |
 
-Total: 12 droids, 12 skills, 2 commands. (CI recomputes these counts from the filesystem; see [Validation](#validation).)
+Total: 12 droids, 13 skills, 2 commands. (CI recomputes these counts from the filesystem; see [Validation](#validation).)
 
 ## Concepts
 
@@ -45,6 +45,9 @@ Total: 12 droids, 12 skills, 2 commands. (CI recomputes these counts from the fi
 The plugins compose into one delegation and procedure loop:
 
 ```
+discovering-unknowns      → blind-spot pass when the territory is unfamiliar
+  │
+  ▼
 spec / architecture-scan  → scope the work or rank refactor candidates
   │
   ├── optionally grilling  → stress-test the plan
@@ -54,6 +57,7 @@ spec / architecture-scan  → scope the work or rank refactor candidates
 (for each unit)
   ├── investigation:   quick-analysis / deep-understanding / deep-research
   ├── implementation:  tdd-workflow + coding-standards (skills the main agent runs)
+  │                    workers carry the Deviations contract (discovering-unknowns)
   ├── verification:    verification-loop (skill)
   └── review:          change-review + security (droids)
                        or review-fix (skill): review read-only, fix, verify, commit — ask before push
@@ -94,6 +98,18 @@ Each droid is pinned to the right model for its job rather than "the best model"
 
 `glm-5.2` supports only `off` and `high` reasoning, so `high` is both its default and its max — the two `glm-5.2` rows differ in job, not effort.
 
+### Fable-class models
+
+Long-horizon models (`claude-fable-5`) earn their multiplier at the **orchestrator level**, where the unknowns work lives (`discovering-unknowns`, `spec`, `grilling`) — run the session there and the deep-tier review `worker`s inherit it for free. Fleet droids stay pinned to their cheaper complementary models. The one pin under trial is `implementer` (`gpt-5.5` at 2x vs `claude-fable-5` at 4x), decided by A/B on the golden pack:
+
+```bash
+scripts/run-golden-task.sh evals/golden-tasks/08-implementer-minimal-fix.md --judge --label a-gpt55
+scripts/run-golden-task.sh evals/golden-tasks/08-implementer-minimal-fix.md --judge --label b-fable \
+  --droid plugins/build/droids/implementer.md --model claude-fable-5 --effort xhigh
+```
+
+Adopt the swap only if the Fable variant wins the rubric on golden 08 **and** one real change-set unit, by enough to justify twice the cost.
+
 ## Layout
 
 ```
@@ -111,6 +127,6 @@ sagar-plugins/
     ├── review/               # 2 droids + 1 skill + 1 command
     ├── synthesis/            # 2 droids
     ├── meta/                 # 2 droids + 1 skill
-    ├── practices/            # 9 skills
+    ├── practices/            # 10 skills
     └── build/                # 2 droids + 1 skill + 1 command
 ```

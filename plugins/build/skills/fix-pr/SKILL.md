@@ -1,6 +1,6 @@
 ---
 name: fix-pr
-version: 2.1.1
+version: 2.2.0
 description: |
   End-to-end PR fix workflow: fetch a PR, read every review comment, reason about whether
   each one is a real bug, fix the valid ones, reply to every comment, resolve the threads,
@@ -376,12 +376,16 @@ Summarize the full workflow result:
 - PR number and title
 - Comments found: <N> total, <M> actionable, <K> skipped
 - Fixed: one line per fix (file + what changed)
+- Deviations: any fix applied differently than the comment suggested, with evidence (or `none`)
 - Skipped: one line per skip with reason
 - Questions replied to: one line per question
 - Threads resolved: <N> of <M>
 - CI status: green / failed / flaky
 - PR approved: yes / n/a (own PR) / no (CI failing)
 - Final state: "Done" or "Approved" or "Blocked - <reason>"
+
+If the fix set was large, offer (do not force) a short comprehension quiz on the changes
+before reporting Done (see the `discovering-unknowns` skill's quiz gate).
 
 ## What Not to Do
 

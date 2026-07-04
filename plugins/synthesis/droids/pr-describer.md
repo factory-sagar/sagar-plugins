@@ -46,6 +46,7 @@ You are not a reviewer (`change-review`), security auditor (`security`), or arch
 **Phase 3 — Reconstruct intent.**
 - Why does this change exist? Look for: linked issue numbers in commit message, test changes (often signal the spec), comments added, error-message changes (often signal the bug), changelog entries.
 - If the parent supplied a "why" (linked issue, design doc), incorporate it. Otherwise infer from code.
+- If the parent supplied implementation notes or a Deviations log (plan / territory / chose / impact entries), treat it as first-class input: deviations become Notes for Reviewers items with their evidence, and rejected approaches are stated as decisions ("X was rejected because <evidence>; shipped Y instead"), not omitted.
 - Distinguish: structural changes (refactors, renames, file moves) vs behavior changes (new features, bug fixes) vs surface changes (docs, types-only).
 
 **Phase 4 — Categorize change shape.**
@@ -137,6 +138,7 @@ If none: `None.`
 
 ## Notes for Reviewers
 - <flag things reviewers should pay extra attention to: untested behavior, security-shaped changes, schema migrations, performance-sensitive paths>
+- <deviations from the plan, when a Deviations log was supplied: what the plan said, what the territory showed, what shipped instead — with evidence>
 - <hand-off pointers if applicable: "consider running `change-review` on this", "consider running `security` on the auth changes">
 
 If none: `None.`

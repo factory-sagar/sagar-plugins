@@ -2,7 +2,7 @@
 
 > Planning and engineering-discipline skills: scope, stress-test, design, set standards, test, and verify.
 
-Nine repeatable flows auto-load when your task matches. Together they cover the loop from a fuzzy idea to a standards-backed, gate-ready change.
+Ten repeatable flows auto-load when your task matches. Together they cover the loop from a fuzzy idea to a standards-backed, gate-ready change.
 
 Skills differ from droids: a skill is a procedure the main agent runs inline (auto-loaded when its description matches your task), while a droid is a sub-agent you delegate to. The skills here recommend delegating to sagar droids at the right moments.
 
@@ -21,6 +21,7 @@ droid plugin install practices@sagar-plugins
 | `architecture-scan` | "architecture scan", "what should we refactor?", "where should this code live?" | Ranks standards-backed refactor candidates and prepares a brief for `tech-spec`. |
 | `grilling` | "grill this plan", "stress-test this design", "poke holes in this" | Interviews the user one question at a time to sharpen the plan, with a recommended answer for each question. |
 | `grill-me` | "grill me" | Starts a `grilling` session. |
+| `discovering-unknowns` | "blindspot pass", "unknown unknowns", "what am I missing?", "help me prompt better" | Map-territory discipline: blind-spot pass for unfamiliar areas, interview and brainstorm patterns for taste-shaped criteria, the shared Deviations contract for territory surprises mid-implementation, and an optional pre-merge quiz gate. |
 | `agentic-engineering` | "AI-assisted work", "model routing", "session strategy", "AI code review checklist" | Operating principles: define completion criteria, decompose into agent-sized units, route models by complexity, measure with evals. |
 | `tdd-workflow` | "TDD", "write tests first", "test-driven", "RED-GREEN-REFACTOR", "fix bug", "add feature" | Test-first discipline: RED checkpoint, GREEN checkpoint, optional REFACTOR. Loads the standards topics that govern tests, seams, async behavior, and observability. |
 | `coding-standards` | "coding standards", "code quality", "boundary parsing", "type contracts", "code review checklist" | Standards router that loads topic docs for modules, boundaries, errors, async workflows, testing, observability, and type contracts. |
@@ -31,6 +32,7 @@ droid plugin install practices@sagar-plugins
 The skills chain into the full procedure loop:
 
 ```
+0. discovering-unknowns       → blind-spot pass when the territory is unfamiliar or criteria are taste-shaped
 1. spec or architecture-scan  → scope the work or rank refactor candidates
 2. grilling / grill-me        → stress-test the plan when requirements are still fuzzy
 3. tech-spec                  → typed contracts, seams, call stacks, and test slices

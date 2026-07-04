@@ -23,6 +23,7 @@ const warn = (file, msg) => warnings.push(`${path.relative(ROOT, file)}: ${msg}`
 // Extend only after checking https://docs.factory.ai/models — a typo'd slug or an
 // unsupported effort silently degrades a droid (glm-5.2 has no xhigh, for example).
 const EFFORT_BY_MODEL = {
+  'claude-fable-5': ['off', 'low', 'medium', 'high', 'xhigh', 'max'],
   'glm-5.2': ['off', 'high'],
   'glm-5.1': ['off', 'high'],
   'kimi-k2.6': ['off', 'high'],
@@ -242,7 +243,8 @@ const bumpIdx = process.argv.indexOf('--require-bumps');
 if (bumpIdx !== -1) {
   const baseRef = process.argv[bumpIdx + 1];
   if (!baseRef) { console.error('--require-bumps requires a git ref'); process.exit(2); }
-  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' });
+  const git = (...args) =>
+    execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
   const gitShow = (ref, p) => {
     try { return git('show', `${ref}:${p}`); } catch { return null; }
   };

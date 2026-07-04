@@ -1,6 +1,6 @@
 ---
 name: review-fix
-version: 1.2.0
+version: 1.3.0
 description: |
   Review a change end-to-end, then fix it. Runs a read-only review (light by default,
   deep on demand), consolidates findings, applies the fixes in code, verifies, commits
@@ -337,6 +337,10 @@ For each **real bug** / **valid improvement** (and accepted nits):
 - Group fixes by file; apply all changes to a file before moving on (avoids line drift). If a
   finding cites a line you already edited, relocate by content, not line number.
 - Re-read each file after editing to confirm the fix is correct.
+- **Deviations contract**: when the code contradicts a finding's suggested fix but the finding
+  is real, take the conservative fix and log the deviation (plan / territory evidence / chose /
+  impact) for the summary. If the contradiction invalidates the finding's premise, reclassify
+  it as a false positive instead of forcing the fix. Never deviate silently.
 
 If the `build` plugin is installed and the fix set is substantial, you may delegate to the
 `implementer` droid with the consolidated finding list. Otherwise apply the edits inline.
@@ -389,8 +393,13 @@ Report:
 - Tier used (light / deep) and why.
 - Findings: <N> total, <M> fixed, <K> skipped (one-line reason each).
 - Fixed: one line per fix (file + change).
+- Deviations: any fix applied differently than the finding suggested (or `none`).
 - Verification: format/lint/typecheck/test status.
 - Commit SHA created (not pushed).
+
+If the fix set was large or the session was long, offer (do not force) a short comprehension
+quiz on the changes — 3-5 questions on behavior and edge cases — before the push decision
+(see the `discovering-unknowns` skill's quiz gate).
 
 Then ask:
 

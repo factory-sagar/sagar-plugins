@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-version: 1.0.0
+version: 1.1.0
 description: |
   Test-driven development discipline with explicit RED-GREEN-REFACTOR phases, Git checkpoint commits
   per phase, 80%+ coverage targets across the unit/integration/E2E test pyramid, and explicit worker
@@ -166,10 +166,12 @@ Requirements:
 - Do NOT modify the tests.
 - Do NOT add functionality the tests don't require (no speculative generality, no extra error handling for cases not asserted).
 - Run the suite after your implementation and confirm all new tests are GREEN AND no existing tests regressed.
+- Deviations contract: if the code contradicts a detail of this plan but the goal stands, take the conservative option and log it under a "Deviations" heading (plan / territory evidence / chose / impact). If the contradiction breaks the plan's premise, STOP and report instead of improvising. Never deviate silently.
 
 Deliverables:
 - The implementation file content.
 - Confirmation that the full test suite is GREEN.
+- Deviations log (or "Deviations: none").
 - Note any places where you were tempted to over-engineer but resisted.
 ```
 
@@ -177,6 +179,7 @@ After the worker returns, **run the full suite yourself** to verify:
 - All new tests are GREEN.
 - No existing tests regressed.
 - The implementation is genuinely minimal (no speculative methods, parameters, or abstractions).
+- The Deviations log is present; carry it forward — it feeds `pr-describer` and the GREEN commit body.
 
 If regressions appeared, decide: is the regression a real bug exposed by the new code (fix it), or did the worker over-modify existing files (push back)?
 

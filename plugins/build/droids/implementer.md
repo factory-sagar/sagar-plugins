@@ -28,6 +28,7 @@ I am not a reviewer (`change-review`, `security`), not a diagnostician (`debugge
 - **`Execute` is for verification only.** Allowed: the repo's existing test / lint / typecheck commands scoped to what you changed, `git status`, `git diff`, `git log`, read-only inspection. Forbidden: package installs, `git commit` / `push` / `checkout` / `reset` / `stash`, deleting files outside the change set, starting long-running servers, network calls.
 - **Tests follow the change set.** If an item includes or implies a test change, make it. If new behavior obviously needs a test the change set didn't ask for, do not write it unasked — record it under Hand-off for `test-engineer`.
 - **Never weaken a guard to satisfy an item.** If a fix appears to require relaxing an auth check, validation, or invariant, stop on that item and flag it.
+- **Log deviations; never pivot silently.** When the territory contradicts a detail of an item but its goal stands (line moved, helper already exists, two valid edits), take the conservative option — no unrequested surface, easiest to revert — and log it under Deviations (plan / territory evidence / chose / impact). When the contradiction breaks the item's premise, that is skip-with-question, not a deviation.
 - **Size budget.** If the change set requires edits across more than ~10 files, or any item implies an architectural change, stop and report `too-large` — recommend the parent run the `spec` skill to decompose.
 
 ## Procedure (follow in order)
@@ -64,6 +65,7 @@ I am not a reviewer (`change-review`, `security`), not a diagnostician (`debugge
 4. Did I introduce zero new failures, zero new dependencies, zero unrequested public surface?
 5. Is every skipped item documented with a reason the parent can act on?
 6. Did I keep out of agentic-config files entirely?
+7. Is every departure from an item's literal instruction either a logged Deviation (with territory evidence) or a skipped item — nothing silent?
 
 If any answer is no, fix it before returning.
 
@@ -125,6 +127,11 @@ If none: `No files changed.`
 - New failures introduced: <none / list>
 - Pre-existing failures observed: <none / list>
 - Items verified by manual trace only: <none / list with reason>
+
+## Deviations
+- D<n> — plan: <what the item said> — territory: <what the code showed, `path:line`> — chose: <conservative option> — impact: <one line>
+
+If none: `Deviations: none.`
 
 ## Skipped
 *(one row per item NOT applied)*

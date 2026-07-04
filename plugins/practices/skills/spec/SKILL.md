@@ -1,6 +1,6 @@
 ---
 name: spec
-version: 1.0.0
+version: 1.1.0
 description: |
   Turn a fuzzy feature request into a concrete spec (goal, acceptance criteria, scope, constraints,
   open questions) AND decompose it into agent-sized units, each tagged with the recommended sagar
@@ -68,6 +68,8 @@ Inline (no delegation). Restate the request in your own words in 1–2 sentences
 - **Hard constraints**: what cannot move (deadline, runtime, dependency, compliance, customer expectation)?
 
 If any of these are genuinely unclear (not just unstated, but ambiguous), **ask one focused question** before continuing. Do not invent answers. One question, not a list — the user is trying to delegate, not fill out a form.
+
+If the operator is new to the target area, or the criteria are taste-shaped ("I'll know it when I see it"), run the `discovering-unknowns` blind-spot pass before finalizing this phase — its evidence-backed unknowns and architecture-changing questions feed directly into Phase 2's anchor and this phase's constraints.
 
 ### Phase 2 — Anchor in the existing system (delegate if needed)
 

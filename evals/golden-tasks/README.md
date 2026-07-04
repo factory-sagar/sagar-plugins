@@ -25,6 +25,7 @@ Run a task headlessly with `scripts/run-golden-task.sh <task-file> [--judge]`: i
 | [`09-security-seeded-vuln.md`](./09-security-seeded-vuln.md) | `security` | yes |
 | [`10-review-fix-tier-selection.md`](./10-review-fix-tier-selection.md) | `review-fix` | yes |
 | [`11-fix-pr-comment-triage.md`](./11-fix-pr-comment-triage.md) | `fix-pr` | no |
+| [`12-blindspot-pass.md`](./12-blindspot-pass.md) | `discovering-unknowns` | no |
 
 ## Scoring
 
@@ -40,6 +41,6 @@ For an overall score, count `pass` as 1, `partial` as 0.5, and `fail` as 0. Crit
 
 1. Save the current output for each task as the baseline (`evals/baselines/<task>.md`).
 2. Apply one prompt change set.
-3. Re-run every task whose target the change touches (all eleven for fleet-wide changes).
+3. Re-run every task whose target the change touches (all twelve for fleet-wide changes).
 4. Compare against the baseline diff and score with the rubric (or `--judge`).
 5. Keep the change only if all critical tasks pass and the total score is at least 85%.
