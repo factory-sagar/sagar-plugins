@@ -1,0 +1,45 @@
+plugins/practices/skills/tdd-workflow/SKILL.md
+  569515f3c6ec4b56 3,169,174
+evals/golden-tasks/README.md
+  569515f3c6ec4b56 44
+README.md
+  569515f3c6ec4b56 130
+plugins/practices/README.md
+  569515f3c6ec4b56 5,35
+plugins/practices/skills/spec/SKILL.md
+  569515f3c6ec4b56 3,72-73
+evals/golden-tasks/12-blindspot-pass.md
+  569515f3c6ec4b56 1-70
+plugins/build/skills/fix-pr/SKILL.md
+  569515f3c6ec4b56 3,379,387-388
+plugins/build/droids/implementer.md
+  569515f3c6ec4b56 131-135
+scripts/run-golden-task.sh
+  569515f3c6ec4b56 4,9-15,17-20,26-40,43,67-77
+scripts/validate.mjs
+  569515f3c6ec4b56 26
+plugins/practices/skills/discovering-unknowns/SKILL.md
+  569515f3c6ec4b56 1-180
+plugins/review/skills/review-fix/SKILL.md
+  569515f3c6ec4b56 340-343,396,400-402
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "51c745c66b53f9434e3387f7303e36d012fd3746",
+  "prompts": {
+    "569515f3c6ec4b56": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "31c95b9b-5fb4-4e61-bb7f-a0794c618784",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 320,
+      "total_deletions": 14,
+      "accepted_lines": 320,
+      "overriden_lines": 0
+    }
+  }
+}
