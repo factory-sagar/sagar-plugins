@@ -384,9 +384,6 @@ Summarize the full workflow result:
 - PR approved: yes / n/a (own PR) / no (CI failing)
 - Final state: "Done" or "Approved" or "Blocked - <reason>"
 
-If the fix set was large, offer (do not force) a short comprehension quiz on the changes
-before reporting Done (see the `discovering-unknowns` skill's quiz gate).
-
 ## What Not to Do
 
 - Do not blindly apply suggestions without reasoning about whether they are correct.

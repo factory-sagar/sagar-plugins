@@ -32,7 +32,7 @@ droid plugin install practices@sagar-plugins
 The skills chain into the full procedure loop:
 
 ```
-0. discovering-unknowns       → blind-spot pass when the territory is unfamiliar or criteria are taste-shaped
+0. discovering-unknowns       → (optional) blind-spot pass when the territory is unfamiliar or criteria are taste-shaped
 1. spec or architecture-scan  → scope the work or rank refactor candidates
 2. grilling / grill-me        → stress-test the plan when requirements are still fuzzy
 3. tech-spec                  → typed contracts, seams, call stacks, and test slices

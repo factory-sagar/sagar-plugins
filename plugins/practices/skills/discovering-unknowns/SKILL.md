@@ -153,7 +153,7 @@ before push, not as a formality. Offer it; never force it.
 | Taste-shaped criteria | Brainstorm and react | `tech-spec` alternatives |
 | Handing a unit to `implementer` / `worker` | Deviations contract in the prompt | report's `## Deviations` |
 | `tdd-workflow` Step 4, `review-fix` Step 5 | Deviations contract | `pr-describer` Notes for Reviewers |
-| Before push/merge of a long session | Quiz gate offer | operator confidence |
+| Before push/merge of a long session | Quiz gate (on request only — not part of the standard loop) | operator confidence |
 
 Long-horizon models (the Fable-class tier) raise the ceiling on all of this: the more work
 one prompt buys, the more unknowns it will cross, so the bottleneck moves to how well the

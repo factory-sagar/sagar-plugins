@@ -45,7 +45,7 @@ Total: 12 droids, 13 skills, 2 commands. (CI recomputes these counts from the fi
 The plugins compose into one delegation and procedure loop:
 
 ```
-discovering-unknowns      → blind-spot pass when the territory is unfamiliar
+optionally discovering-unknowns → blind-spot pass first, when the territory is unfamiliar
   │
   ▼
 spec / architecture-scan  → scope the work or rank refactor candidates

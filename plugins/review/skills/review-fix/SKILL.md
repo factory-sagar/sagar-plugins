@@ -397,10 +397,6 @@ Report:
 - Verification: format/lint/typecheck/test status.
 - Commit SHA created (not pushed).
 
-If the fix set was large or the session was long, offer (do not force) a short comprehension
-quiz on the changes — 3-5 questions on behavior and edge cases — before the push decision
-(see the `discovering-unknowns` skill's quiz gate).
-
 Then ask:
 
 ```
