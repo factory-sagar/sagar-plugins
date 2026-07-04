@@ -1,0 +1,27 @@
+plugins/review/README.md
+  569515f3c6ec4b56 17,40
+scripts/validate.mjs
+  569515f3c6ec4b56 23-26,29,32-33,36
+plugins/review/droids/change-review.md
+  569515f3c6ec4b56 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "f01c5c6c6b4e900a557a994f1ac64b779c83775b",
+  "prompts": {
+    "569515f3c6ec4b56": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "31c95b9b-5fb4-4e61-bb7f-a0794c618784",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 9,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    }
+  }
+}
