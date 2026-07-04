@@ -93,10 +93,10 @@ Each droid is pinned to the right model for its job rather than "the best model"
 | `gpt-5.5` (xhigh) | Highest-reasoning implementation tier | `implementer` |
 | `gpt-5.4` (xhigh) | Deep reasoning; investigations, root-cause, security, prompt application | `deep-understanding`, `debugger`, `security`, `doc-generator` |
 | `claude-opus-4-8` (xhigh) | Strong prompt critique and adherence diagnosis; deep external research | `prompt-optimizer`, `deep-research` |
-| `glm-5.2` (high) | Different distribution at its max reasoning; strict last-gate correctness review that complements `gpt-5.4` | `change-review` |
+| `glm-5.2` (max) | Different distribution at its max reasoning; strict last-gate correctness review that complements `gpt-5.4` | `change-review` |
 | `claude-opus-4-8` (high) | Strongest natural prose; PR synthesis | `pr-describer` |
 
-`glm-5.2` supports only `off` and `high` reasoning, so `high` is both its default and its max — the two `glm-5.2` rows differ in job, not effort.
+`glm-5.2` supports `off`, `high` (default), and `max` per the CLI's model registry (the docs page lags): the triage/format droids run its `high` default, `change-review` runs `max`. The validator's effort compatibility map is extracted from the CLI registry, not the docs.
 
 ### Fable-class models
 

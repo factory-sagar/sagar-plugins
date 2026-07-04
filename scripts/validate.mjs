@@ -20,18 +20,20 @@ const fail = (file, msg) => errors.push(`${path.relative(ROOT, file)}: ${msg}`);
 const warn = (file, msg) => warnings.push(`${path.relative(ROOT, file)}: ${msg}`);
 
 // Model allowlist and per-model reasoningEffort compatibility.
-// Extend only after checking https://docs.factory.ai/models — a typo'd slug or an
-// unsupported effort silently degrades a droid (glm-5.2 has no xhigh, for example).
+// Source of truth is the CLI's embedded model registry, NOT the docs page (which lags —
+// it omitted glm-5.2's `max`, for example). Re-extract when models change:
+//   rg -a -o '"<model>":\{id:"<model>".{0,700}?reasoningEffort:\{supported:\[[^\]]*\]' "$(which droid)"
+// A typo'd slug or an unsupported effort silently degrades a droid.
 const EFFORT_BY_MODEL = {
   'claude-fable-5': ['off', 'low', 'medium', 'high', 'xhigh', 'max'],
-  'glm-5.2': ['off', 'high'],
+  'glm-5.2': ['off', 'high', 'max'],
   'glm-5.1': ['off', 'high'],
   'kimi-k2.6': ['off', 'high'],
-  'gpt-5.5': ['none', 'low', 'medium', 'high', 'xhigh'],
-  'gpt-5.4': ['none', 'low', 'medium', 'high', 'xhigh'],
+  'gpt-5.5': ['low', 'medium', 'high', 'xhigh'],
+  'gpt-5.4': ['low', 'medium', 'high', 'xhigh'],
   'gpt-5.2': ['off', 'low', 'medium', 'high', 'xhigh'],
   'claude-opus-4-8': ['off', 'low', 'medium', 'high', 'xhigh', 'max'],
-  'claude-opus-4-7': ['off', 'low', 'medium', 'high', 'max'],
+  'claude-opus-4-7': ['off', 'low', 'medium', 'high', 'xhigh', 'max'],
   'claude-sonnet-4-6': ['off', 'low', 'medium', 'high', 'max'],
 };
 // Repo policy (README "Models"): no `inherit` — pinned slugs keep droid output
