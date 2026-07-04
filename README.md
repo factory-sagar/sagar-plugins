@@ -90,7 +90,7 @@ Each droid is pinned to the right model for its job rather than "the best model"
 | --- | --- | --- |
 | `glm-5.2` (high) | Fast and cheap; triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
 | `gpt-5.4` (high) | Strong reasoning; test writing | `test-engineer` |
-| `gpt-5.5` (xhigh) | Highest-reasoning implementation tier | `implementer` |
+| `claude-fable-5` (xhigh) | Long-horizon implementation tier; adopted over gpt-5.5 by A/B (2026-07-04) | `implementer` |
 | `gpt-5.4` (xhigh) | Deep reasoning; investigations, root-cause, security, prompt application | `deep-understanding`, `debugger`, `security`, `doc-generator` |
 | `claude-opus-4-8` (xhigh) | Strong prompt critique and adherence diagnosis; deep external research | `prompt-optimizer`, `deep-research` |
 | `glm-5.2` (max) | Different distribution at its max reasoning; strict last-gate correctness review that complements `gpt-5.4` | `change-review` |
@@ -100,15 +100,11 @@ Each droid is pinned to the right model for its job rather than "the best model"
 
 ### Fable-class models
 
-Long-horizon models (`claude-fable-5`) earn their multiplier at the **orchestrator level**, where the unknowns work lives (`discovering-unknowns`, `spec`, `grilling`) — run the session there and the deep-tier review `worker`s inherit it for free. Fleet droids stay pinned to their cheaper complementary models. The one pin under trial is `implementer` (`gpt-5.5` at 2x vs `claude-fable-5` at 4x), decided by A/B on the golden pack:
+Long-horizon models (`claude-fable-5`) earn their multiplier at the **orchestrator level**, where the unknowns work lives (`discovering-unknowns`, `spec`, `grilling`) — run the session there and the deep-tier review `worker`s inherit it for free.
 
-```bash
-scripts/run-golden-task.sh evals/golden-tasks/08-implementer-minimal-fix.md --judge --label a-gpt55
-scripts/run-golden-task.sh evals/golden-tasks/08-implementer-minimal-fix.md --judge --label b-fable \
-  --droid plugins/build/droids/implementer.md --model claude-fable-5 --effort xhigh
-```
+`implementer` is pinned to `claude-fable-5` (xhigh) by A/B against `gpt-5.5` (2026-07-04): golden 08 tied at pass, and the real-unit leg won on convention fit (schema-level clamp matching sibling routes), verification rigor (full domain suite + strict lint vs one test file), and Deviations discipline (evidence-anchored log vs a silent deviation), with `change-review` returning zero findings on both diffs. `gpt-5.5` (xhigh) is the recorded fallback pin if Fable availability or cost changes.
 
-Adopt the swap only if the Fable variant wins the rubric on golden 08 **and** one real change-set unit, by enough to justify twice the cost.
+**Model A/Bs for droids must run in-session, not through the runner**: `droid exec` exposes no Task tool, so an exec session cannot spawn pinned droids — a droid-targeted golden under `scripts/run-golden-task.sh` measures contract adherence of the exec session model, not the pinned droid. To A/B a droid's model: write a temporary variant (e.g. `implementer-fable`) into the working repo's `.factory/droids/`, run both legs from a live session via the Task tool against isolated scratch dirs or worktrees, judge with `evals/golden-tasks/JUDGE.md`, and have `change-review` verdict both diffs.
 
 ## Layout
 

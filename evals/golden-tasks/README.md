@@ -4,6 +4,8 @@ This pack gives prompt changes a repeatable regression check before they ship. R
 
 Run a task headlessly with `scripts/run-golden-task.sh <task-file> [--judge]`: it extracts the task's optional ` ```bash ` Setup block into a scratch git repo, runs the ` ```text ` Prompt via `droid exec`, saves the transcript under `evals/runs/`, and with `--judge` scores it against [`JUDGE.md`](./JUDGE.md). Accepted transcripts live in [`../baselines/`](../baselines/) and are diffed on later runs.
 
+Droid-targeted tasks run inline on the exec session model because `droid exec` has no Task tool — the runner therefore measures contract adherence for droid tasks, not the pinned model. Model A/Bs for droids run in-session via the Task tool with a temporary `.factory/droids/` variant (see the root README "Fable-class models").
+
 ## Pass rule
 
 - All critical tasks must pass.

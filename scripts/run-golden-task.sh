@@ -7,17 +7,16 @@
 #   1. Extracts the task's Target, optional ```bash Setup block, and ```text Prompt block.
 #   2. Creates a scratch git repo, runs Setup inside it.
 #   3. With --droid/--model: writes a model-variant copy of that droid into the scratch
-#      repo's .factory/droids/ (project droids shadow installed ones) — this is the A/B
-#      mechanism for trialing a model swap on one droid without touching the plugin.
+#      repo's .factory/droids/. LIMITATION: droid exec has no Task tool, so droid-targeted
+#      tasks run inline on the exec session model — this flag does NOT produce a true model
+#      A/B for droids. For that, run both legs in-session via Task (see README "Fable-class
+#      models"). Skill-targeted tasks are unaffected.
 #   4. Invokes `droid exec` against the scratch repo with the composed prompt.
 #   5. Writes the transcript to evals/runs/<timestamp>-<task>[-<label>]/transcript.md.
 #   6. With --judge: scores the transcript against the task rubric via JUDGE.md.
 #   7. Diffs against evals/baselines/<task>.md when a baseline exists.
 #
-# A/B example (implementer on gpt-5.5 vs claude-fable-5, golden 08):
-#   scripts/run-golden-task.sh evals/golden-tasks/08-implementer-minimal-fix.md --judge --label a-gpt55
-#   scripts/run-golden-task.sh evals/golden-tasks/08-implementer-minimal-fix.md --judge --label b-fable \
-#     --droid plugins/build/droids/implementer.md --model claude-fable-5 --effort xhigh
+#   (For droid model A/Bs, do NOT use this script — see README "Fable-class models".)
 #
 # Requires: droid CLI on PATH, the relevant plugins installed.
 set -euo pipefail

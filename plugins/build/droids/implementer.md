@@ -1,7 +1,7 @@
 ---
 name: implementer
 description: Apply an approved change set to code — review findings, a spec unit, or an explicit fix list. Makes the smallest change that closes each item, runs targeted verification, and reports file by file. Pairs with change-review and security (which find) — this droid fixes.
-model: gpt-5.5
+model: claude-fable-5
 reasoningEffort: xhigh
 tools: ["Read", "LS", "Grep", "Glob", "Execute", "Edit", "Create", "ApplyPatch"]
 ---

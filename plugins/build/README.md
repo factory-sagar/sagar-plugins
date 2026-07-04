@@ -14,7 +14,7 @@ droid plugin install build@sagar-plugins
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `implementer` | Apply an approved change set: `change-review` / `security` findings, a `spec` unit, or an explicit fix list. Makes the smallest change that closes each item, with targeted verification. | `gpt-5.5` | `xhigh` | full read/write + `Execute` (verification only) |
+| `implementer` | Apply an approved change set: `change-review` / `security` findings, a `spec` unit, or an explicit fix list. Makes the smallest change that closes each item, with targeted verification. | `claude-fable-5` | `xhigh` | full read/write + `Execute` (verification only) |
 | `test-engineer` | Find the riskiest untested behavior (gap analysis) or write the missing tests (write mode, including TDD RED). Pins current behavior; never encodes guesses. | `gpt-5.4` | `high` | full read/write + `Execute` (test runs only) |
 
 ## Skills
@@ -35,7 +35,7 @@ Commands: `/fix-pr <PR URL or number>` runs the skill directly. `/implement <tas
 
 ## Models
 
-`implementer` runs `gpt-5.5` at `xhigh` for high-stakes code changes where invariants and repo conventions matter. `test-engineer` stays on `gpt-5.4` at `high` for focused test gap analysis and test writing. The `fix-pr` skill runs inline on your session model.
+`implementer` runs `claude-fable-5` at `xhigh` for high-stakes code changes where invariants and repo conventions matter — adopted over `gpt-5.5` by A/B (2026-07-04); `gpt-5.5` at `xhigh` is the recorded fallback pin. `test-engineer` stays on `gpt-5.4` at `high` for focused test gap analysis and test writing. The `fix-pr` skill runs inline on your session model.
 
 ## Related plugins
 
