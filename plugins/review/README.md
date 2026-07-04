@@ -14,7 +14,7 @@ droid plugin install review@sagar-plugins
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `change-review` | Strict last-gate reviewer for diffs, commits, branches, or named files. Correctness, consent and auth gates, rollback, event reliability. | `glm-5.2` | `xhigh` | read-only + `Execute` |
+| `change-review` | Strict last-gate reviewer for diffs, commits, branches, or named files. Correctness, consent and auth gates, rollback, event reliability. | `glm-5.2` | `high` | read-only + `Execute` |
 | `security` | Evidence-based security reviewer using STRIDE and OWASP. Verifies CVEs against trusted sources (NVD, GHSA). | `gpt-5.4` | `xhigh` | read-only + `Execute` + `WebSearch` + `FetchUrl` |
 
 ## Skills
@@ -37,7 +37,7 @@ The deep tier treats the notes doc as the single source of truth: it verifies ea
 
 ## Models
 
-`change-review` runs on `glm-5.2` at max reasoning (`xhigh`) and `security` runs on `gpt-5.4`. Different model families with different training distributions catch different bugs, so running both in parallel gives broader coverage than running either twice. `change-review` carries the strict label-list output contract and `[P<n>·<conf>]` confidence labels; `security` focuses on attack-path and cross-domain issues through STRIDE and OWASP lenses.
+`change-review` runs on `glm-5.2` at its max reasoning (`high` — glm-5.2 supports only `off`/`high`) and `security` runs on `gpt-5.4`. Different model families with different training distributions catch different bugs, so running both in parallel gives broader coverage than running either twice. `change-review` carries the strict label-list output contract and `[P<n>·<conf>]` confidence labels; `security` focuses on attack-path and cross-domain issues through STRIDE and OWASP lenses.
 
 ## Related plugins
 

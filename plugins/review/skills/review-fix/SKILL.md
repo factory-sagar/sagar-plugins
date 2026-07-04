@@ -1,6 +1,6 @@
 ---
 name: review-fix
-version: 1.1.0
+version: 1.2.0
 description: |
   Review a change end-to-end, then fix it. Runs a read-only review (light by default,
   deep on demand), consolidates findings, applies the fixes in code, verifies, commits
@@ -83,6 +83,12 @@ git diff --staged
 
 Capture: changed file count, total added+removed lines, and the list of changed paths. You
 need these for the tier heuristic in Step 2.
+
+**Rolling / stacked PRs:** if the branch follows a one-commit-per-unit convention (commit
+subjects like `U0`, `A4 [WP2]`, lane/unit prefixes, or the PR body describes per-unit landing),
+do not review the whole branch as one blob. Ask which unit(s) to review, or default to the
+commits not yet reviewed, and scope the diff per commit (`git show <sha>`). The tier heuristic
+then applies per unit, not to the branch total.
 
 If the target is a PR, check out its branch (see the `fix-pr` skill's checkout step) so you can
 apply fixes locally. For a local branch / staged changes, work in place. Confirm the working
@@ -206,7 +212,9 @@ Use the convention-discovery procedure in <DISCOVERY_DOC>. Run it against the di
 Notes doc path: <NOTES_PATH>
 Review notes format: <FORMAT_DOC>
 Convention backstop (if installed): ../../../practices/skills/coding-standards/SKILL.md and its
-topic docs. Also discover the TARGET repo's own convention docs (Glob "docs/**/*.md",
+topic docs; if that relative path does not resolve, Glob for
+"**/practices/skills/coding-standards/SKILL.md" before treating the backstop as absent. Also
+discover the TARGET repo's own convention docs (Glob "docs/**/*.md",
 "**/AGENTS.md", touched-workspace READMEs).
 
 Append every pattern-check you produce to the "## Pattern Checks" section of the notes doc using
@@ -342,13 +350,21 @@ frontmatter validator when you edited those files). Run validators for the file 
 touched.
 
 Run in an efficient order: the **affected/changed-area tests first** (fast feedback on your
-fixes), then the **full suite** and the repo-specific validators.
+fixes), then the **full suite** and the repo-specific validators. If the repo declares a master
+gate (`npm run verify`, `make check`, a CI-mirroring script), finish with that — it is the
+definition of green, not your reconstruction of it.
 
 ```bash
 npm run format && npm run lint && npm run typecheck
 npm test -- <changed area>     # affected tests first
 npm test                       # then the full suite
+npm run verify                 # master gate last, when the repo declares one
 ```
+
+**Ratchet / freeze gates:** repos may enforce shrink-only baselines (inline-5xx counts, `.sort`
+counts, size budgets, dependency-age gates). If one of your fixes trips such a gate, make the
+code comply — never raise a baseline to get green. If a fix legitimately lowers a count, lower
+the baseline in the same commit to lock in the win.
 
 Fix any failure your changes introduced before committing. Do not commit broken code.
 

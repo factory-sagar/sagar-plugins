@@ -14,7 +14,7 @@ droid plugin install synthesis@sagar-plugins
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `pr-describer` | Write a PR title and body from a diff. Structured what, why, testing, breaking changes, follow-ups, and notes for reviewers. | `inherit` (Claude) | `high` | read-only + `Execute` |
+| `pr-describer` | Write a PR title and body from a diff. Structured what, why, testing, breaking changes, follow-ups, and notes for reviewers. | `claude-opus-4-8` | `high` | read-only + `Execute` |
 | `commit-message-writer` | Write a Conventional Commits message from staged or specified changes. Fast and format-mechanical. | `glm-5.2` | default | read-only + `Execute` |
 
 ## Usage
@@ -24,7 +24,7 @@ droid plugin install synthesis@sagar-plugins
 
 ## Models
 
-`commit-message-writer` runs on `glm-5.2` because the format is mechanical and the output is short, so fast and cheap is the right call. `pr-describer` runs on Claude (`inherit`) because the body is multi-paragraph prose, and Claude has consistently produced the cleanest natural prose in this marketplace's testing.
+`commit-message-writer` runs on `glm-5.2` because the format is mechanical and the output is short, so fast and cheap is the right call. `pr-describer` runs pinned on `claude-opus-4-8` because the body is multi-paragraph prose, and Claude has consistently produced the cleanest natural prose in this marketplace's testing. It is pinned (not `inherit`) so the output distribution never depends on the parent session's model.
 
 ## Related plugins
 

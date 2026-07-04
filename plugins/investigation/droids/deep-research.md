@@ -1,7 +1,7 @@
 ---
 name: deep-research
 description: Thorough external research on a focused question using web search and trusted sources. Returns a synthesized answer with cited evidence, confidence labels, and a list of open questions. Use when the question lives outside the repo.
-model: inherit
+model: claude-opus-4-8
 reasoningEffort: xhigh
 tools: ["Read", "LS", "Grep", "Glob", "Execute", "WebSearch", "FetchUrl"]
 ---

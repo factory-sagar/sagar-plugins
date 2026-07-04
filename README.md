@@ -27,13 +27,13 @@ Or browse interactively with `/plugins`.
 | Plugin | Contents | Category |
 | --- | --- | --- |
 | [`investigation`](./plugins/investigation/) | Droids: `quick-analysis`, `deep-understanding`, `deep-research`, `debugger` | research |
-| [`review`](./plugins/review/) | Droids: `change-review`, `security` | quality |
+| [`review`](./plugins/review/) | Droids: `change-review`, `security`; Skill: `review-fix` (+ `/review-fix` command) | quality |
 | [`synthesis`](./plugins/synthesis/) | Droids: `pr-describer`, `commit-message-writer` | productivity |
 | [`meta`](./plugins/meta/) | Droids: `prompt-optimizer`, `doc-generator`; Skill: `audit-and-apply-loop` | productivity |
 | [`practices`](./plugins/practices/) | Skills: planning (`spec`, `tech-spec`, `architecture-scan`, `grilling`, `grill-me`) + discipline (`agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`) | productivity |
 | [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skill: `fix-pr` (+ `/fix-pr` command) | productivity |
 
-Total: 12 droids, 11 skills, 1 command.
+Total: 12 droids, 12 skills, 2 commands. (CI recomputes these counts from the filesystem; see [Validation](#validation).)
 
 ## Concepts
 
@@ -56,6 +56,7 @@ spec / architecture-scan  → scope the work or rank refactor candidates
   ├── implementation:  tdd-workflow + coding-standards (skills the main agent runs)
   ├── verification:    verification-loop (skill)
   └── review:          change-review + security (droids)
+                       or review-fix (skill): review read-only, fix, verify, commit — ask before push
   │
   ▼
 synthesis: pr-describer + commit-message-writer
@@ -67,19 +68,31 @@ A separate meta loop improves the droid prompts themselves: `prompt-optimizer` a
 
 Prompt upgrades are checked against the golden-task pack in [`evals/golden-tasks/`](./evals/golden-tasks/). Critical goldens must all pass, and the overall pack must score at least 85% before a prompt rewrite is considered ready.
 
+Run a task headlessly with [`scripts/run-golden-task.sh`](./scripts/run-golden-task.sh); score the transcript with the [`evals/golden-tasks/JUDGE.md`](./evals/golden-tasks/JUDGE.md) rubric prompt. Accepted outputs are stored under [`evals/baselines/`](./evals/baselines/) and diffed on the next run.
+
+## Validation
+
+`node scripts/validate.mjs` enforces the repo's structural invariants: manifest JSON validity and name/dir agreement, marketplace and plugin description equality, droid frontmatter (valid model IDs, per-model `reasoningEffort` compatibility, known tool IDs, output contract present), skill frontmatter (semver version), README counts vs the filesystem, resolvable cross-plugin `.md` references, and golden-task targets that exist. CI runs it on every push and PR; PRs additionally require a `plugin.json` version bump for any plugin whose files changed (`--require-bumps`).
+
+## Versioning
+
+One rule: any change under `plugins/<name>/` bumps that plugin's `plugin.json` version (semver). Skills additionally carry their own `version` frontmatter and bump it when their content changes. Droids version through their plugin only — droid frontmatter has no version field because `DroidValidator` only accepts documented keys. CI enforces the plugin-level bump on PRs.
+
 ## Models
 
-Each droid is pinned to the right model for its job rather than "the best model" for everything, because different model families catch different things.
+Each droid is pinned to the right model for its job rather than "the best model" for everything, because different model families catch different things. No droid uses `inherit`: a pinned slug keeps a droid's output distribution independent of whatever model the parent session happens to run, and `reasoningEffort` is ignored under `inherit`. Every droid also pins `reasoningEffort` explicitly.
 
 | Model | Tier | Used by |
 | --- | --- | --- |
-| `glm-5.2` | Fast and cheap; triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
+| `glm-5.2` (high) | Fast and cheap; triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
 | `gpt-5.4` (high) | Strong reasoning; test writing | `test-engineer` |
 | `gpt-5.5` (xhigh) | Highest-reasoning implementation tier | `implementer` |
 | `gpt-5.4` (xhigh) | Deep reasoning; investigations, root-cause, security, prompt application | `deep-understanding`, `debugger`, `security`, `doc-generator` |
-| `claude-opus-4-8` (xhigh) | Strong prompt critique and adherence diagnosis | `prompt-optimizer` |
-| `glm-5.2` (xhigh) | Different distribution at max reasoning; strict last-gate correctness review that complements `gpt-5.4` | `change-review` |
-| `inherit` (Claude Opus) | Strongest natural prose; synthesis and external research | `pr-describer`, `deep-research` |
+| `claude-opus-4-8` (xhigh) | Strong prompt critique and adherence diagnosis; deep external research | `prompt-optimizer`, `deep-research` |
+| `glm-5.2` (high) | Different distribution at its max reasoning; strict last-gate correctness review that complements `gpt-5.4` | `change-review` |
+| `claude-opus-4-8` (high) | Strongest natural prose; PR synthesis | `pr-describer` |
+
+`glm-5.2` supports only `off` and `high` reasoning, so `high` is both its default and its max — the two `glm-5.2` rows differ in job, not effort.
 
 ## Layout
 
@@ -87,11 +100,15 @@ Each droid is pinned to the right model for its job rather than "the best model"
 sagar-plugins/
 ├── .factory-plugin/
 │   └── marketplace.json
+├── .github/
+│   └── workflows/            # validate.yml — structural invariants + version bumps
+├── scripts/                  # validate.mjs, run-golden-task.sh
 ├── evals/
-│   └── golden-tasks/        # prompt regression tasks and rubrics
+│   ├── golden-tasks/         # prompt regression tasks, rubrics, JUDGE.md
+│   └── baselines/            # accepted golden-task outputs (regression reference)
 └── plugins/
     ├── investigation/        # 4 droids
-    ├── review/               # 2 droids
+    ├── review/               # 2 droids + 1 skill + 1 command
     ├── synthesis/            # 2 droids
     ├── meta/                 # 2 droids + 1 skill
     ├── practices/            # 9 skills

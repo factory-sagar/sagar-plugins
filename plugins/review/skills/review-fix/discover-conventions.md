@@ -30,8 +30,9 @@ Two sources, in priority order:
 
 1. **The target repo's own docs** — the authoritative conventions for the code under review.
 2. **The `coding-standards` backstop** (if the `practices` plugin is installed):
-   `../../../practices/skills/coding-standards/SKILL.md` is a router; load only the topic docs
-   matching the change:
+   `../../../practices/skills/coding-standards/SKILL.md` is a router; if that relative path does
+   not resolve, `Glob` for `**/practices/skills/coding-standards/SKILL.md` before treating the
+   backstop as absent. Load only the topic docs matching the change:
    - modules, interfaces, seams, dependencies → `DESIGNING_MODULES.md`
    - parsing, DTOs, storage, config, projections → `BOUNDARIES_AND_PARSING.md`
    - expected failures, catch behavior, classification → `ERROR_HANDLING.md`

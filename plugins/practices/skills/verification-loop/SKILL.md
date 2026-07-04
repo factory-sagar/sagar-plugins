@@ -1,6 +1,6 @@
 ---
 name: verification-loop
-version: 1.0.0
+version: 1.1.0
 description: |
   Four-phase quality gate (build, type-check, lint, tests with coverage) with explicit worker
   delegation per phase for long-running commands. Catches regressions before review, surfaces
@@ -57,6 +57,10 @@ Inline. Use these signals:
 If commands genuinely aren't declared, look for the framework defaults (`pnpm exec tsc --noEmit` for TypeScript, `ruff check .` for Python ruff, etc.) — and **note the inferred command** in the output so the user can confirm.
 
 If you can't determine the command for a phase, mark that phase `n/a (no tooling detected)` in the output. Don't fabricate a command.
+
+**Master gate:** if the repo declares an umbrella verification script (`npm run verify`, `make check`, a script CI runs verbatim), treat it as the canonical definition of green. Run the four phases for fast targeted feedback, then finish with the master gate — a repo-specific validator you didn't reconstruct (freeze gates, duplicate-code checks, docs validators) only shows up there.
+
+**Ratchet / freeze gates:** some repos enforce shrink-only baselines (occurrence counts, size budgets, dependency-age gates). These are part of the test phase's pass condition: a change must comply with the current baseline. Never raise a baseline to pass; if the change legitimately lowers a count, lower the baseline in the same change to lock in the win, and say so in the output.
 
 For prompt, plugin, config, and documentation repositories with no build/test tooling, still run applicable static checks based on changed files:
 

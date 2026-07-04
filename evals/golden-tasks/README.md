@@ -2,6 +2,8 @@
 
 This pack gives prompt changes a repeatable regression check before they ship. Run each task against the relevant skill or droid, then score the output against the rubric in the task file.
 
+Run a task headlessly with `scripts/run-golden-task.sh <task-file> [--judge]`: it extracts the task's optional ` ```bash ` Setup block into a scratch git repo, runs the ` ```text ` Prompt via `droid exec`, saves the transcript under `evals/runs/`, and with `--judge` scores it against [`JUDGE.md`](./JUDGE.md). Accepted transcripts live in [`../baselines/`](../baselines/) and are diffed on later runs.
+
 ## Pass rule
 
 - All critical tasks must pass.
@@ -19,6 +21,10 @@ This pack gives prompt changes a repeatable regression check before they ship. R
 | [`05-standards-backed-review.md`](./05-standards-backed-review.md) | `change-review` | yes |
 | [`06-tdd-workflow-plan.md`](./06-tdd-workflow-plan.md) | `tdd-workflow` | yes |
 | [`07-verification-loop.md`](./07-verification-loop.md) | `verification-loop` | no |
+| [`08-implementer-minimal-fix.md`](./08-implementer-minimal-fix.md) | `implementer` | yes |
+| [`09-security-seeded-vuln.md`](./09-security-seeded-vuln.md) | `security` | yes |
+| [`10-review-fix-tier-selection.md`](./10-review-fix-tier-selection.md) | `review-fix` | yes |
+| [`11-fix-pr-comment-triage.md`](./11-fix-pr-comment-triage.md) | `fix-pr` | no |
 
 ## Scoring
 
@@ -32,8 +38,8 @@ For an overall score, count `pass` as 1, `partial` as 0.5, and `fail` as 0. Crit
 
 ## Regression workflow
 
-1. Save the current output for each task as the baseline.
+1. Save the current output for each task as the baseline (`evals/baselines/<task>.md`).
 2. Apply one prompt change set.
-3. Re-run all seven tasks.
-4. Compare against the baseline and the rubric.
+3. Re-run every task whose target the change touches (all eleven for fleet-wide changes).
+4. Compare against the baseline diff and score with the rubric (or `--judge`).
 5. Keep the change only if all critical tasks pass and the total score is at least 85%.

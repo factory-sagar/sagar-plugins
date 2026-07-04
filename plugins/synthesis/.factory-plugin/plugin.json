@@ -1,7 +1,7 @@
 {
   "name": "synthesis",
-  "version": "1.0.0",
-  "description": "Synthesis droids: PR description writer and Conventional Commits message writer.",
+  "version": "1.1.0",
+  "description": "Synthesis droids: PR description writer (pr-describer) and Conventional Commits message writer (commit-message-writer).",
   "author": {
     "name": "Sagar",
     "url": "https://github.com/factory-sagar"
