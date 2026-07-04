@@ -32,13 +32,13 @@
     },
     {
       "name": "practices",
-      "description": "Planning and engineering-discipline skills: spec, tech-spec, architecture-scan, grilling, grill-me, discovering-unknowns, TDD workflow, coding standards, verification loop, and agentic-engineering operating principles.",
+      "description": "Planning and engineering-discipline skills: spec, tech-spec, architecture-scan, grilling, grill-me, discovering-unknowns, TDD workflow, coding standards, verification loop, and agentic-engineering operating principles. Ships the /spec command as a guaranteed entry point.",
       "source": "./plugins/practices",
       "category": "productivity"
     },
     {
       "name": "build",
-      "description": "Hands-on tools that change code: implementer (applies approved review findings, spec units, or fix lists), test-engineer (finds the riskiest untested behavior and writes the missing tests), and the fix-pr skill plus /fix-pr command (fetch, reason about, fix, reply, resolve, wait for CI, and approve PRs end-to-end).",
+      "description": "Hands-on tools that change code: implementer (applies approved review findings, spec units, or fix lists), test-engineer (finds the riskiest untested behavior and writes the missing tests), the fix-pr skill plus /fix-pr command (fetch, reason about, fix, reply, resolve, wait for CI, and approve PRs end-to-end), and the /implement command (route to implementer or tdd-workflow with the Deviations contract).",
       "source": "./plugins/build",
       "category": "productivity"
     }

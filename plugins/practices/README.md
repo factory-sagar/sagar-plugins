@@ -12,6 +12,8 @@ Skills differ from droids: a skill is a procedure the main agent runs inline (au
 droid plugin install practices@sagar-plugins
 ```
 
+Command: `/spec <task>` is the guaranteed entry for "spec this out" — it runs the `spec` skill directly, no description matching involved.
+
 ## Skills
 
 | Skill | Triggers on | What it does |

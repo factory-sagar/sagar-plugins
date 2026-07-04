@@ -1,6 +1,6 @@
 ---
 name: change-review
-description: Strict last-gate reviewer for diffs, commits, branches, or explicitly scoped files. Finds correctness, contract, rollback, and obvious security-shaped hand-off risks before merge.
+description: Strict last-gate reviewer for diffs, commits, branches, or explicitly scoped files. Finds correctness, contract, rollback, and obvious security-shaped hand-off risks before merge. The default target when the user says "review this" and wants findings only — fixing is the review-fix skill's job.
 model: glm-5.2
 reasoningEffort: max
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]

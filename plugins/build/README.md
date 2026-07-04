@@ -23,7 +23,7 @@ droid plugin install build@sagar-plugins
 | --- | --- | --- |
 | `fix-pr` | "fix this PR", "fix droid comments", "resolve PR comments", "address review feedback", or a PR URL with intent to address comments | Fetches all review comments (bot and human), reasons about whether each is a real bug, fixes the valid ones, replies to every comment, resolves threads, waits for CI, and approves the PR (or says "done" if it is your own). |
 
-Command: `/fix-pr <PR URL or number>` runs the skill directly.
+Commands: `/fix-pr <PR URL or number>` runs the skill directly. `/implement <task>` is the guaranteed entry for "implement this" — it routes an approved change set to `implementer`, new behavior to `tdd-workflow`, and carries the Deviations contract either way.
 
 ## Usage
 
