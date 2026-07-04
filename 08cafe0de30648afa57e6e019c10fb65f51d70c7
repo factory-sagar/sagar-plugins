@@ -1,0 +1,27 @@
+README.md
+  569515f3c6ec4b56 48
+plugins/practices/README.md
+  569515f3c6ec4b56 35
+plugins/practices/skills/discovering-unknowns/SKILL.md
+  569515f3c6ec4b56 156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "08cafe0de30648afa57e6e019c10fb65f51d70c7",
+  "prompts": {
+    "569515f3c6ec4b56": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "31c95b9b-5fb4-4e61-bb7f-a0794c618784",
+        "model": "claude-fable-5"
+      },
+      "human_author": null,
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
