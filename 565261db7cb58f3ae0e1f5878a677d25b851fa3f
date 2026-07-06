@@ -1,0 +1,39 @@
+README.md
+  1bcecb4798e50bdb 33-34,36,40,123,126-127
+plugins/review/.factory-plugin/plugin.json
+  1bcecb4798e50bdb 3-4
+plugins/review/README.md
+  1bcecb4798e50bdb 26
+plugins/build/.factory-plugin/plugin.json
+  1bcecb4798e50bdb 3-4
+plugins/practices/README.md
+  1bcecb4798e50bdb 15
+plugins/build/README.md
+  1bcecb4798e50bdb 5,25,27,39
+plugins/build/skills/implement/SKILL.md
+  1bcecb4798e50bdb 1-42
+plugins/practices/.factory-plugin/plugin.json
+  1bcecb4798e50bdb 3-4
+.factory-plugin/marketplace.json
+  1bcecb4798e50bdb 17,35,41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "565261db7cb58f3ae0e1f5878a677d25b851fa3f",
+  "prompts": {
+    "1bcecb4798e50bdb": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3d21a89c-27c7-48d3-b59a-fe84b5646592",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 65,
+      "total_deletions": 22,
+      "accepted_lines": 64,
+      "overriden_lines": 0
+    }
+  }
+}
