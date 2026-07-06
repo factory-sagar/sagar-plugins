@@ -27,17 +27,17 @@ Or browse interactively with `/plugins`.
 | Plugin | Contents | Category |
 | --- | --- | --- |
 | [`investigation`](./plugins/investigation/) | Droids: `quick-analysis`, `deep-understanding`, `deep-research`, `debugger` | research |
-| [`review`](./plugins/review/) | Droids: `change-review`, `security`; Skill: `review-fix` (+ `/review-fix` command) | quality |
+| [`review`](./plugins/review/) | Droids: `change-review`, `security`; Skill: `review-fix` (`/review-fix`) | quality |
 | [`synthesis`](./plugins/synthesis/) | Droids: `pr-describer`, `commit-message-writer` | productivity |
 | [`meta`](./plugins/meta/) | Droids: `prompt-optimizer`, `doc-generator`; Skill: `audit-and-apply-loop` | productivity |
-| [`practices`](./plugins/practices/) | Skills: planning (`spec`, `tech-spec`, `architecture-scan`, `grilling`, `grill-me`, `discovering-unknowns`) + discipline (`agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`); `/spec` command | productivity |
-| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skill: `fix-pr`; `/fix-pr` and `/implement` commands | productivity |
+| [`practices`](./plugins/practices/) | Skills: planning (`spec` (`/spec`), `tech-spec`, `architecture-scan`, `grilling`, `grill-me`, `discovering-unknowns`) + discipline (`agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`) | productivity |
+| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skills: `fix-pr` (`/fix-pr`), `implement` (`/implement`) | productivity |
 
-Total: 12 droids, 13 skills, 4 commands. (CI recomputes these counts from the filesystem; see [Validation](#validation).)
+Total: 12 droids, 14 skills, 0 commands — skills register their own slash entry points, so there are no separate command files. (CI recomputes these counts from the filesystem; see [Validation](#validation).)
 
 ## Concepts
 
-- **Skills**: repeatable procedures the main agent runs inline. Markdown SOPs that Droid auto-loads when a task matches.
+- **Skills**: repeatable procedures the main agent runs inline. Markdown SOPs that Droid auto-loads when a task matches. Each skill also registers `/skill-name` as a deterministic entry point, so no separate command files are needed.
 - **Droids**: sub-agents you delegate to. Each has a pinned model and a reasoning budget.
 
 ## Usage
@@ -120,9 +120,9 @@ sagar-plugins/
 │   └── baselines/            # accepted golden-task outputs (regression reference)
 └── plugins/
     ├── investigation/        # 4 droids
-    ├── review/               # 2 droids + 1 skill + 1 command
+    ├── review/               # 2 droids + 1 skill
     ├── synthesis/            # 2 droids
     ├── meta/                 # 2 droids + 1 skill
-    ├── practices/            # 10 skills + 1 command
-    └── build/                # 2 droids + 1 skill + 2 commands
+    ├── practices/            # 10 skills
+    └── build/                # 2 droids + 2 skills
 ```

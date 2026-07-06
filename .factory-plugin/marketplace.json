@@ -14,7 +14,7 @@
     },
     {
       "name": "review",
-      "description": "Pre-merge review droids (strict diff reviewer and security reviewer) plus the review-fix skill and /review-fix command: review a change read-only (light single-pass or deep exhaustive multi-pass, auto-escalated for risky diffs), apply the fixes, verify, and commit locally before push.",
+      "description": "Pre-merge review droids (strict diff reviewer and security reviewer) plus the review-fix skill (/review-fix): review a change read-only (light single-pass or deep exhaustive multi-pass, auto-escalated for risky diffs), apply the fixes, verify, and commit locally before push.",
       "source": "./plugins/review",
       "category": "quality"
     },
@@ -32,13 +32,13 @@
     },
     {
       "name": "practices",
-      "description": "Planning and engineering-discipline skills: spec, tech-spec, architecture-scan, grilling, grill-me, discovering-unknowns, TDD workflow, coding standards, verification loop, and agentic-engineering operating principles. Ships the /spec command as a guaranteed entry point.",
+      "description": "Planning and engineering-discipline skills: spec, tech-spec, architecture-scan, grilling, grill-me, discovering-unknowns, TDD workflow, coding standards, verification loop, and agentic-engineering operating principles. The spec skill registers /spec as its direct entry point.",
       "source": "./plugins/practices",
       "category": "productivity"
     },
     {
       "name": "build",
-      "description": "Hands-on tools that change code: implementer (applies approved review findings, spec units, or fix lists), test-engineer (finds the riskiest untested behavior and writes the missing tests), the fix-pr skill plus /fix-pr command (fetch, reason about, fix, reply, resolve, wait for CI, and approve PRs end-to-end), and the /implement command (route to implementer or tdd-workflow with the Deviations contract).",
+      "description": "Hands-on tools that change code: implementer (applies approved review findings, spec units, or fix lists), test-engineer (finds the riskiest untested behavior and writes the missing tests), the fix-pr skill (/fix-pr: fetch, reason about, fix, reply, resolve, wait for CI, and approve PRs end-to-end), and the implement skill (/implement: route to implementer or tdd-workflow with the Deviations contract).",
       "source": "./plugins/build",
       "category": "productivity"
     }

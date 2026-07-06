@@ -2,7 +2,7 @@
 
 > Tools that change code: apply approved changes, write the missing tests, and fix PRs end-to-end.
 
-Most of the marketplace investigates, reviews, and synthesizes. The build plugin applies: `implementer` turns approved findings and spec units into minimal diffs, `test-engineer` turns coverage gaps into tests, and the `fix-pr` skill fetches review comments, reasons about each one, fixes the valid bugs, replies and resolves threads, waits for CI, and approves the PR.
+Most of the marketplace investigates, reviews, and synthesizes. The build plugin applies: `implementer` turns approved findings and spec units into minimal diffs, `test-engineer` turns coverage gaps into tests, the `implement` skill routes "implement this" to the right executor, and the `fix-pr` skill fetches review comments, reasons about each one, fixes the valid bugs, replies and resolves threads, waits for CI, and approves the PR.
 
 ## Install
 
@@ -22,8 +22,9 @@ droid plugin install build@sagar-plugins
 | Skill | Triggers on | What it does |
 | --- | --- | --- |
 | `fix-pr` | "fix this PR", "fix droid comments", "resolve PR comments", "address review feedback", or a PR URL with intent to address comments | Fetches all review comments (bot and human), reasons about whether each is a real bug, fixes the valid ones, replies to every comment, resolves threads, waits for CI, and approves the PR (or says "done" if it is your own). |
+| `implement` | "implement this", "apply this change set", "build this unit" | Routes an approved change set to `implementer`, new behavior without one to `tdd-workflow`, and small mechanical changes inline. Carries the Deviations contract in every path and finishes with `verification-loop`. |
 
-Commands: `/fix-pr <PR URL or number>` runs the skill directly. `/implement <task>` is the guaranteed entry for "implement this" — it routes an approved change set to `implementer`, new behavior to `tdd-workflow`, and carries the Deviations contract either way.
+Both skills register direct slash entry points: `/fix-pr <PR URL or number>` and `/implement <task>` run them deterministically, no description matching involved.
 
 ## Usage
 
@@ -35,7 +36,7 @@ Commands: `/fix-pr <PR URL or number>` runs the skill directly. `/implement <tas
 
 ## Models
 
-`implementer` runs `claude-fable-5` at `xhigh` for high-stakes code changes where invariants and repo conventions matter — adopted over `gpt-5.5` by A/B (2026-07-04); `gpt-5.5` at `xhigh` is the recorded fallback pin. `test-engineer` stays on `gpt-5.4` at `high` for focused test gap analysis and test writing. The `fix-pr` skill runs inline on your session model.
+`implementer` runs `claude-fable-5` at `xhigh` for high-stakes code changes where invariants and repo conventions matter — adopted over `gpt-5.5` by A/B (2026-07-04); `gpt-5.5` at `xhigh` is the recorded fallback pin. `test-engineer` stays on `gpt-5.4` at `high` for focused test gap analysis and test writing. The `fix-pr` and `implement` skills run inline on your session model.
 
 ## Related plugins
 

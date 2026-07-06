@@ -23,7 +23,7 @@ droid plugin install review@sagar-plugins
 | --- | --- | --- |
 | `review-fix` | "review and fix", "deep review and fix", or a PR URL / branch with intent to fix findings, not just report them | Loads the diff, picks a tier (light single-pass via `change-review`/`security`, or deep exhaustive multi-pass over a shared notes doc — auto-escalated for large/risky diffs, confirmed first), consolidates and triages findings, applies the fixes, verifies, commits locally, and asks before pushing. |
 
-Command: `/review-fix <PR URL, branch, range, or staged>` runs the skill directly.
+The skill registers `/review-fix <PR URL, branch, range, or staged>` as a direct entry point, no description matching involved.
 
 The deep tier ships three supporting files in the skill directory: `review-notes-format.md` (shared notes-doc and finding format), `review-worker.md` (Review subagent prompt templates), and `discover-conventions.md` (convention enumeration procedure). When the `practices` plugin is installed, deep-tier discovery is backed by `coding-standards`; otherwise it falls back to the target repo's own docs.
 
