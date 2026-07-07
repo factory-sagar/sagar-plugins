@@ -31,9 +31,9 @@ Or browse interactively with `/plugins`.
 | [`synthesis`](./plugins/synthesis/) | Droids: `pr-describer`, `commit-message-writer` | productivity |
 | [`meta`](./plugins/meta/) | Droids: `prompt-optimizer`, `doc-generator`; Skill: `audit-and-apply-loop` | productivity |
 | [`practices`](./plugins/practices/) | Skills: planning (`spec` (`/spec`), `tech-spec`, `architecture-scan`, `grilling`, `grill-me`, `discovering-unknowns`) + discipline (`agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`) | productivity |
-| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skills: `fix-pr` (`/fix-pr`), `implement` (`/implement`) | productivity |
+| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skills: `fix-pr` (`/fix-pr`), `implement` (`/implement`), `ship` (`/ship`) | productivity |
 
-Total: 12 droids, 14 skills, 0 commands — skills register their own slash entry points, so there are no separate command files. (CI recomputes these counts from the filesystem; see [Validation](#validation).)
+Total: 12 droids, 15 skills, 0 commands — skills register their own slash entry points, so there are no separate command files. (CI recomputes these counts from the filesystem; see [Validation](#validation).)
 
 ## Concepts
 
@@ -64,6 +64,9 @@ spec / architecture-scan  → scope the work or rank refactor candidates
   │
   ▼
 synthesis: pr-describer + commit-message-writer
+  │
+  ▼
+ship (skill): commit → push → PR body per template → CI watch → resolve threads → merge-ready
 ```
 
 A separate meta loop improves the droid prompts themselves: `prompt-optimizer` audits, `doc-generator` applies, governed by the `audit-and-apply-loop` skill.
@@ -124,5 +127,5 @@ sagar-plugins/
     ├── synthesis/            # 2 droids
     ├── meta/                 # 2 droids + 1 skill
     ├── practices/            # 10 skills
-    └── build/                # 2 droids + 2 skills
+    └── build/                # 2 droids + 3 skills
 ```

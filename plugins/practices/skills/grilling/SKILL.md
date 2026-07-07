@@ -1,9 +1,13 @@
 ---
 name: grilling
-version: 1.0.0
+version: 1.1.0
 description: |
-  Interview the user relentlessly about a plan or design. Use when the user wants to stress-test a
-  plan before building, or uses any "grill" trigger phrases.
+  Interview the user relentlessly about a plan or design, one question at a time, to stress-test
+  it before building.
+  Use when:
+  - User says "grill this plan", "grill me", or any "grill" trigger phrase
+  - User says "lets discuss this plan", "poke holes in this", "whats wrong with this plan", "are we sure about this"
+  - A plan or design needs stress-testing before implementation starts
 tags: [planning, interview, design, critique, discovery]
 ---
 

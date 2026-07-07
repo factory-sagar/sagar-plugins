@@ -1,6 +1,6 @@
 ---
 name: spec
-version: 1.1.0
+version: 1.2.0
 description: |
   Turn a fuzzy feature request into a concrete spec (goal, acceptance criteria, scope, constraints,
   open questions) AND decompose it into agent-sized units, each tagged with the recommended sagar
@@ -9,6 +9,7 @@ description: |
   - User says "spec this out", "plan this", "decompose", "break this into steps"
   - User says "give me a spec for X", "let me think through", "draft a plan for", "scope this"
   - User says "what would it take to", "how should we approach X"
+  - User says "come up with a full plan", "lets spec out all the work", "scope this out properly"
   - A new feature, refactor, or migration is being scoped
   - A request is ambiguous and needs concrete shape before any code is written
 tags: [planning, decomposition, scoping, workflow, spec]

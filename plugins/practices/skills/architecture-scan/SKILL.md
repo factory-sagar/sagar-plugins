@@ -1,6 +1,6 @@
 ---
 name: architecture-scan
-version: 1.0.0
+version: 1.1.0
 description: |
   Find standards-backed architecture refactor opportunities. Use when the user wants to scan a
   codebase, module, or feature area for higher-leverage refactors before writing a tech spec.
@@ -8,6 +8,7 @@ description: |
   - The user asks "where should this code live?" or "what should we refactor?"
   - A codebase needs architecture opportunities ranked before deeper design work
   - You want a brief for `tech-spec`, not implementation
+  - User says "evaluate codebase architecture", "review the architecture", "is this the right architecture"
 tags: [planning, architecture, refactor, scan, review, standards]
 ---
 

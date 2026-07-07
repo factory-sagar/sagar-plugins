@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-version: 1.2.0
+version: 1.3.0
 description: |
   Test-driven development discipline with explicit RED-GREEN-REFACTOR phases, Git checkpoint commits
   per phase, 80%+ coverage targets across the unit/integration/E2E test pyramid, and explicit worker
@@ -12,6 +12,7 @@ description: |
   - Adding API endpoints or new public surface
   - Implementing a unit from a `spec` decomposition where new or changed behavior is involved
   - User says "implement this", "TDD", "write tests first", "test-driven", "RED-GREEN-REFACTOR", "fix bug", "add feature" (for "implement this" with an already-approved change set or fix list, delegate to the `implementer` droid instead)
+  - User says "write tests", "add tests for this", "cover this with tests", "why are we not testing this"
 tags: [testing, tdd, workflow, quality, red-green-refactor, coverage]
 ---
 

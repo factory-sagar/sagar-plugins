@@ -1,6 +1,6 @@
 ---
 name: fix-pr
-version: 2.2.0
+version: 2.3.0
 description: |
   End-to-end PR fix workflow: fetch a PR, read every review comment, reason about whether
   each one is a real bug, fix the valid ones, reply to every comment, resolve the threads,
@@ -12,6 +12,7 @@ description: |
   - The user provides a PR URL and wants comments addressed end-to-end
   - The user says "fix the review comments on <PR>" and expects CI + approval handled
   - The user wants to batch-apply code review suggestions from a PR and close the loop
+  - The user says "resolve comments", "theres droid review comments", "more droid comments on the PR"
 ---
 
 # Fix PR
@@ -327,7 +328,11 @@ This blocks until all checks complete. If any check fails:
      rate. If it passes consistently elsewhere, treat it as real and investigate.
    - If the branch is behind base, a rebase (step 2) may clear staleness failures.
 3. If caused by your changes: fix the issue, commit, push, and re-watch
-4. If genuinely pre-existing / flaky: note it and proceed (but do not approve if a required
+4. If the cause is **not obvious from the logs** (test fails but the mechanism is unclear,
+   behavior differs between CI and local, or a second fix attempt failed): delegate to the
+   `debugger` droid with the failing check's logs and the diff before patching further. Apply
+   its fix plan rather than guessing.
+5. If genuinely pre-existing / flaky: note it and proceed (but do not approve if a required
    check is failing)
 
 **Max retries: 3.** If CI fails 3 times due to your changes, stop, report the failure, and

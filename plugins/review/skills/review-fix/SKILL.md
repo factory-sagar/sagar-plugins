@@ -1,6 +1,6 @@
 ---
 name: review-fix
-version: 1.3.0
+version: 1.4.0
 description: |
   Review a change end-to-end, then fix it. Runs a read-only review (light by default,
   deep on demand), consolidates findings, applies the fixes in code, verifies, commits
@@ -12,6 +12,7 @@ description: |
   - The user gives a PR URL / branch / commit range and wants findings fixed, not just reported
   - The user wants exhaustive review for a risky change but a quick one for routine changes
   - The user wants review findings applied and committed locally, then to approve before push
+  - The user says "review all my PRs", "review and simplify", "review all code, ensure no issues, quality, security"
 ---
 
 # Review and Fix

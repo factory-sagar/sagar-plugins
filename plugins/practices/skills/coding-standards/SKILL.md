@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-version: 1.1.0
+version: 1.2.0
 description: |
   Standards router for naming/layout, module design, boundaries, error handling, async workflows,
   testing, observability, and type contracts. Load the topic docs that match the code you are touching.
@@ -9,6 +9,7 @@ description: |
   - Reviewing or refactoring code against a shared rubric
   - Shaping naming, layout, boundaries, seams, errors, async flows, tests, or observability
   - Establishing code review criteria before implementation or review
+  - User says "follow strict coding rules", "good quality code", "code quality pass", "clean this up properly"
 tags: [standards, code-quality, design, review, testing, architecture]
 ---
 

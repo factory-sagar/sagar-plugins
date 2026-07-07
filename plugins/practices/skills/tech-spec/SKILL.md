@@ -1,6 +1,6 @@
 ---
 name: tech-spec
-version: 1.0.0
+version: 1.1.0
 description: |
   Write a typed call-stack architecture handoff. Use when a scoped request needs concrete types,
   seams, adapters, call stacks, and an implementation-ready TDD plan.
@@ -9,6 +9,7 @@ description: |
   - A plan needs concrete types, interfaces, or boundary contracts
   - Multiple architecture options need comparison before implementation
   - Repo context should be converted into an implementation-ready handoff
+  - User says "scope out a proper tech stack", "design this properly", "how should this be architected"
 tags: [planning, architecture, design, interfaces, call-stacks, tdd]
 ---
 

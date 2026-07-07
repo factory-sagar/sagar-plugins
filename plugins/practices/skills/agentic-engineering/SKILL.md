@@ -1,12 +1,13 @@
 ---
 name: agentic-engineering
-version: 1.0.0
+version: 1.1.0
 description: |
-  Operating principles for engineering work where AI agents perform most implementation and humans
-  (or higher-tier agents) enforce quality and risk control. Defines completion criteria, decomposition
-  rules, model-routing matrix, session strategy, eval-first loop, and a 5-lens checklist for reviewing
-  AI-generated code — each with explicit recommendations for which droid or worker to delegate to.
+  Decide how to run AI-assisted work: which model for a subtask, when to delegate to a droid or
+  worker vs do it inline, when to continue a session vs start fresh, and how to review AI output.
+  Defines completion criteria, decomposition rules, the model-routing matrix, session strategy,
+  the eval-first loop, and a 5-lens review checklist.
   Use when:
+  - User says "which model should I use", "should I delegate this", "whats the best way to run this"
   - Scoping AI-assisted work or deciding which model for a specific subtask
   - Structuring sessions for delegation, continuation, or fresh start
   - Reviewing AI-generated code through a structured lens checklist

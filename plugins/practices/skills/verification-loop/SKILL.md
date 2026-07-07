@@ -1,6 +1,6 @@
 ---
 name: verification-loop
-version: 1.1.0
+version: 1.2.0
 description: |
   Four-phase quality gate (build, type-check, lint, tests with coverage) with explicit worker
   delegation per phase for long-running commands. Catches regressions before review, surfaces
@@ -12,6 +12,7 @@ description: |
   - Finishing a refactor (suite must stay green; this confirms it)
   - Finishing a `tdd-workflow` loop (the natural next step)
   - User asks "is this ready", "did I break anything", "run the checks"
+  - User says "make sure everything passes", "verify everything", "ensure no issues", "ensure everything looks good"
   - As the regression eval in an `agentic-engineering` eval-first loop
 tags: [quality-gates, verification, testing, ci, build, lint, type-check]
 ---

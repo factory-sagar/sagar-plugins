@@ -1,6 +1,6 @@
 {
   "name": "practices",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Planning and engineering-discipline skills: spec, tech-spec, architecture-scan, grilling, grill-me, discovering-unknowns, TDD workflow, coding standards, verification loop, and agentic-engineering operating principles. The spec skill registers /spec as its direct entry point.",
   "author": {
     "name": "Sagar",
