@@ -1,0 +1,68 @@
+plugins/practices/skills/grilling/SKILL.md
+  s_1bcecb4798e50b::t_746df17c81b80a 3
+  s_1bcecb4798e50b::t_8695e5958fb877 5-10
+plugins/practices/skills/coding-standards/SKILL.md
+  s_1bcecb4798e50b::t_78fb5319a38692 12
+  s_1bcecb4798e50b::t_ad1209fc9e454c 3
+plugins/practices/skills/architecture-scan/SKILL.md
+  s_1bcecb4798e50b::t_456b8986249fb7 3
+  s_1bcecb4798e50b::t_6d587433759088 11
+plugins/review/.factory-plugin/plugin.json
+  s_1bcecb4798e50b::t_83f52a9cd3c08e 3
+README.md
+  s_1bcecb4798e50b::t_e17038a18cf2ff 34,36
+  s_1bcecb4798e50b::t_3c1fe1bf40f68e 67-69
+  s_1bcecb4798e50b::t_f6d8dd19a8f8e2 130
+plugins/build/README.md
+  s_1bcecb4798e50b::t_60da4e63c28d24 40
+  s_1bcecb4798e50b::t_260eed04339eba 26,28
+plugins/practices/skills/tech-spec/SKILL.md
+  s_1bcecb4798e50b::t_1ac3fac7f5221d 3
+  s_1bcecb4798e50b::t_46c8c655a3ec2a 12
+plugins/build/skills/fix-pr/SKILL.md
+  s_1bcecb4798e50b::t_40992f93302985 331-335
+  s_1bcecb4798e50b::t_ad421818cc53e9 15
+plugins/build/skills/ship/SKILL.md
+  s_1bcecb4798e50b::t_d4d380cc1091ac 1-87
+plugins/practices/.factory-plugin/plugin.json
+  s_1bcecb4798e50b::t_67d0fa257dbddc 3
+plugins/review/skills/review-fix/SKILL.md
+  s_1bcecb4798e50b::t_3f5d4320f4ef6a 15
+  s_1bcecb4798e50b::t_f8fd71053177a3 3
+plugins/build/.factory-plugin/plugin.json
+  s_1bcecb4798e50b::t_c7e5250c55cd75 3-4
+plugins/practices/skills/spec/SKILL.md
+  s_1bcecb4798e50b::t_92cb3aa7d50920 12
+  s_1bcecb4798e50b::t_36787ecf2800c8 3
+plugins/practices/skills/agentic-engineering/SKILL.md
+  s_1bcecb4798e50b::t_f44067fa99e192 3
+  s_1bcecb4798e50b::t_ff153fb719e0ab 5-8,10
+.factory-plugin/marketplace.json
+  s_1bcecb4798e50b::t_857e2b9d6e3b61 41
+plugins/practices/skills/verification-loop/SKILL.md
+  s_1bcecb4798e50b::t_b9995e608f85c0 3
+  s_1bcecb4798e50b::t_2c998641137949 15
+plugins/practices/skills/tdd-workflow/SKILL.md
+  s_1bcecb4798e50b::t_3611bf80a7e605 15
+  s_1bcecb4798e50b::t_184e8ac4ee227c 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "ddd00a9ffdafde063663e6be7649e2d1283d9648",
+  "prompts": {
+    "1bcecb4798e50bdb": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3d21a89c-27c7-48d3-b59a-fe84b5646592",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 134,
+      "total_deletions": 26,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
