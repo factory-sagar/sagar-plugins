@@ -1,6 +1,6 @@
 ---
 name: review-fix
-version: 1.4.0
+version: 1.5.0
 description: |
   Review a change end-to-end, then fix it. Runs a read-only review (light by default,
   deep on demand), consolidates findings, applies the fixes in code, verifies, commits
@@ -72,6 +72,9 @@ Determine the base ref and collect the diff plus file/line stats. Use whichever 
 # PR
 gh pr view <url> --json number,title,author,headRefName,baseRefName,state,body
 gh pr diff <url>
+# PR — existing review threads (MANDATORY whenever the target is a PR)
+gh api repos/<owner>/<repo>/pulls/<number>/comments   # inline review comments
+gh pr view <url> --json reviews,comments              # review summaries + PR-level comments
 
 # branch vs base
 git diff --stat <base>...<branch>
@@ -84,6 +87,12 @@ git diff --staged
 
 Capture: changed file count, total added+removed lines, and the list of changed paths. You
 need these for the tier heuristic in Step 2.
+
+**Existing review comments are inputs to this review, not someone else's problem.** When the
+target is a PR, carry every unresolved actionable comment (bot or human) into the Step 4
+findings list with source `pr-thread` and triage it like any other finding — fix it, or reject
+it with a written reason. A review-fix pass on a PR that ends with untriaged existing threads
+is incomplete, no matter what else it fixed.
 
 **Rolling / stacked PRs:** if the branch follows a one-commit-per-unit convention (commit
 subjects like `U0`, `A4 [WP2]`, lane/unit prefixes, or the PR body describes per-unit landing),
@@ -393,6 +402,8 @@ Use a heredoc (`git commit -F -`) if the message contains special characters.
 Report:
 - Tier used (light / deep) and why.
 - Findings: <N> total, <M> fixed, <K> skipped (one-line reason each).
+- Review threads (PR targets): <T> existing, <F> fixed+resolved, <R> rejected with reply,
+  <U> unresolved (list them). Omit only for non-PR targets.
 - Fixed: one line per fix (file + change).
 - Deviations: any fix applied differently than the finding suggested (or `none`).
 - Verification: format/lint/typecheck/test status.
@@ -413,15 +424,30 @@ Only push if confirmed:
 git push origin <branch-name>
 ```
 
-### 9. Close the loop on a PR (optional)
+### 9. Close the loop on a PR
 
-This skill's core scope ends at push. If the target is a PR and the user wants the loop closed
-(post a summary comment, reply to and resolve review threads, approve, merge), that is the `fix-pr`
-skill's job, not this one. After a confirmed push, offer the handoff:
+This skill's core scope ends at push. What happens next depends on what the user asked for
+in the invocation:
 
-- Comment / resolve threads / approve / merge → run the `fix-pr` skill (or `gh` CLI) on the same PR.
+**User did not ask to land it:** after a confirmed push, offer the handoff — comment /
+resolve threads / approve / merge → the `fix-pr` skill (or `ship`) on the same PR.
 
-Do not auto-merge. Merging is an explicit, separate user decision.
+**User explicitly asked to land it ("merge when green", "keep it ready and merge", etc.):**
+landing has a hard gate. Verify ALL of the following against the live API, in order, before
+any approve or merge:
+
+1. Every `pr-thread` finding from Step 1 is closed: fixed items have a reply on their thread
+   and the thread resolved; rejected items have a reply with the reasoning. Re-fetch the
+   thread list now — new comments may have arrived since Step 1.
+2. Zero unresolved review threads remain (`gh api repos/<o>/<r>/pulls/<n>/comments` +
+   review threads). An unresolved thread is a hard merge blocker, even with green CI and an
+   explicit merge instruction — stop and report the remaining threads instead of merging.
+3. CI is green (`gh pr checks`).
+4. The PR body still describes the PR after your fixes; regenerate it if the scope moved.
+
+Only when all four hold: approve (if not your own PR) and merge. If any check fails, report
+what is outstanding and stop. Never auto-merge without an explicit user instruction from this
+session.
 
 ## Severity discipline
 
@@ -437,6 +463,11 @@ bias the filter's closed-list reasons exist to prevent.
 
 - Do not let reviewer subagents edit code. Review is read-only; fixes are a separate phase.
 - Do not push. The skill stops at a local commit and asks first.
+- Do not approve or merge while any review thread is unresolved. Untriaged existing comments
+  are a hard blocker even when the user said "merge when green" — burying reviewer comments
+  under a merge is the one failure this skill must never repeat.
+- Do not skip fetching existing PR threads in Step 1. Absence of knowledge about threads is
+  not absence of threads.
 - Do not run the deep tier on a small routine diff. Default light; escalate only on the heuristic.
 - Do not escalate to deep on a small, well-tested touch to a risk-sensitive path alone. Escalate
   only when the diff is also large or the risk-sensitive logic is new/rewritten.

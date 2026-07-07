@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 1.0.0
+version: 1.1.0
 description: |
   Land finished work end-to-end: commit, push, create or update the PR with a
   template-conformant body, watch CI until green (fixing failures), resolve review threads,
@@ -76,7 +76,9 @@ End with a short report:
 - Deviations: from the implementation log, or `none`
 
 Do not merge. Merging stays a human action unless the user explicitly asked for
-merge-on-green in this session.
+merge-on-green in this session — and even then, re-fetch the thread list first: an
+unresolved review thread is a hard merge blocker. Report the remaining threads instead
+of merging over them.
 
 ## Anti-patterns
 
