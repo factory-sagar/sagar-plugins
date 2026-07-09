@@ -42,6 +42,9 @@ Total: 14 droids, 15 skills, 0 commands — skills register their own slash entr
 
 ## Usage
 
+**[docs/WORKFLOW.md](./docs/WORKFLOW.md)** is the operating loop: one entry point per stage,
+three human gates, and the chore list the pipeline owns so you never type it.
+
 The plugins compose into one delegation and procedure loop:
 
 ```
@@ -107,20 +110,6 @@ inside the review step to the pipeline level.
 | `claude-opus-4-8` (high) | Strongest natural prose; PR synthesis | `pr-describer` |
 
 `glm-5.2` supports `off`, `high` (default), and `max` per the CLI's model registry (the docs page lags): the triage/format droids run its `high` default, `implementer` runs `max`. The validator's effort compatibility map is extracted from the CLI registry, not the docs.
-
-**Revert trigger:** `implementer` moved fable-5 → glm-5.2 max under this strategy despite the
-2026-07-04 A/B (fable won on convention fit and Deviations discipline). The monthly usage
-report's correction-rate trend arbitrates: if corrections spike on implementation work, the
-pin reverts to `claude-fable-5` (xhigh). Plan-tagged `risk: high` units should be delegated
-to a fable-tier session or worker regardless of the default pin.
-
-### Fable-class models
-
-Long-horizon models (`claude-fable-5`) earn their multiplier where the unknowns work lives. Since 2026-07-09 that is the **`planner` droid** (delegated by the `spec` skill) rather than whole orchestrator sessions: sessions run cheap, and Fable spends its multiplier only on planning and judgement. Deep-tier review subagents no longer inherit the session model — they run as the pinned `review-worker`.
-
-A/B record (2026-07-04): `implementer` on `claude-fable-5` beat `gpt-5.5` on convention fit (schema-level clamp matching sibling routes), verification rigor (full domain suite + strict lint vs one test file), and Deviations discipline (evidence-anchored log vs a silent deviation), with `change-review` returning zero findings on both diffs. The 2026-07-09 three-family strategy still moved `implementer` to `glm-5.2` (max) for cost, accepting the trade consciously — the monthly correction-rate report is the revert trigger, and `claude-fable-5` (xhigh) is the recorded revert pin.
-
-**Model A/Bs for droids must run in-session, not through the runner**: `droid exec` exposes no Task tool, so an exec session cannot spawn pinned droids — a droid-targeted golden under `scripts/run-golden-task.sh` measures contract adherence of the exec session model, not the pinned droid. To A/B a droid's model: write a temporary variant (e.g. `implementer-fable`) into the working repo's `.factory/droids/`, run both legs from a live session via the Task tool against isolated scratch dirs or worktrees, judge with `evals/golden-tasks/JUDGE.md`, and have `change-review` verdict both diffs.
 
 ## Layout
 
