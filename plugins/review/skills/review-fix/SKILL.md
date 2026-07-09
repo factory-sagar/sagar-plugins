@@ -1,6 +1,6 @@
 ---
 name: review-fix
-version: 1.5.0
+version: 1.6.0
 description: |
   Review a change end-to-end, then fix it. Runs a read-only review (light by default,
   deep on demand), consolidates findings, applies the fixes in code, verifies, commits
@@ -170,12 +170,17 @@ notes doc and never read the PR or load convention docs yourself. Read `<FORMAT_
 
 #### Subagents
 
-- **`Discovery` subagent** (Step 3b-i only): a single `worker` `Task` call that follows
+All deep-tier subagents run as `review-worker` (pinned to the reviewing model), NOT the
+generic `worker` — `worker` inherits the session model, so a cheap session would silently
+degrade every deep pass. If `review-worker` is unavailable (plugin not installed), fall back
+to `worker` and say so in the report.
+
+- **`Discovery` subagent** (Step 3b-i only): a single `review-worker` `Task` call that follows
   `<DISCOVERY_DOC>` to crawl convention sources and append every applicable pattern-check to the
   notes doc. It returns a two-field summary (final pattern-check count + source docs); the real
   output lives in the notes doc.
 - **`Review` subagent** (Step 3b-ii to initialize, then RESUMED for every pass and the final
-  filter): a single `worker` `Task` call to initialize, followed by `Task` calls with
+  filter): a single `review-worker` `Task` call to initialize, followed by `Task` calls with
   `resume: <task_id>` for every subsequent pass. It accumulates context (PR intent, prior
   findings, convention docs it has read) across passes. **Never spawn a fresh Review per pass**
   — always resume the same one. Both subagents are **read-only on the repo** and may write only
@@ -200,7 +205,7 @@ The resumed-session pattern is leaky in two observed ways. Guard against both:
    do NOT trust its `completed`-looking summary.
 
    **Sanctioned fallback (comprehensive worker):** when resume is verified not to be writing to
-   the notes doc, stop resuming. Spawn ONE fresh `worker` that loads the diff once and, in a single
+   the notes doc, stop resuming. Spawn ONE fresh `review-worker` that loads the diff once and, in a single
    session, walks ALL pattern-checks already enumerated in the notes doc by Discovery PLUS the
    mandatory model-driven concerns (Functional Correctness, Impact, Completeness), appending every
    codepath note and finding to the notes doc in the normal format. This preserves the deep tier's

@@ -1,6 +1,6 @@
 {
   "name": "build",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Hands-on tools that change and land code: implementer (applies approved review findings, spec units, or fix lists), test-engineer (finds the riskiest untested behavior and writes the missing tests), the fix-pr skill (/fix-pr: fetch, reason about, fix, reply, resolve, wait for CI, and approve PRs end-to-end), the implement skill (/implement: route to implementer or tdd-workflow with the Deviations contract), and the ship skill (/ship: commit, push, template-conformant PR body, CI watch, resolve threads, merge-ready report).",
   "author": {
     "name": "Sagar",

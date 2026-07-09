@@ -27,13 +27,13 @@ Or browse interactively with `/plugins`.
 | Plugin | Contents | Category |
 | --- | --- | --- |
 | [`investigation`](./plugins/investigation/) | Droids: `quick-analysis`, `deep-understanding`, `deep-research`, `debugger` | research |
-| [`review`](./plugins/review/) | Droids: `change-review`, `security`; Skill: `review-fix` (`/review-fix`) | quality |
+| [`review`](./plugins/review/) | Droids: `change-review`, `security`, `review-worker`; Skill: `review-fix` (`/review-fix`) | quality |
 | [`synthesis`](./plugins/synthesis/) | Droids: `pr-describer`, `commit-message-writer` | productivity |
 | [`meta`](./plugins/meta/) | Droids: `prompt-optimizer`, `doc-generator`; Skill: `audit-and-apply-loop` | productivity |
-| [`practices`](./plugins/practices/) | Skills: planning (`spec` (`/spec`), `tech-spec`, `architecture-scan`, `grilling`, `grill-me`, `discovering-unknowns`) + discipline (`agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`) | productivity |
+| [`practices`](./plugins/practices/) | Droid: `planner`; Skills: planning (`spec` (`/spec`), `tech-spec`, `architecture-scan`, `grilling`, `grill-me`, `discovering-unknowns`) + discipline (`agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`) | productivity |
 | [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skills: `fix-pr` (`/fix-pr`), `implement` (`/implement`), `ship` (`/ship`) | productivity |
 
-Total: 12 droids, 15 skills, 0 commands — skills register their own slash entry points, so there are no separate command files. (CI recomputes these counts from the filesystem; see [Validation](#validation).)
+Total: 14 droids, 15 skills, 0 commands — skills register their own slash entry points, so there are no separate command files. (CI recomputes these counts from the filesystem; see [Validation](#validation).)
 
 ## Concepts
 
@@ -49,6 +49,7 @@ optionally discovering-unknowns → blind-spot pass first, when the territory is
   │
   ▼
 spec / architecture-scan  → scope the work or rank refactor candidates
+  │                         (spec delegates heavy planning to the planner droid — fable-5)
   │
   ├── optionally grilling  → stress-test the plan
   └── optionally tech-spec → typed contracts, seams, call stacks
@@ -89,23 +90,35 @@ One rule: any change under `plugins/<name>/` bumps that plugin's `plugin.json` v
 
 Each droid is pinned to the right model for its job rather than "the best model" for everything, because different model families catch different things. No droid uses `inherit`: a pinned slug keeps a droid's output distribution independent of whatever model the parent session happens to run, and `reasoningEffort` is ignored under `inherit`. Every droid also pins `reasoningEffort` explicitly.
 
-| Model | Tier | Used by |
+The fleet follows a **three-family pipeline** (adopted 2026-07-09): GLM writes, GPT-5.5
+reviews, Fable plans and judges. No line of code is written and reviewed by the same
+model family, which moves the "different families catch different bugs" principle from
+inside the review step to the pipeline level.
+
+| Model | Role | Used by |
 | --- | --- | --- |
-| `glm-5.2` (high) | Fast and cheap; triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
-| `gpt-5.4` (high) | Strong reasoning; test writing | `test-engineer` |
-| `claude-fable-5` (xhigh) | Long-horizon implementation tier; adopted over gpt-5.5 by A/B (2026-07-04) | `implementer` |
-| `gpt-5.4` (xhigh) | Deep reasoning; investigations, root-cause, security, prompt application | `deep-understanding`, `debugger`, `security`, `doc-generator` |
-| `claude-opus-4-8` (xhigh) | Strong prompt critique and adherence diagnosis; deep external research | `prompt-optimizer`, `deep-research` |
-| `glm-5.2` (max) | Different distribution at its max reasoning; strict last-gate correctness review that complements `gpt-5.4` | `change-review` |
+| `claude-fable-5` (xhigh) | Plan & judge — long-horizon reasoning where the unknowns live | `planner`, `prompt-optimizer` |
+| `glm-5.2` (max) | Do — implementation workloads | `implementer` |
+| `glm-5.2` (high) | Do — triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
+| `gpt-5.5` (high) | Review & diagnose | `change-review`, `review-worker`, `test-engineer`, `doc-generator` |
+| `gpt-5.5` (xhigh) | Review & diagnose — attack-path and root-cause depth | `security`, `debugger` |
+| `gpt-5.4` (xhigh) | Deep repo investigation | `deep-understanding` |
+| `claude-opus-4-8` (xhigh) | Deep external research | `deep-research` |
 | `claude-opus-4-8` (high) | Strongest natural prose; PR synthesis | `pr-describer` |
 
-`glm-5.2` supports `off`, `high` (default), and `max` per the CLI's model registry (the docs page lags): the triage/format droids run its `high` default, `change-review` runs `max`. The validator's effort compatibility map is extracted from the CLI registry, not the docs.
+`glm-5.2` supports `off`, `high` (default), and `max` per the CLI's model registry (the docs page lags): the triage/format droids run its `high` default, `implementer` runs `max`. The validator's effort compatibility map is extracted from the CLI registry, not the docs.
+
+**Revert trigger:** `implementer` moved fable-5 → glm-5.2 max under this strategy despite the
+2026-07-04 A/B (fable won on convention fit and Deviations discipline). The monthly usage
+report's correction-rate trend arbitrates: if corrections spike on implementation work, the
+pin reverts to `claude-fable-5` (xhigh). Plan-tagged `risk: high` units should be delegated
+to a fable-tier session or worker regardless of the default pin.
 
 ### Fable-class models
 
-Long-horizon models (`claude-fable-5`) earn their multiplier at the **orchestrator level**, where the unknowns work lives (`discovering-unknowns`, `spec`, `grilling`) — run the session there and the deep-tier review `worker`s inherit it for free.
+Long-horizon models (`claude-fable-5`) earn their multiplier where the unknowns work lives. Since 2026-07-09 that is the **`planner` droid** (delegated by the `spec` skill) rather than whole orchestrator sessions: sessions run cheap, and Fable spends its multiplier only on planning and judgement. Deep-tier review subagents no longer inherit the session model — they run as the pinned `review-worker`.
 
-`implementer` is pinned to `claude-fable-5` (xhigh) by A/B against `gpt-5.5` (2026-07-04): golden 08 tied at pass, and the real-unit leg won on convention fit (schema-level clamp matching sibling routes), verification rigor (full domain suite + strict lint vs one test file), and Deviations discipline (evidence-anchored log vs a silent deviation), with `change-review` returning zero findings on both diffs. `gpt-5.5` (xhigh) is the recorded fallback pin if Fable availability or cost changes.
+A/B record (2026-07-04): `implementer` on `claude-fable-5` beat `gpt-5.5` on convention fit (schema-level clamp matching sibling routes), verification rigor (full domain suite + strict lint vs one test file), and Deviations discipline (evidence-anchored log vs a silent deviation), with `change-review` returning zero findings on both diffs. The 2026-07-09 three-family strategy still moved `implementer` to `glm-5.2` (max) for cost, accepting the trade consciously — the monthly correction-rate report is the revert trigger, and `claude-fable-5` (xhigh) is the recorded revert pin.
 
 **Model A/Bs for droids must run in-session, not through the runner**: `droid exec` exposes no Task tool, so an exec session cannot spawn pinned droids — a droid-targeted golden under `scripts/run-golden-task.sh` measures contract adherence of the exec session model, not the pinned droid. To A/B a droid's model: write a temporary variant (e.g. `implementer-fable`) into the working repo's `.factory/droids/`, run both legs from a live session via the Task tool against isolated scratch dirs or worktrees, judge with `evals/golden-tasks/JUDGE.md`, and have `change-review` verdict both diffs.
 
@@ -123,9 +136,9 @@ sagar-plugins/
 │   └── baselines/            # accepted golden-task outputs (regression reference)
 └── plugins/
     ├── investigation/        # 4 droids
-    ├── review/               # 2 droids + 1 skill
+    ├── review/               # 3 droids + 1 skill
     ├── synthesis/            # 2 droids
     ├── meta/                 # 2 droids + 1 skill
-    ├── practices/            # 10 skills
+    ├── practices/            # 1 droid + 10 skills
     └── build/                # 2 droids + 3 skills
 ```

@@ -17,7 +17,7 @@ droid plugin install investigation@sagar-plugins
 | `quick-analysis` | Fast triage of an unfamiliar repo: stack, structure, entry points, anomalies. Use first when you don't know the lay of the land. | `glm-5.2` | default | read-only |
 | `deep-understanding` | Thorough, evidence-based investigation of a repository, subsystem, or focused question. Architecture audits and agentic-config audits. | `gpt-5.4` | `xhigh` | read-only + `Execute` |
 | `deep-research` | External research using WebSearch and FetchUrl. Library evaluations, API references, comparisons, CVE follow-ups. For questions that live outside the repo. | `claude-opus-4-8` | `xhigh` | read-only + `Execute` + `WebSearch` + `FetchUrl` |
-| `debugger` | Root-cause a failing behavior: reproduce, rank hypotheses, prove the cause, hand a fix plan to `implementer`. Failing tests, stack traces, regressions, incident RCA. | `gpt-5.4` | `xhigh` | read-only + `Execute` |
+| `debugger` | Root-cause a failing behavior: reproduce, rank hypotheses, prove the cause, hand a fix plan to `implementer`. Failing tests, stack traces, regressions, incident RCA. | `gpt-5.5` | `xhigh` | read-only + `Execute` |
 
 ## Usage
 
@@ -29,7 +29,8 @@ droid plugin install investigation@sagar-plugins
 ## Models
 
 - `glm-5.2`: fast and cheap triage.
-- `gpt-5.4` (xhigh): strong architectural reasoning (`deep-understanding`) and evidence-driven root-cause work (`debugger`).
+- `gpt-5.4` (xhigh): strong architectural reasoning (`deep-understanding`).
+- `gpt-5.5` (xhigh): evidence-driven root-cause work (`debugger`), the review-and-diagnose family.
 - `claude-opus-4-8` (xhigh): strongest natural prose for synthesizing external sources.
 
 Models are pinned by policy — no droid uses `inherit`, so its output distribution never depends on the parent session's model (and `reasoningEffort` is ignored under `inherit`). `scripts/validate.mjs` enforces this.

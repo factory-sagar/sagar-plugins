@@ -2,7 +2,13 @@
 
 > Planning and engineering-discipline skills: scope, stress-test, design, set standards, test, and verify.
 
-Ten repeatable flows auto-load when your task matches. Together they cover the loop from a fuzzy idea to a standards-backed, gate-ready change.
+Ten repeatable flows auto-load when your task matches, plus one droid: `planner`, the evidence-anchored planning engine the `spec` skill delegates its heavy phases to. Together they cover the loop from a fuzzy idea to a standards-backed, gate-ready change.
+
+## Droid
+
+| Droid | When to delegate | Model | Reasoning | Tools |
+| --- | --- | --- | --- | --- |
+| `planner` | Non-trivial scope needs a plan: territory scan with `file:line` evidence, 2-4 decisions with rejected alternatives, agent-sized units with executors, sequencing, and open questions with recommended answers. Delegated by `spec`, or directly with a clarified brief. Cannot ask the user — the session runs the interview on its returned open questions. | `claude-fable-5` | `xhigh` | read-only + `Execute` |
 
 Skills differ from droids: a skill is a procedure the main agent runs inline (auto-loaded when its description matches your task), while a droid is a sub-agent you delegate to. The skills here recommend delegating to sagar droids at the right moments.
 

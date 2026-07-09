@@ -1,6 +1,6 @@
 ---
 name: spec
-version: 1.2.0
+version: 1.3.0
 description: |
   Turn a fuzzy feature request into a concrete spec (goal, acceptance criteria, scope, constraints,
   open questions) AND decompose it into agent-sized units, each tagged with the recommended sagar
@@ -77,7 +77,15 @@ If the operator is new to the target area, or the criteria are taste-shaped ("I'
 Goal: ground the spec in what already exists. A spec written without knowing the system's current shape will miss constraints.
 
 **Delegation rule:**
-- If the user gave a path to a repo or said "in this codebase" and you have not seen it before → **delegate to `quick-analysis`** for a 60-second triage. Pass the repo path. Use the output to populate "constraints" in the spec.
+- **Default for non-trivial scope (multi-file, multi-unit, or unfamiliar territory) →
+  delegate the heavy planning to the `planner` droid.** Pass the clarified request, Phase 1's
+  constraints and answered questions, and the repo path. It returns a decisions-first,
+  evidence-anchored plan (territory scan, decisions with rejected alternatives, agent-sized
+  units, sequencing, open questions with recommended answers). Then Phases 3-5 collapse into:
+  review its Decisions and Open Questions with the user (this is the interview — `planner`
+  cannot ask, you can), adjust, and present the final spec. Do not redo inline what `planner`
+  already grounded in evidence.
+- If the user gave a path to a repo or said "in this codebase" and you have not seen it before, and the scope is small → **delegate to `quick-analysis`** for a 60-second triage. Pass the repo path. Use the output to populate "constraints" in the spec.
 - If the real question is "what are the best refactor candidates here?" or "which architecture direction should we explore?" → **delegate to `architecture-scan`** first, then bring the chosen candidate back into this skill or `tech-spec`.
 - If the repo is non-trivial and the work spans subsystems → **delegate to `deep-understanding`** with focus questions like "where does <subsystem> live", "what conventions govern <area>", "what existing tests cover <feature>".
 - If the question is about something external (a library's API, a known pattern, a CVE applicability) → **delegate to `deep-research`** with the focused question.

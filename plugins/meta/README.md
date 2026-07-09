@@ -14,8 +14,8 @@ droid plugin install meta@sagar-plugins
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `prompt-optimizer` | Audit a droid or skill prompt and recommend minimal-edit improvements. Use when authoring a new droid, diagnosing poor output, or comparing prompt versions. Single-prompt or pairwise scope. | `claude-opus-4-8` | `xhigh` | read-only |
-| `doc-generator` | Apply targeted, minimal-edit agentic-doc updates after an approved audit (from `prompt-optimizer` or `deep-understanding`) or an explicit request. The only droid in this marketplace with edit tools. | `gpt-5.4` | `xhigh` | read-only + `Execute` + `Edit` + `Create` + `ApplyPatch` |
+| `prompt-optimizer` | Audit a droid or skill prompt and recommend minimal-edit improvements. Use when authoring a new droid, diagnosing poor output, or comparing prompt versions. Single-prompt or pairwise scope. | `claude-fable-5` | `xhigh` | read-only |
+| `doc-generator` | Apply targeted, minimal-edit agentic-doc updates after an approved audit (from `prompt-optimizer` or `deep-understanding`) or an explicit request. The only droid in this marketplace with edit tools. | `gpt-5.5` | `high` | read-only + `Execute` + `Edit` + `Create` + `ApplyPatch` |
 
 ## Skills
 
@@ -32,7 +32,7 @@ droid plugin install meta@sagar-plugins
 
 ## Models
 
-`prompt-optimizer` runs `claude-opus-4-8` at `xhigh` for prompt critique and adherence diagnosis. `doc-generator` runs `gpt-5.4` at `xhigh` for minimal-edit application.
+`prompt-optimizer` runs `claude-fable-5` at `xhigh` — prompt critique is judgement work, the Fable tier's role in the three-family strategy. `doc-generator` runs `gpt-5.5` at `high` for minimal-edit application.
 
 ## Related plugins
 
