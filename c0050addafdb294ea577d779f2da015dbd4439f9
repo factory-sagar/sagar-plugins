@@ -1,0 +1,37 @@
+plugins/practices/droids/planner.md
+  1bcecb4798e50bdb 1-147
+plugins/practices/skills/spec/SKILL.md
+  1bcecb4798e50bdb 3,80-88
+plugins/review/skills/review-fix/SKILL.md
+  1bcecb4798e50bdb 173-178,183,208
+plugins/review/droids/review-worker.md
+  1bcecb4798e50bdb 1-52
+plugins/build/README.md
+  1bcecb4798e50bdb 40
+README.md
+  1bcecb4798e50bdb 30,52,93-98,100-106,109,111-115,119,121,139,142
+plugins/review/README.md
+  1bcecb4798e50bdb 17-19
+plugins/practices/README.md
+  1bcecb4798e50bdb 5-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "c0050addafdb294ea577d779f2da015dbd4439f9",
+  "prompts": {
+    "1bcecb4798e50bdb": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3d21a89c-27c7-48d3-b59a-fe84b5646592",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 258,
+      "total_deletions": 26,
+      "accepted_lines": 254,
+      "overriden_lines": 0
+    }
+  }
+}
