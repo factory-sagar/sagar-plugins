@@ -1,8 +1,11 @@
 # sagar-plugins
 
-> Multi-model droid toolkit and engineering-discipline skills for [Factory](https://factory.ai), in six focused plugins.
+> Deterministic engineering workflows, policy skills, specialist droids, and delivery
+> guardrails for [Factory](https://factory.ai).
 
-Sagar's personal Factory plugins marketplace. Each plugin is independently installable; install all six for the full delegation and procedure workflow.
+Four public skills provide the operator surface: `spec`, `implement`, `review-pr`, and
+`ship`. Model-invoked policy skills and specialist droids supply the method behind those
+short requests.
 
 ## Install
 
@@ -11,13 +14,14 @@ Add the marketplace, then install the plugins you want:
 ```bash
 droid plugin marketplace add https://github.com/factory-sagar/sagar-plugins
 
-# Install all six for the full toolkit:
+# Install the complete toolkit:
 droid plugin install investigation@sagar-plugins
 droid plugin install review@sagar-plugins
 droid plugin install synthesis@sagar-plugins
 droid plugin install meta@sagar-plugins
 droid plugin install practices@sagar-plugins
 droid plugin install build@sagar-plugins
+droid plugin install guardrails@sagar-plugins
 ```
 
 Or browse interactively with `/plugins`.
@@ -27,18 +31,23 @@ Or browse interactively with `/plugins`.
 | Plugin | Contents | Category |
 | --- | --- | --- |
 | [`investigation`](./plugins/investigation/) | Droids: `quick-analysis`, `deep-understanding`, `deep-research`, `debugger` | research |
-| [`review`](./plugins/review/) | Droids: `change-review`, `security`, `review-worker`; Skill: `review-fix` (`/review-fix`) | quality |
+| [`review`](./plugins/review/) | Droids: `change-review`, `security`, `review-worker`; public skill: `review-pr` | quality |
 | [`synthesis`](./plugins/synthesis/) | Droids: `pr-describer`, `commit-message-writer` | productivity |
 | [`meta`](./plugins/meta/) | Droids: `prompt-optimizer`, `doc-generator`; Skill: `audit-and-apply-loop` | productivity |
-| [`practices`](./plugins/practices/) | Droid: `planner`; Skills: planning (`spec` (`/spec`), `tech-spec`, `architecture-scan`, `grilling`, `grill-me`, `discovering-unknowns`) + discipline (`agentic-engineering`, `tdd-workflow`, `coding-standards`, `verification-loop`) | productivity |
-| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; Skills: `fix-pr` (`/fix-pr`), `implement` (`/implement`), `ship` (`/ship`) | productivity |
+| [`practices`](./plugins/practices/) | Droid: `planner`; public skill: `spec`; model-invoked planning and engineering policy | productivity |
+| [`build`](./plugins/build/) | Droids: `implementer`, `test-engineer`; public skills: `implement`, `ship` | productivity |
+| [`guardrails`](./plugins/guardrails/) | Four-intent router, push policy, delivery ledger, and current-head completion gate | quality |
 
-Total: 14 droids, 15 skills, 0 commands — skills register their own slash entry points, so there are no separate command files. (CI recomputes these counts from the filesystem; see [Validation](#validation).)
+Total: 14 droids, 13 skills, 0 commands. Only the four public skills appear in the slash
+menu; internal policy skills remain model-invoked.
 
 ## Concepts
 
-- **Skills**: repeatable procedures the main agent runs inline. Markdown SOPs that Droid auto-loads when a task matches. Each skill also registers `/skill-name` as a deterministic entry point, so no separate command files are needed.
+- **Public skills**: four operator entry points. Short requests receive the full method;
+  detailed prompts add constraints and automatically trigger deeper design work.
+- **Policy skills**: model-invoked reference and procedure bundles hidden from the slash menu.
 - **Droids**: sub-agents you delegate to. Each has a pinned model and a reasoning budget.
+- **Hooks**: deterministic controls that run independently of model judgment.
 
 ## Usage
 
@@ -51,8 +60,8 @@ The plugins compose into one delegation and procedure loop:
 optionally discovering-unknowns → blind-spot pass first, when the territory is unfamiliar
   │
   ▼
-spec / architecture-scan  → scope the work or rank refactor candidates
-  │                         (spec delegates heavy planning to the planner droid — fable-5)
+spec                    → plan the work; detailed design intent automatically adds
+  │                       unknown discovery, architecture scan, and typed tech spec
   │
   ├── optionally grilling  → stress-test the plan
   └── optionally tech-spec → typed contracts, seams, call stacks
@@ -63,8 +72,8 @@ spec / architecture-scan  → scope the work or rank refactor candidates
   ├── implementation:  tdd-workflow + coding-standards (skills the main agent runs)
   │                    workers carry the Deviations contract (discovering-unknowns)
   ├── verification:    verification-loop (skill)
-  └── review:          change-review + security (droids)
-                       or review-fix (skill): review read-only, fix, verify, commit — ask before push
+  └── review:          review-pr selects mandatory + diff-driven lenses, then delegates
+                       to change-review and security as required
   │
   ▼
 synthesis: pr-describer + commit-message-writer
@@ -77,13 +86,21 @@ A separate meta loop improves the droid prompts themselves: `prompt-optimizer` a
 
 ## Evals
 
-Prompt upgrades are checked against the golden-task pack in [`evals/golden-tasks/`](./evals/golden-tasks/). Critical goldens must all pass, and the overall pack must score at least 85% before a prompt rewrite is considered ready.
+Prompt upgrades are checked against the golden-task pack in
+[`evals/golden-tasks/`](./evals/golden-tasks/) and the unforced routing corpus in
+[`evals/routing/`](./evals/routing/). [`evals/policy.json`](./evals/policy.json)
+defines critical quality, routing, false-positive, repetition, cost, and latency gates.
 
-Run a task headlessly with [`scripts/run-golden-task.sh`](./scripts/run-golden-task.sh); score the transcript with the [`evals/golden-tasks/JUDGE.md`](./evals/golden-tasks/JUDGE.md) rubric prompt. Accepted outputs are stored under [`evals/baselines/`](./evals/baselines/) and diffed on the next run.
+Run a task headlessly with [`scripts/run-golden-task.sh`](./scripts/run-golden-task.sh).
+Score captured routing results with [`scripts/eval-routing.mjs`](./scripts/eval-routing.mjs).
+Model pins are mirrored in [`evals/model-assignments.json`](./evals/model-assignments.json)
+and link to versioned decision records.
 
 ## Validation
 
-`node scripts/validate.mjs` enforces the repo's structural invariants: manifest JSON validity and name/dir agreement, marketplace and plugin description equality, droid frontmatter (valid model IDs, per-model `reasoningEffort` compatibility, known tool IDs, output contract present), skill frontmatter (semver version), README counts vs the filesystem, resolvable cross-plugin `.md` references, and golden-task targets that exist. CI runs it on every push and PR; PRs additionally require a `plugin.json` version bump for any plugin whose files changed (`--require-bumps`).
+`node scripts/validate.mjs` enforces manifests, droid frontmatter, the four-skill public
+surface, model-assignment parity and evidence links, routing-case integrity, policy bounds,
+README counts, cross-plugin references, golden targets, and plugin/skill version bumps.
 
 ## Versioning
 
@@ -91,25 +108,20 @@ One rule: any change under `plugins/<name>/` bumps that plugin's `plugin.json` v
 
 ## Models
 
-Each droid is pinned to the right model for its job rather than "the best model" for everything, because different model families catch different things. No droid uses `inherit`: a pinned slug keeps a droid's output distribution independent of whatever model the parent session happens to run, and `reasoningEffort` is ignored under `inherit`. Every droid also pins `reasoningEffort` explicitly.
-
-The fleet follows a **three-family pipeline** (adopted 2026-07-09): GLM writes, GPT-5.5
-reviews, Fable plans and judges. No line of code is written and reviewed by the same
-model family, which moves the "different families catch different bugs" principle from
-inside the review step to the pipeline level.
+Each droid pins a model and reasoning effort, but assignments are provisional until they
+clear repeated role-specific evaluations. Family diversity is useful evidence, not a
+substitute for measured quality.
 
 | Model | Role | Used by |
 | --- | --- | --- |
-| `claude-fable-5` (xhigh) | Plan & judge — long-horizon reasoning where the unknowns live | `planner`, `prompt-optimizer` |
-| `glm-5.2` (max) | Do — implementation workloads | `implementer` |
-| `glm-5.2` (high) | Do — triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
-| `gpt-5.5` (high) | Review & diagnose | `change-review`, `review-worker`, `test-engineer`, `doc-generator` |
-| `gpt-5.5` (xhigh) | Review & diagnose — attack-path and root-cause depth | `security`, `debugger` |
-| `gpt-5.4` (xhigh) | Deep repo investigation | `deep-understanding` |
-| `claude-opus-4-8` (xhigh) | Deep external research | `deep-research` |
-| `claude-opus-4-8` (high) | Strongest natural prose; PR synthesis | `pr-describer` |
+| `gpt-5.6-sol` (xhigh) | Heavy planning, investigation, and root cause | `planner`, `deep-understanding`, `debugger` |
+| `gpt-5.6-terra` (high) | Implementation, tests, and precise config edits | `implementer`, `test-engineer`, `doc-generator` |
+| `gpt-5.6-luna` (high/medium) | Triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
+| `gpt-5.2` (xhigh) | Correctness review incumbent | `change-review`, `review-worker` |
+| `claude-opus-4-8` (xhigh/high) | Security, research, prompt critique, and PR prose | `security`, `deep-research`, `prompt-optimizer`, `pr-describer` |
 
-`glm-5.2` supports `off`, `high` (default), and `max` per the CLI's model registry (the docs page lags): the triage/format droids run its `high` default, `implementer` runs `max`. The validator's effort compatibility map is extracted from the CLI registry, not the docs.
+[`evals/model-assignments.json`](./evals/model-assignments.json) is the machine-readable
+source of truth for current assignments and evidence status.
 
 ## Layout
 
@@ -128,6 +140,7 @@ sagar-plugins/
     ├── review/               # 3 droids + 1 skill
     ├── synthesis/            # 2 droids
     ├── meta/                 # 2 droids + 1 skill
-    ├── practices/            # 1 droid + 10 skills
-    └── build/                # 2 droids + 3 skills
+    ├── practices/            # 1 droid + 9 skills (1 public)
+    ├── build/                # 2 droids + 2 public skills
+    └── guardrails/           # deterministic delivery hooks
 ```

@@ -14,7 +14,7 @@
     },
     {
       "name": "review",
-      "description": "Pre-merge review droids (strict diff reviewer, security reviewer, and the pinned review-worker deep-tier subagent) plus the review-fix skill (/review-fix): review a change read-only (light single-pass or deep exhaustive multi-pass, auto-escalated for risky diffs), triage existing PR threads, apply the fixes, verify, and commit locally before push.",
+      "description": "Language-agnostic review policy and droids plus the unified review-pr workflow: short review requests receive mandatory and diff-selected lenses, while explicit fix, comment, ship, and merge intent controls mutation authority.",
       "source": "./plugins/review",
       "category": "quality"
     },
@@ -32,15 +32,21 @@
     },
     {
       "name": "practices",
-      "description": "Planning and engineering-discipline skills plus the planner droid (claude-fable-5 evidence-anchored planning engine that spec delegates heavy planning to): spec, tech-spec, architecture-scan, grilling, grill-me, discovering-unknowns, TDD workflow, coding standards, verification loop, and agentic-engineering operating principles. The spec skill registers /spec as its direct entry point.",
+      "description": "The public spec workflow plus model-invoked planning and engineering policy: unknown discovery, architecture scan, grilling, typed tech specs, coding standards, TDD, verification, and agentic-engineering guidance.",
       "source": "./plugins/practices",
       "category": "productivity"
     },
     {
       "name": "build",
-      "description": "Hands-on tools that change and land code: implementer (applies approved review findings, spec units, or fix lists), test-engineer (finds the riskiest untested behavior and writes the missing tests), the fix-pr skill (/fix-pr: fetch, reason about, fix, reply, resolve, wait for CI, and approve PRs end-to-end), the implement skill (/implement: route to implementer or tdd-workflow with the Deviations contract), and the ship skill (/ship: commit, push, template-conformant PR body, CI watch, resolve threads, merge-ready report).",
+      "description": "The public implement and ship workflows plus focused implementation and test droids. Review-comment handling is unified under review-pr so build owns only code execution and delivery.",
       "source": "./plugins/build",
       "category": "productivity"
+    },
+    {
+      "name": "guardrails",
+      "description": "Deterministic workflow and delivery guardrails: four-intent routing, safe push policy, per-session delivery ledger, and a stop gate that requires current-head CI, PR-body freshness, and resolved review threads.",
+      "source": "./plugins/guardrails",
+      "category": "quality"
     }
   ]
 }

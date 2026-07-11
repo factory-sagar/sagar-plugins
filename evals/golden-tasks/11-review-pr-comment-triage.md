@@ -1,13 +1,13 @@
-# Golden Task 11: Fix-PR Comment Triage
+# Golden Task 11: Review-PR Comment Triage
 
 ## Target
 
-`fix-pr`.
+`review-pr`.
 
 ## Prompt
 
 ```text
-You are running the triage step of the fix-pr workflow. GitHub is unreachable in this
+You are running the comment-triage step of review-pr. GitHub is unreachable in this
 environment, so do not attempt gh calls: produce (1) the triage table, (2) the exact fix
 you would apply for each comment you accept, and (3) a reply draft for every comment.
 

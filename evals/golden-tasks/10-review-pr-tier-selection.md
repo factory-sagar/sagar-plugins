@@ -1,8 +1,8 @@
-# Golden Task 10: Review-Fix Tier Selection and Push Gate
+# Golden Task 10: Review-PR Tier Selection and Push Gate
 
 ## Target
 
-`review-fix`.
+`review-pr`.
 
 ## Setup
 

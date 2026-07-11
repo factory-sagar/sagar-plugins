@@ -1,39 +1,28 @@
----
-name: review-fix
-version: 1.6.0
-description: |
-  Review a change end-to-end, then fix it. Runs a read-only review (light by default,
-  deep on demand), consolidates findings, applies the fixes in code, verifies, commits
-  locally, and STOPS before pushing so you can approve. Picks the tier automatically:
-  light single-pass for regular PRs, deep exhaustive multi-pass for large or risky ones,
-  confirming before it escalates.
-  Use when:
-  - The user says "review and fix", "review this PR and fix it", "deep review and fix"
-  - The user gives a PR URL / branch / commit range and wants findings fixed, not just reported
-  - The user wants exhaustive review for a risky change but a quick one for routine changes
-  - The user wants review findings applied and committed locally, then to approve before push
-  - The user says "review all my PRs", "review and simplify", "review all code, ensure no issues, quality, security"
----
+# Deep Review Procedure
 
-# Review and Fix
+Internal reference for `review-pr`. Load it only when a change is broad, high-consequence,
+or explicitly requests exhaustive review. Authority still comes from `review-pr`; this
+procedure never upgrades a report-only request into an editing or remote-write workflow.
 
-Take a change, review it **read-only**, fix every actionable finding, verify, and commit
-locally **without pushing**. Match the review depth to the change: a light single-pass review
-for routine PRs, an exhaustive multi-pass review for large or risky ones.
+Review every change **read-only** first. Match depth to evidence: a light single-pass review
+for routine changes, an exhaustive multi-pass review for broad or high-consequence ones.
+Only fix, commit, push, approve, or merge when the selected `review-pr` authority mode
+explicitly allows that action.
 
 Two phases with a hard wall between them:
 
 1. **Review (read-only).** Reviewer subagents never edit code. They produce findings only.
 2. **Fix.** After findings are final, a separate fix phase applies them, verifies, and commits.
 
-The skill always stops at a local commit and asks before pushing.
+Authority comes from `review-pr`: fix mode stops at a local commit; comments, ship, and land
+modes continue only as already authorized by the user's original request.
 
 ## Inputs
 
 - **Review target** (required): a PR URL/number, a branch name, a commit range (`base..head`),
   or staged/working-tree changes.
-- **Depth** (optional): `auto` (default), `light`, or `deep`. `auto` chooses per the heuristic
-  in Step 2 and confirms via `AskUser` before escalating to deep.
+- **Depth** (optional): `auto` (default), `light`, or `deep`. `auto` chooses from diff
+  evidence and proceeds without making the user select the method.
 - **Specific concerns** (optional): if the user has particular questions, prioritize them.
 
 ## Supporting files
@@ -91,7 +80,7 @@ need these for the tier heuristic in Step 2.
 **Existing review comments are inputs to this review, not someone else's problem.** When the
 target is a PR, carry every unresolved actionable comment (bot or human) into the Step 4
 findings list with source `pr-thread` and triage it like any other finding — fix it, or reject
-it with a written reason. A review-fix pass on a PR that ends with untriaged existing threads
+it with a written reason. A review-pr pass on a PR that ends with untriaged existing threads
 is incomplete, no matter what else it fixed.
 
 **Rolling / stacked PRs:** if the branch follows a one-commit-per-unit convention (commit
@@ -100,7 +89,7 @@ do not review the whole branch as one blob. Ask which unit(s) to review, or defa
 commits not yet reviewed, and scope the diff per commit (`git show <sha>`). The tier heuristic
 then applies per unit, not to the branch total.
 
-If the target is a PR, check out its branch (see the `fix-pr` skill's checkout step) so you can
+If the target is a PR, use an isolated worktree and follow `fix-comments.md` for checkout so you can
 apply fixes locally. For a local branch / staged changes, work in place. Confirm the working
 tree is clean before editing: `git status --porcelain`.
 
@@ -125,18 +114,8 @@ already well-built and tested, prefer **light** — `change-review` + `security`
 the same findings at a fraction of the cost — and note why. Reserve deep for diffs that are also
 large, or where the risk-sensitive logic itself is new or rewritten.
 
-When the heuristic suggests deep, confirm before escalating:
-
-```
-AskUser:
-1. [question] This change looks large or risky (<one-line reason, e.g. "78 files, touches auth + a DB migration">). Run the deep exhaustive review, or the light review?
-[topic] Review Depth
-[option] Deep (exhaustive multi-pass)
-[option] Light (single pass)
-```
-
-If no signal fires, proceed light without asking. State which tier you chose and why in one
-sentence before reviewing.
+When the heuristic selects deep, state the evidence and proceed. If no signal fires, proceed
+light. The user chooses the outcome and authority; the workflow chooses the review method.
 
 ---
 
@@ -346,6 +325,9 @@ surface. If the choice is genuinely a product-direction call, surface it instead
 
 ### 5. Fix the actionable findings
 
+Run this step only in `fix`, `comments`, `ship`, or `land` mode. In `report` mode, return
+the reconciled findings without editing.
+
 For each **real bug** / **valid improvement** (and accepted nits):
 
 - Read the file and surrounding code before editing.
@@ -389,6 +371,8 @@ Fix any failure your changes introduced before committing. Do not commit broken 
 
 ### 7. Commit — do NOT push
 
+Run this step only in a mutating mode. `report` mode never stages or commits.
+
 Stage and commit with a conventional-commit message summarizing the fixes. **Do not push.**
 
 ```bash
@@ -402,7 +386,7 @@ Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.g
 
 Use a heredoc (`git commit -F -`) if the message contains special characters.
 
-### 8. Summarize and ask before pushing
+### 8. Summarize and return to the authority mode
 
 Report:
 - Tier used (light / deep) and why.
@@ -414,28 +398,20 @@ Report:
 - Verification: format/lint/typecheck/test status.
 - Commit SHA created (not pushed).
 
-Then ask:
-
-```
-AskUser:
-1. [question] Fixes are committed locally on <branch> (<sha>), not pushed. Push now?
-[topic] Push
-[option] Push to remote
-[option] Don't push, I'll review first
-```
-
-Only push if confirmed:
-```bash
-git push origin <branch-name>
-```
+In fix mode, stop here. In comments, ship, or land mode, continue because the original user
+request already authorized the stronger remote workflow. Never ask the user to repeat
+authority they already provided.
 
 ### 9. Close the loop on a PR
+
+Run this step only in `comments`, `ship`, or `land` mode. Approval and merge require
+explicit approval or merge intent; comment handling alone does not grant either authority.
 
 This skill's core scope ends at push. What happens next depends on what the user asked for
 in the invocation:
 
 **User did not ask to land it:** after a confirmed push, offer the handoff — comment /
-resolve threads / approve / merge → the `fix-pr` skill (or `ship`) on the same PR.
+resolve threads / approve / merge → `review-pr` comments mode (or `ship`) on the same PR.
 
 **User explicitly asked to land it ("merge when green", "keep it ready and merge", etc.):**
 landing has a hard gate. Verify ALL of the following against the live API, in order, before
@@ -467,7 +443,8 @@ bias the filter's closed-list reasons exist to prevent.
 ## What Not to Do
 
 - Do not let reviewer subagents edit code. Review is read-only; fixes are a separate phase.
-- Do not push. The skill stops at a local commit and asks first.
+- In `report` and `fix` modes, do not push. Stronger modes continue only because the
+  original request already granted remote-write authority.
 - Do not approve or merge while any review thread is unresolved. Untriaged existing comments
   are a hard blocker even when the user said "merge when green" — burying reviewer comments
   under a merge is the one failure this skill must never repeat.
@@ -476,7 +453,7 @@ bias the filter's closed-list reasons exist to prevent.
 - Do not run the deep tier on a small routine diff. Default light; escalate only on the heuristic.
 - Do not escalate to deep on a small, well-tested touch to a risk-sensitive path alone. Escalate
   only when the diff is also large or the risk-sensitive logic is new/rewritten.
-- Do not escalate to deep without confirming via AskUser (unless the user asked for deep).
+- Do not ask the user to select light versus deep; select from evidence and report why.
 - Do not trust a resume's `completed`-looking summary or reply body. Confirm new entries actually
   landed in the notes doc; if a resume wrote nothing, switch to the comprehensive-worker fallback.
 - Do not auto-fix a finding that challenges a product/design decision; surface it to the operator.

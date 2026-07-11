@@ -1,21 +1,8 @@
----
-name: fix-pr
-version: 2.3.0
-description: |
-  End-to-end PR fix workflow: fetch a PR, read every review comment, reason about whether
-  each one is a real bug, fix the valid ones, reply to every comment, resolve the threads,
-  push, wait for CI to go green, then approve the PR (or say "done" if it is your own).
-  Handles bot comments (factory-droid, code-review bots) and human reviewer comments alike.
-  Parses ```suggestion blocks, prose feedback, and P0/P1/P2 severity tags.
-  Use when:
-  - The user says "fix this PR", "fix droid comments", "resolve PR comments", "address review feedback"
-  - The user provides a PR URL and wants comments addressed end-to-end
-  - The user says "fix the review comments on <PR>" and expects CI + approval handled
-  - The user wants to batch-apply code review suggestions from a PR and close the loop
-  - The user says "resolve comments", "theres droid review comments", "more droid comments on the PR"
----
+# Existing Comment Procedure
 
-# Fix PR
+Internal reference for `review-pr` comments mode. It owns complete comment discovery,
+triage, replies, resolution, push, and CI follow-through. It does not run unless the user
+authorized comment handling or a stronger remote-write mode.
 
 Given a PR URL or number, fetch all review comments, reason about each one, fix the valid
 bugs, reply to every comment, resolve the threads, push, wait for CI, then approve the PR
@@ -232,6 +219,11 @@ If you did NOT rebase, use a plain push:
 git push origin <branch-name>
 ```
 
+After every push, invoke `pr-describer` against the current PR, preserve the repository's
+template, and update the body so it ends with
+`<!-- sagar-plugins:head=<full-head-sha> -->`. The delivery stop gate treats a body stamped
+for an older revision as incomplete.
+
 ### 7. Reply to Every Comment and Resolve Threads
 
 For **every** triaged comment, post a short reply on GitHub. Use `gh` to reply to review
@@ -341,9 +333,9 @@ ask the user for guidance. Do not keep pushing fixes in a loop.
 If CI was already green before your push (unlikely but possible), confirm it is still green
 after your push.
 
-### 9. Approve or Say Done
+### 9. Finalize the authorized state
 
-The goal of this skill is a **fully fixed, merge-ready PR**. Do not approve (or declare done)
+The goal of comments mode is a **fully fixed, merge-ready PR**. Do not declare it ready
 until every one of these is true, verified against the live API:
 
 - [ ] Every actionable comment (real bug / valid improvement) has a corresponding code fix
@@ -353,22 +345,21 @@ until every one of these is true, verified against the live API:
 - [ ] Changes are committed and pushed to the PR branch
 - [ ] CI is green (all required checks passing)
 
-Only when the PR is fully fixed and CI is green do you finalize:
+Approval is a separate authority. Only approve when the original `review-pr` request
+explicitly included approve or merge intent.
 
-**If the PR author is NOT `factory-droid[bot]`** (someone else's PR), approve it:
+**If approval is authorized and the PR author is NOT `factory-droid[bot]`:**
 ```bash
 gh pr review <url> --approve --body "All review comments addressed and resolved, CI is green. PR is merge-ready."
 ```
 
-**If the PR author IS `factory-droid[bot]`** (your own PR):
-Do not approve your own PR (GitHub disallows self-approval and it is not meaningful). The
-end state is still a fully fixed, green PR; simply report "Done" to the user.
+Otherwise, report the PR as merge-ready without approving it. Never approve your own PR.
 
 To determine authorship, check the `author.login` field captured in step 1. The
 factory-droid bot author is `factory-droid[bot]`.
 
 If any checklist item cannot be satisfied (e.g. CI stays red after 3 attempts, or a comment
-needs the user's decision), do NOT approve. Report the PR as **Blocked** with the specific
+needs the user's decision), report the PR as **Blocked** with the specific
 reason and what is needed to unblock.
 
 ### 10. Report

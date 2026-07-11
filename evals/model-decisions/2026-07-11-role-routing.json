@@ -1,0 +1,65 @@
+{
+  "id": "2026-07-11-role-routing",
+  "date": "2026-07-11",
+  "status": "provisional",
+  "scope": [
+    "planning",
+    "implementation",
+    "review",
+    "routing"
+  ],
+  "protocol": {
+    "planningCandidates": [
+      "gpt-5.6-sol:xhigh",
+      "gpt-5.6-terra:high",
+      "gpt-5.6-luna:high",
+      "claude-fable-5:xhigh",
+      "claude-opus-4-8:xhigh",
+      "gemini-3.1-pro-preview:high",
+      "glm-5.2:max"
+    ],
+    "implementationCandidates": [
+      "gpt-5.6-sol:xhigh",
+      "gpt-5.6-terra:high",
+      "gpt-5.6-luna:high",
+      "claude-fable-5:xhigh",
+      "claude-opus-4-8:xhigh",
+      "gpt-5.5:xhigh",
+      "glm-5.2:max",
+      "gemini-3.5-flash:high",
+      "kimi-k2.7-code:high"
+    ],
+    "reviewCandidates": [
+      "gpt-5.6-sol:xhigh",
+      "gpt-5.5:xhigh",
+      "gpt-5.2:xhigh",
+      "claude-opus-4-8:xhigh",
+      "gemini-3.1-pro-preview:high",
+      "glm-5.2:max"
+    ],
+    "routingCandidates": [
+      "gpt-5.6-terra:high",
+      "glm-5.2:high"
+    ],
+    "repetitions": 1,
+    "artifactPolicy": "Raw local transcripts and private session content are not committed."
+  },
+  "results": {
+    "planning": "Sol produced the strongest depth; Terra preserved the required architecture and evidence at materially lower cost.",
+    "implementation": "Terra, Sol, Fable, GPT-5.5, and Gemini Flash passed all five hidden contract checks. GLM-5.2 and Kimi missed null and signed-integer behavior.",
+    "review": "All candidates found the seeded cross-tenant defect and clean controls produced no findings. GPT-5.2 remains the review incumbent because Factory's April 2026 50-PR benchmark reports the highest mean F1.",
+    "routing": "Terra selected the right primary workflow with 3-5 skill calls per case. GLM selected the same primary workflows but loaded 20-43 skills per case."
+  },
+  "decisions": {
+    "heavyReasoning": "gpt-5.6-sol:xhigh",
+    "standardImplementation": "gpt-5.6-terra:high",
+    "mechanical": "gpt-5.6-luna:medium-high",
+    "correctnessReview": "gpt-5.2:xhigh",
+    "securityAndResearch": "claude-opus-4-8:xhigh"
+  },
+  "limitations": [
+    "Single-run local evidence is sufficient only for provisional assignments.",
+    "Droid-targeted runs did not reproduce the exact Task boundary for every role.",
+    "Role pins require five-repeat public and held-out evaluation before becoming validated."
+  ]
+}

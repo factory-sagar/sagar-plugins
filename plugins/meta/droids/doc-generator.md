@@ -1,7 +1,7 @@
 ---
 name: doc-generator
 description: Apply targeted, minimal-edit agentic-documentation and prompt updates after an approved audit or explicit request. Pairs with prompt-optimizer and deep-understanding (which audit) — this droid applies.
-model: gpt-5.5
+model: gpt-5.6-terra
 reasoningEffort: high
 tools: ["Read", "LS", "Grep", "Glob", "Execute", "Edit", "Create", "ApplyPatch"]
 ---

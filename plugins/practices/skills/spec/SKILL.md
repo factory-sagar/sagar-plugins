@@ -1,17 +1,10 @@
 ---
 name: spec
-version: 1.3.0
+version: 1.4.0
 description: |
-  Turn a fuzzy feature request into a concrete spec (goal, acceptance criteria, scope, constraints,
-  open questions) AND decompose it into agent-sized units, each tagged with the recommended sagar
-  droid or worker for delegation. The starting point for any non-trivial new work.
-  Use when:
-  - User says "spec this out", "plan this", "decompose", "break this into steps"
-  - User says "give me a spec for X", "let me think through", "draft a plan for", "scope this"
-  - User says "what would it take to", "how should we approach X"
-  - User says "come up with a full plan", "lets spec out all the work", "scope this out properly"
-  - A new feature, refactor, or migration is being scoped
-  - A request is ambiguous and needs concrete shape before any code is written
+  Plan non-trivial features, refactors, and migrations. Converts short or detailed requests
+  into evidence-backed decisions, testable acceptance criteria, and executable units; adds
+  unknown-discovery and technical architecture automatically when the request demands them.
 tags: [planning, decomposition, scoping, workflow, spec]
 ---
 
@@ -35,7 +28,22 @@ This skill owns scope and decomposition. Before writing implementation-facing de
 - `../coding-standards/OBSERVABILITY.md` for logging, tracing, metrics, safe summaries, or redaction.
 - `../coding-standards/VOCABULARY.md` for shared failure, boundary, module, runtime, and adoption language.
 
-When the approved plan needs typed contracts, seams, call stacks, or architecture alternatives, hand it to `tech-spec`. When the question is "what should we refactor or where should this live?", use `architecture-scan` first. When the plan itself needs stress-testing, use `grilling` or `grill-me`.
+When the approved plan needs typed contracts, seams, call stacks, or architecture alternatives, hand it to `tech-spec`. When the question is "what should we refactor or where should this live?", use `architecture-scan` first. When the plan itself needs stress-testing, use `grilling`.
+
+## Prompt-depth routing
+
+Prompt length is evidence about the user's intent, not a quality setting:
+
+- A **short directive** receives the complete standard planning method. Short never means
+  shallow.
+- A **detailed execution prompt** supplies constraints and acceptance evidence. Preserve
+  those inputs, then run the standard method without making the user restate them.
+- A **design- or architecture-shaped prompt** automatically adds `discovering-unknowns`,
+  `architecture-scan`, and `tech-spec` before implementation units are finalized.
+- An **unfamiliar-territory prompt** ("I am new to this", "find my blind spots") adds the
+  evidence-backed blind-spot pass before decisions.
+
+The user chooses the outcome. The toolchain chooses the required method.
 
 ## When to Activate
 

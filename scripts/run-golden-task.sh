@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Run one golden task headlessly and (optionally) judge the transcript.
 #
-#   scripts/run-golden-task.sh <task-file> [--judge] [--droid <droid.md> --model <id> [--effort <level>]] [--label <name>]
+#   scripts/run-golden-task.sh <task-file> [--judge] [--exec-model <id>]
+#     [--exec-effort <level>] [--judge-model <id>] [--judge-effort <level>]
+#     [--droid <droid.md> --model <id> [--effort <level>]] [--label <name>]
 #
 # What it does:
 #   1. Extracts the task's Target, optional ```bash Setup block, and ```text Prompt block.
@@ -22,15 +24,20 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TASK_FILE="${1:?usage: run-golden-task.sh <task-file> [--judge] [--droid <file> --model <id> [--effort <level>]] [--label <name>]}"
+TASK_FILE="${1:?usage: run-golden-task.sh <task-file> [--judge] [--exec-model <id>] [--exec-effort <level>] [--droid <file> --model <id> [--effort <level>]] [--label <name>]}"
 shift
 JUDGE="" DROID_FILE="" MODEL="" EFFORT="" LABEL=""
+EXEC_MODEL="" EXEC_EFFORT="" JUDGE_MODEL="claude-opus-4-8" JUDGE_EFFORT="xhigh"
 while [ $# -gt 0 ]; do
   case "$1" in
     --judge) JUDGE="--judge" ;;
     --droid) DROID_FILE="$2"; shift ;;
     --model) MODEL="$2"; shift ;;
     --effort) EFFORT="$2"; shift ;;
+    --exec-model) EXEC_MODEL="$2"; shift ;;
+    --exec-effort) EXEC_EFFORT="$2"; shift ;;
+    --judge-model) JUDGE_MODEL="$2"; shift ;;
+    --judge-effort) JUDGE_EFFORT="$2"; shift ;;
     --label) LABEL="-$2"; shift ;;
     *) echo "unknown flag: $1" >&2; exit 2 ;;
   esac
@@ -84,8 +91,31 @@ echo "target: $TARGET"
 echo "scratch: $SCRATCH"
 echo "run dir: $RUN_DIR"
 
-droid exec -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto medium -o text \
+EXEC_ARGS=()
+[ -n "$EXEC_MODEL" ] && EXEC_ARGS+=(--model "$EXEC_MODEL")
+[ -n "$EXEC_EFFORT" ] && EXEC_ARGS+=(--reasoning-effort "$EXEC_EFFORT")
+STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+droid exec "${EXEC_ARGS[@]}" -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto medium -o text \
   | tee "$RUN_DIR/transcript.md"
+FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+TASK_NAME="$TASK_NAME" TARGET="$TARGET" STARTED_AT="$STARTED_AT" FINISHED_AT="$FINISHED_AT" \
+EXEC_MODEL="$EXEC_MODEL" EXEC_EFFORT="$EXEC_EFFORT" DROID_FILE="$DROID_FILE" \
+node -e '
+  const fs = require("node:fs");
+  const metadata = {
+    schemaVersion: 1,
+    task: process.env.TASK_NAME,
+    target: process.env.TARGET,
+    startedAt: process.env.STARTED_AT,
+    finishedAt: process.env.FINISHED_AT,
+    requestedModel: process.env.EXEC_MODEL || null,
+    requestedReasoningEffort: process.env.EXEC_EFFORT || null,
+    evidenceType: process.env.DROID_FILE ? "contract_only" : "skill_execution",
+    pinnedDroidExercised: false
+  };
+  fs.writeFileSync(process.argv[1], `${JSON.stringify(metadata, null, 2)}\n`);
+' "$RUN_DIR/metadata.json"
 
 if [ "$JUDGE" = "--judge" ]; then
   {
@@ -93,7 +123,8 @@ if [ "$JUDGE" = "--judge" ]; then
     echo; echo "--- TASK FILE ---"; cat "$TASK_FILE"
     echo; echo "--- TRANSCRIPT ---"; cat "$RUN_DIR/transcript.md"
   } > "$RUN_DIR/judge-prompt.md"
-  droid exec -f "$RUN_DIR/judge-prompt.md" -o text | tee "$RUN_DIR/verdict.md"
+  droid exec --model "$JUDGE_MODEL" --reasoning-effort "$JUDGE_EFFORT" \
+    -f "$RUN_DIR/judge-prompt.md" -o text | tee "$RUN_DIR/verdict.md"
 fi
 
 BASELINE="$ROOT/evals/baselines/$TASK_NAME.md"

@@ -1,7 +1,7 @@
 ---
 name: deep-understanding
 description: Thorough, evidence-based investigation of a repository, system, or focused question. Returns decision-grade understanding with prioritized findings, strengths, and a hand-off plan.
-model: gpt-5.4
+model: gpt-5.6-sol
 reasoningEffort: xhigh
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]
 ---

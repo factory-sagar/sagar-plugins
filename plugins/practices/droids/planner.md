@@ -1,7 +1,7 @@
 ---
 name: planner
 description: Evidence-anchored planning engine. Turns a scoping brief into a decisions-first plan — territory scan with file:line evidence, 2-4 architecture-changing decisions with rejected alternatives, agent-sized units with executors, sequencing, and open questions with recommended answers. Pairs with the spec skill (which owns the interactive clarify/approve half) — this droid does the heavy repo-anchored thinking.
-model: claude-fable-5
+model: gpt-5.6-sol
 reasoningEffort: xhigh
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]
 ---

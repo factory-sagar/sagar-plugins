@@ -1,15 +1,10 @@
 ---
 name: ship
-version: 1.1.0
+version: 1.2.0
 description: |
-  Land finished work end-to-end: commit, push, create or update the PR with a
-  template-conformant body, watch CI until green (fixing failures), resolve review threads,
-  and report merge-ready. Owns everything after "the code is done".
-  Use when:
-  - The user says "ship it", "push", "push everything", "push and update PR", "push and make a PR"
-  - The user says "monitor ci", "verify ci is green", "merge it if CI passes"
-  - The user says "clean up the PR", "fix the PR body", "package this up well"
-  - Implementation or review-fix is complete and the change needs to land
+  Land finished work. Commits and pushes, writes the repository-template PR body, watches
+  current-head CI, closes review threads, and reports merge-ready; merges only when the user
+  explicitly requests it and every delivery gate passes.
 ---
 
 # Ship
@@ -53,17 +48,21 @@ PR template (look in `.github/`, `docs/`, or `PULL_REQUEST_TEMPLATE*`). The body
 the change itself — never the session, process, or tooling that produced it. Include the
 Deviations log as reviewer notes when one exists.
 
+End the body with `<!-- sagar-plugins:head=<full-head-sha> -->`. The delivery stop gate uses
+this marker to prove that the body describes the current pushed revision.
+
 ### 5. Watch CI until green
 
-Run the CI watch loop exactly as defined in the `fix-pr` skill (step "Wait for CI"):
+Run the CI watch loop defined in
+`../../../review/skills/review-pr/fix-comments.md`:
 `gh pr checks --watch`, read failure logs, distinguish own-change failures from
 pre-existing ones, delegate to the `debugger` droid when the cause is not obvious, fix and
 repush. Max 3 fix attempts, then stop and report.
 
 ### 6. Resolve review threads
 
-If the PR has unresolved review comments, handle them with the `fix-pr` skill's triage
-rules (fix valid ones, reply to every comment, resolve threads). Skip silently if there
+If the PR has unresolved review comments, handle them with `review-pr` comments mode
+(fix valid ones, reply to every comment, resolve threads). Skip silently if there
 are none yet.
 
 ### 7. Report merge-ready

@@ -1,5 +1,10 @@
 # Trial: implementer model A/B — gpt-5.5 vs claude-fable-5 (2026-07-04)
 
+**Status: superseded.** This single-run trial remains historical evidence but does not
+govern the current pin. The provisional replacement decision is
+`evals/model-decisions/2026-07-11-role-routing.json`; promotion to validated status requires
+the repeated comparison policy in `evals/policy.json`.
+
 **Decision: ADOPT `claude-fable-5` (xhigh) for `implementer`.** Fallback pin: `gpt-5.5` (xhigh).
 
 ## Protocol

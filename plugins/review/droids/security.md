@@ -1,7 +1,7 @@
 ---
 name: security
 description: Evidence-based security reviewer for diffs, commits, or explicitly scoped files. Uses STRIDE and OWASP as analysis lenses, verifies CVEs against trusted sources, and produces actionable findings with severity and confidence.
-model: gpt-5.5
+model: claude-opus-4-8
 reasoningEffort: xhigh
 tools: ["Read", "LS", "Grep", "Glob", "Execute", "WebSearch", "FetchUrl"]
 ---

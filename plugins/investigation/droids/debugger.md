@@ -1,7 +1,7 @@
 ---
 name: debugger
 description: Root-cause analysis for a failing behavior — reproduce, localize, rank falsifiable hypotheses, prove the cause with evidence, and hand a concrete fix plan to implementer. Diagnoses only, never patches. Use for failing tests, stack traces, regressions, flaky behavior, and incident RCA.
-model: gpt-5.5
+model: gpt-5.6-sol
 reasoningEffort: xhigh
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]
 ---
