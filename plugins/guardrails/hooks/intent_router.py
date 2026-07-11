@@ -13,11 +13,26 @@ INFORMATIONAL = re.compile(
 )
 
 
+def action_position(text: str, pattern: str) -> int | None:
+    for match in re.finditer(pattern, text, re.IGNORECASE):
+        boundary = max(
+            text.rfind(".", 0, match.start()),
+            text.rfind(";", 0, match.start()),
+            text.rfind(" but ", 0, match.start()),
+            text.rfind(" then ", 0, match.start()),
+        )
+        clause = text[boundary + 1 : match.start()]
+        if re.search(r"\b(do not|don't|never|without)\b", clause, re.IGNORECASE):
+            continue
+        return match.start()
+    return None
+
+
 def route_intent(prompt: str) -> list[str] | None:
     text = " ".join(prompt.strip().split())
     if not text or INFORMATIONAL.search(text):
         return None
-    review = re.search(
+    review_match = re.search(
         r"\b(review|address)\b",
         text,
         re.IGNORECASE,
@@ -26,39 +41,44 @@ def route_intent(prompt: str) -> list[str] | None:
         text,
         re.IGNORECASE,
     )
-    plan = re.search(
+    review_position = (
+        action_position(text, r"\b(review|address)\b")
+        if review_match
+        else None
+    )
+    plan_position = action_position(
+        text,
         r"\b(plan|spec|scope|design|architect(?:ure)?)\b",
-        text,
-        re.IGNORECASE,
     )
-    implement = not re.search(
-        r"\b(do not|don't|never|without)\s+(implement|build|apply)\b",
+    implement_position = action_position(text, r"\b(implement|build|apply)\b")
+    if implement_position is None and re.search(
+        r"\bexecute\b.{0,40}\b(plan|program|unit|work package|change set)\b",
         text,
         re.IGNORECASE,
-    ) and re.search(
-        r"\b(implement|build|apply)\b",
+    ):
+        implement_position = action_position(text, r"\bexecute\b")
+    if implement_position is not None and re.search(
+        r"\bapproved (plan|program|spec)\b",
         text,
         re.IGNORECASE,
-    )
-    ship = not re.search(
-        r"\b(do not|don't|never|without)\s+(ship|push|merge|land)\b",
+    ):
+        plan_position = None
+    ship_position = action_position(
         text,
-        re.IGNORECASE,
-    ) and re.search(
         r"\b(ship|push|merge|land|merge-ready)\b",
-        text,
-        re.IGNORECASE,
     )
 
     routes: list[str] = []
-    if review:
+    if plan_position is not None:
+        routes.append("spec")
+    if (
+        implement_position is not None
+        and (review_position is None or implement_position < review_position)
+    ):
+        routes.append("implement")
+    if review_position is not None:
         routes.append("review-pr")
-    else:
-        if plan:
-            routes.append("spec")
-        if implement:
-            routes.append("implement")
-    if ship:
+    if ship_position is not None:
         routes.append("ship")
     return routes or None
 

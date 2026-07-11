@@ -8,7 +8,12 @@ import subprocess
 import sys
 from dataclasses import dataclass
 
-from delivery_ledger import load_state, state_directory, state_path
+from delivery_ledger import (
+    clear_push_state,
+    load_state,
+    state_directory,
+    state_path,
+)
 
 BODY_HEAD_MARKER = "pr-body-head"
 
@@ -18,7 +23,8 @@ class DeliverySnapshot:
     local_head: str | None
     remote_head: str | None
     pr_head: str | None
-    dirty_worktree: bool | None
+    dirty_tracked: bool | None
+    unexpected_untracked: tuple[str, ...] | None
     checks_complete: bool | None
     checks_green: bool | None
     unresolved_threads: int | None
@@ -29,6 +35,23 @@ def body_is_fresh(body: str, head: str) -> bool:
     return f"<!-- {BODY_HEAD_MARKER}={head} -->" in body
 
 
+def classify_worktree(
+    status: str | None,
+    baseline_untracked: list[str],
+) -> tuple[bool | None, tuple[str, ...] | None]:
+    if status is None:
+        return None, None
+    dirty_tracked = False
+    current_untracked = set()
+    for line in status.splitlines():
+        if line.startswith("?? "):
+            current_untracked.add(line[3:])
+        elif line:
+            dirty_tracked = True
+    unexpected = tuple(sorted(current_untracked - set(baseline_untracked)))
+    return dirty_tracked, unexpected
+
+
 def pending_obligations(
     state: dict[str, object],
     snapshot: DeliverySnapshot,
@@ -36,10 +59,15 @@ def pending_obligations(
     pushed_head = str(state.get("pushed_head") or "")
     obligations: list[str] = []
 
-    if snapshot.dirty_worktree is None:
+    if snapshot.dirty_tracked is None:
         obligations.append("Delivery gate could not verify whether the worktree is clean.")
-    elif snapshot.dirty_worktree:
-        obligations.append("The worktree contains uncommitted or untracked changes.")
+    elif snapshot.dirty_tracked:
+        obligations.append("The worktree contains uncommitted tracked changes.")
+    if snapshot.unexpected_untracked is None:
+        obligations.append("Delivery gate could not verify untracked-file ownership.")
+    elif snapshot.unexpected_untracked:
+        paths = ", ".join(snapshot.unexpected_untracked[:3])
+        obligations.append(f"New untracked delivery files remain: {paths}.")
     if snapshot.local_head and snapshot.local_head != pushed_head:
         obligations.append("Local HEAD contains unpushed work created after the recorded push.")
     if snapshot.remote_head is None:
@@ -194,7 +222,15 @@ def snapshot_delivery(state: dict[str, object]) -> DeliverySnapshot:
 
     local_head = run_text(["git", "rev-parse", "HEAD"], repo_root)
     remote_head = run_text(["git", "rev-parse", f"origin/{branch}"], repo_root)
-    status = run_text(["git", "status", "--porcelain"], repo_root)
+    status = run_text(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        repo_root,
+    )
+    baseline_untracked = state.get("baseline_untracked")
+    dirty_tracked, unexpected_untracked = classify_worktree(
+        status,
+        baseline_untracked if isinstance(baseline_untracked, list) else [],
+    )
     pr = fetch_pr(repo_root, pr_number)
     if pr is not None and isinstance(pr.get("number"), int):
         pr_number = int(pr["number"])
@@ -214,7 +250,8 @@ def snapshot_delivery(state: dict[str, object]) -> DeliverySnapshot:
         local_head=local_head,
         remote_head=remote_head,
         pr_head=pr_head,
-        dirty_worktree=None if status is None else bool(status),
+        dirty_tracked=dirty_tracked,
+        unexpected_untracked=unexpected_untracked,
         checks_complete=checks_complete,
         checks_green=checks_green,
         unresolved_threads=unresolved_threads,
@@ -229,14 +266,20 @@ def main() -> int:
         return 0
 
     session_id = str(hook_input.get("session_id") or "session")
-    path = state_path(state_directory(), session_id)
+    cwd = str(hook_input.get("cwd") or "")
+    repo_root = run_text(["git", "rev-parse", "--show-toplevel"], cwd)
+    if not repo_root:
+        return 0
+    path = state_path(state_directory(), session_id, repo_root)
     state = load_state(path)
     if state is None:
+        return 0
+    if not state.get("pushed_head"):
         return 0
 
     obligations = pending_obligations(state, snapshot_delivery(state))
     if not obligations:
-        path.unlink(missing_ok=True)
+        clear_push_state(path, state)
         return 0
 
     message = "Delivery remains incomplete:\n" + "\n".join(

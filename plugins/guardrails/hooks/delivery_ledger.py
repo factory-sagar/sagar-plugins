@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import shlex
 import subprocess
@@ -11,7 +12,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-STATE_VERSION = 1
+STATE_VERSION = 2
 SHELL_SEPARATORS = {"&&", ";", "||", "|"}
 
 
@@ -78,9 +79,14 @@ def state_directory() -> Path:
     return Path(configured) if configured else Path(tempfile.gettempdir()) / "droid-delivery-ledger"
 
 
-def state_path(state_dir: Path, session_id: str) -> Path:
+def state_path(state_dir: Path, session_id: str, repo_root: str | None = None) -> Path:
     safe_id = "".join(char for char in session_id if char.isalnum() or char in "-_")
-    return state_dir / f"{safe_id or 'session'}.json"
+    repo_id = (
+        hashlib.sha256(repo_root.encode("utf-8")).hexdigest()[:12]
+        if repo_root
+        else "no-repo"
+    )
+    return state_dir / f"{safe_id or 'session'}-{repo_id}.json"
 
 
 def record_push(
@@ -91,9 +97,21 @@ def record_push(
     branch: str,
     pushed_head: str,
     pr_number: int | None,
+    baseline_untracked: list[str] | None = None,
 ) -> Path:
-    path = state_path(state_dir, session_id)
+    path = state_path(state_dir, session_id, repo_root)
     path.parent.mkdir(parents=True, exist_ok=True)
+    existing = load_state(path) or {}
+    existing_baseline = (
+        existing.get("baseline_untracked")
+        if existing.get("repo_root") == repo_root
+        else None
+    )
+    preserved_baseline = (
+        existing_baseline
+        if isinstance(existing_baseline, list)
+        else baseline_untracked or []
+    )
     payload = {
         "version": STATE_VERSION,
         "session_id": session_id,
@@ -101,6 +119,31 @@ def record_push(
         "branch": branch,
         "pushed_head": pushed_head,
         "pr_number": pr_number,
+        "baseline_untracked": sorted(set(preserved_baseline)),
+    }
+    temporary = path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    temporary.replace(path)
+    return path
+
+
+def record_session_baseline(
+    *,
+    state_dir: Path,
+    session_id: str,
+    repo_root: str,
+    baseline_untracked: list[str],
+) -> Path:
+    path = state_path(state_dir, session_id, repo_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "version": STATE_VERSION,
+        "session_id": session_id,
+        "repo_root": repo_root,
+        "branch": None,
+        "pushed_head": None,
+        "pr_number": None,
+        "baseline_untracked": sorted(set(baseline_untracked)),
     }
     temporary = path.with_suffix(".tmp")
     temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
@@ -116,6 +159,21 @@ def load_state(path: Path) -> dict[str, object] | None:
     if payload.get("version") != STATE_VERSION:
         return None
     return payload
+
+
+def clear_push_state(path: Path, state: dict[str, object]) -> None:
+    payload = {
+        "version": STATE_VERSION,
+        "session_id": state.get("session_id"),
+        "repo_root": state.get("repo_root"),
+        "branch": None,
+        "pushed_head": None,
+        "pr_number": None,
+        "baseline_untracked": state.get("baseline_untracked", []),
+    }
+    temporary = path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    temporary.replace(path)
 
 
 def run(command: list[str], cwd: str) -> str | None:
@@ -135,7 +193,7 @@ def run(command: list[str], cwd: str) -> str | None:
     return result.stdout.strip()
 
 
-def resolve_push_state(cwd: str) -> tuple[str, str, str, int | None] | None:
+def resolve_push_state(cwd: str) -> tuple[str, str, str, int | None, list[str]] | None:
     repo_root = run(["git", "rev-parse", "--show-toplevel"], cwd)
     branch = run(["git", "branch", "--show-current"], cwd)
     head = run(["git", "rev-parse", "HEAD"], cwd)
@@ -147,7 +205,12 @@ def resolve_push_state(cwd: str) -> tuple[str, str, str, int | None] | None:
         pr_number = int(raw_pr) if raw_pr else None
     except ValueError:
         pr_number = None
-    return repo_root, branch, head, pr_number
+    raw_untracked = run(
+        ["git", "ls-files", "--others", "--exclude-standard"],
+        repo_root,
+    )
+    baseline_untracked = raw_untracked.splitlines() if raw_untracked else []
+    return repo_root, branch, head, pr_number, baseline_untracked
 
 
 def main() -> int:
@@ -156,10 +219,29 @@ def main() -> int:
     except json.JSONDecodeError:
         return 0
 
+    event = hook_input.get("hook_event_name")
+    cwd = str(hook_input.get("cwd") or os.getcwd())
+    session_id = str(hook_input.get("session_id") or "session")
+    if event == "SessionStart":
+        repo_root = run(["git", "rev-parse", "--show-toplevel"], cwd)
+        if not repo_root:
+            return 0
+        raw_untracked = run(
+            ["git", "ls-files", "--others", "--exclude-standard"],
+            repo_root,
+        )
+        record_session_baseline(
+            state_dir=state_directory(),
+            session_id=session_id,
+            repo_root=repo_root,
+            baseline_untracked=raw_untracked.splitlines() if raw_untracked else [],
+        )
+        print(json.dumps({"suppressOutput": True}))
+        return 0
+
     if hook_input.get("tool_name") != "Execute":
         return 0
     command = str((hook_input.get("tool_input") or {}).get("command", ""))
-    cwd = str(hook_input.get("cwd") or os.getcwd())
     push_cwd = parse_push_command(command, cwd)
     if push_cwd is None:
         return 0
@@ -171,14 +253,15 @@ def main() -> int:
     resolved = resolve_push_state(push_cwd)
     if resolved is None:
         return 0
-    repo_root, branch, head, pr_number = resolved
+    repo_root, branch, head, pr_number, baseline_untracked = resolved
     record_push(
         state_dir=state_directory(),
-        session_id=str(hook_input.get("session_id") or "session"),
+        session_id=session_id,
         repo_root=repo_root,
         branch=branch,
         pushed_head=head,
         pr_number=pr_number,
+        baseline_untracked=baseline_untracked,
     )
     print(json.dumps({"suppressOutput": True}))
     return 0
