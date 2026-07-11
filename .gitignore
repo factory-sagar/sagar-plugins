@@ -18,6 +18,8 @@ Desktop.ini
 # Logs / temp
 *.log
 tmp/
+__pycache__/
+*.pyc
 
 # Golden-task run transcripts (baselines are committed; runs are transient)
 evals/runs/

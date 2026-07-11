@@ -1,15 +1,10 @@
 ---
 name: implement
-version: 1.0.0
+version: 1.1.0
 description: |
-  Route "implement this" to the right executor: an approved change set goes to the
-  implementer droid, new or changed behavior without one runs tdd-workflow, and a small
-  mechanical change in known territory is applied inline. Every path carries the
-  Deviations contract and finishes with verification.
-  Use when:
-  - The user says "implement this", "/implement <task>", "apply this change set", "build this unit"
-  - A spec unit, review finding set, debugger fix plan, or explicit fix list is ready to execute
-  - New behavior needs implementing and the entry discipline (droid vs TDD vs inline) must be chosen
+  Build approved work. Routes explicit change sets to the implementer, new behavior through
+  test-first execution, and small mechanical changes inline; every path records deviations
+  and finishes with the repository's verification gate.
 ---
 
 # Implement

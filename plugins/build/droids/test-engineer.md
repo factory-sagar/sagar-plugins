@@ -1,7 +1,7 @@
 ---
 name: test-engineer
 description: Find the riskiest untested behavior and write the missing tests. Gap-analysis mode ranks untested behavior by risk (coverage-informed when the repo has it wired); write mode adds tests that pin current behavior or assert a provided spec, including TDD RED tests. Finds and fills — never guesses at intent.
-model: gpt-5.5
+model: gpt-5.6-terra
 reasoningEffort: high
 tools: ["Read", "LS", "Grep", "Glob", "Execute", "Edit", "Create", "ApplyPatch"]
 ---

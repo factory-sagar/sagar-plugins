@@ -1,16 +1,12 @@
 ---
 name: tech-spec
-version: 1.1.0
+version: 1.2.0
 description: |
-  Write a typed call-stack architecture handoff. Use when a scoped request needs concrete types,
-  seams, adapters, call stacks, and an implementation-ready TDD plan.
-  Use when:
-  - The user wants a deeper technical design after `spec`
-  - A plan needs concrete types, interfaces, or boundary contracts
-  - Multiple architecture options need comparison before implementation
-  - Repo context should be converted into an implementation-ready handoff
-  - User says "scope out a proper tech stack", "design this properly", "how should this be architected"
+  Convert scoped design work into typed contracts, seams, adapters, call stacks, failure
+  flows, file ownership, and vertical test slices. Invoke automatically when a plan carries
+  architecture-changing boundaries or explicit technical-design intent.
 tags: [planning, architecture, design, interfaces, call-stacks, tdd]
+user-invocable: false
 ---
 
 # Tech Spec
@@ -201,7 +197,7 @@ Completion criterion: the output follows the outline below and is implementation
    - Do not include skeleton types, example APIs, provisional call stacks, file maps, or TDD slices. Those are spec content and must wait for Path A.
    - Completion criterion: the agent has not invented requirements, APIs, files, or call stacks.
 2. Start a grilling interview.
-   - Use `../grill-me/`.
+   - Invoke the `grilling` skill.
    - Ask one question at a time and provide the recommended answer with each question.
    - One question means one actual ask with one missing fact. The `Question` line must contain exactly one question mark and must not contain " and " or " or ". Do not append secondary asks, shopping lists, repo-path requests, stack-constraint lists, or "also tell me" bullets in the same turn. If several core facts are missing, ask for the repo or codebase path first.
    - Use this exact compact shape for the first turn:

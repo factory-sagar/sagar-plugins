@@ -1,15 +1,12 @@
 ---
 name: architecture-scan
-version: 1.1.0
+version: 1.2.0
 description: |
-  Find standards-backed architecture refactor opportunities. Use when the user wants to scan a
-  codebase, module, or feature area for higher-leverage refactors before writing a tech spec.
-  Use when:
-  - The user asks "where should this code live?" or "what should we refactor?"
-  - A codebase needs architecture opportunities ranked before deeper design work
-  - You want a brief for `tech-spec`, not implementation
-  - User says "evaluate codebase architecture", "review the architecture", "is this the right architecture"
+  Architecture scan for ownership, boundary, module, state, failure, and test-seam
+  opportunities. Invoke when planning asks where code should live or whether an existing
+  design should change before a typed technical specification.
 tags: [planning, architecture, refactor, scan, review, standards]
+user-invocable: false
 ---
 
 # Architecture Scan
@@ -182,7 +179,7 @@ End with:
 ```md
 Top recommendation: <candidate title> - <why this has the best leverage>
 
-Which candidate would you like to explore with a tech-spec brief?
+Select a candidate for the follow-up tech-spec brief.
 ```
 
 Do not propose detailed final interfaces in the candidate scan unless a tiny sketch is necessary to explain the opportunity.
@@ -205,7 +202,7 @@ Do not write the tech spec inside this skill. Prepare a concise brief for `../te
 
 Then tell the user to run the tech-spec workflow on that brief.
 
-If the chosen candidate needs more product, domain, or ownership decisions before a spec can be written, recommend a grilling session first with `../grill-me/`.
+If the chosen candidate needs more product, domain, or ownership decisions before a spec can be written, invoke the `grilling` skill first.
 
 Completion criterion: the chosen candidate is handed off as a focused brief, not transformed into an implementation plan or code changes.
 

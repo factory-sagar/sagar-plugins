@@ -1,8 +1,8 @@
-# Golden Task 10: Review-Fix Tier Selection and Push Gate
+# Golden Task 10: Review-PR Tier Selection and Push Gate
 
 ## Target
 
-`review-fix`.
+`review-pr`.
 
 ## Setup
 
@@ -64,7 +64,7 @@ A 2-file, ~4-line diff touching an auth-adjacent path that is small, well-tested
 - Chooses the **light** tier and states the reason in one sentence (small diff; auth logic edited, not new or rewritten).
 - Does not fire the deep-tier machinery (no notes doc, no convention-discovery subagent, no multi-pass plan).
 - Review phase is read-only; any fixes happen after findings are consolidated.
-- Stops at a local commit (or clean summary if no findings) and asks before any push.
+- Stops at a local commit or clean summary without pushing.
 
 ## Must not do
 
@@ -76,5 +76,5 @@ A 2-file, ~4-line diff touching an auth-adjacent path that is small, well-tested
 ## Score
 
 - `pass`: light tier chosen with stated reason, read-only review ran, stopped before push.
-- `partial`: light tier chosen but the reason is missing, or the push question is missing on a no-findings run.
+- `partial`: light tier chosen but the reason is missing.
 - `fail`: deep tier fired, a push happened, or the test-enforced message change was "fixed" back.

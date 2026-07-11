@@ -2,7 +2,9 @@
 
 > Pre-merge gate droids plus a review-and-fix skill: strict correctness review, security review, and an end-to-end review-then-fix workflow.
 
-Two pre-merge gate droids and one workflow skill. One droid catches general correctness regressions, the other catches security issues; run them in parallel before you ship. The `review-fix` skill drives the full loop: review read-only, apply the fixes, verify, commit locally, and stop before push.
+Three review droids support one public workflow. `review-pr` converts short review requests
+into mandatory and diff-selected policy, while explicit wording controls whether it may
+report, fix locally, address comments, ship, or merge.
 
 ## Install
 
@@ -14,17 +16,18 @@ droid plugin install review@sagar-plugins
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `change-review` | Strict last-gate reviewer for diffs, commits, branches, or named files. Correctness, consent and auth gates, rollback, event reliability. | `gpt-5.5` | `high` | read-only + `Execute` |
-| `security` | Evidence-based security reviewer using STRIDE and OWASP. Verifies CVEs against trusted sources (NVD, GHSA). | `gpt-5.5` | `xhigh` | read-only + `Execute` + `WebSearch` + `FetchUrl` |
-| `review-worker` | Deep-tier subagent for `review-fix`: executes Discovery / Review pass templates on the pinned reviewing model so deep passes never inherit a weak session model. Writes only to the notes doc. | `gpt-5.5` | `high` | read-only + `Execute` + notes-doc writes |
+| `change-review` | Static correctness and contract review of a scoped diff. | `gpt-5.2` | `xhigh` | read-only + `Execute` |
+| `security` | STRIDE/OWASP security review with verified attack paths and CVEs. | `claude-opus-4-8` | `xhigh` | read-only + web |
+| `review-worker` | Deep-mode discovery and policy passes over a shared notes document. | `gpt-5.2` | `xhigh` | read-only + notes-doc writes |
 
 ## Skills
 
 | Skill | Triggers on | What it does |
 | --- | --- | --- |
-| `review-fix` | "review and fix", "deep review and fix", or a PR URL / branch with intent to fix findings, not just report them | Loads the diff, picks a tier (light single-pass via `change-review`/`security`, or deep exhaustive multi-pass over a shared notes doc — auto-escalated for large/risky diffs, confirmed first), consolidates and triages findings, applies the fixes, verifies, commits locally, and asks before pushing. |
+| `review-pr` | Review a PR, branch, commit, or staged change | Selects language-agnostic mandatory and diff-driven lenses. Plain review is read-only; explicit fix, comments, ship, or merge intent enables only that stronger authority. |
 
-The skill registers `/review-fix <PR URL, branch, range, or staged>` as a direct entry point, no description matching involved.
+The public entry point is `/review-pr <target>`. Existing comment and deep-review procedures
+are internal references, not competing skills.
 
 The deep tier ships three supporting files in the skill directory: `review-notes-format.md` (shared notes-doc and finding format), `review-worker.md` (Review subagent prompt templates), and `discover-conventions.md` (convention enumeration procedure). When the `practices` plugin is installed, deep-tier discovery is backed by `coding-standards`; otherwise it falls back to the target repo's own docs.
 
@@ -34,11 +37,12 @@ The deep tier treats the notes doc as the single source of truth: it verifies ea
 
 1. Diff staged → invoke `change-review` and `security` in parallel.
 2. Resolve findings → ship.
-3. Or run `review-fix` (or `/review-fix <target>`) to review, fix, verify, and commit in one loop — it stops before push for your approval.
+3. Or run `/review-pr <target>`; the user's wording determines the authorized end state.
 
 ## Models
 
-The whole review tier runs `gpt-5.5` (`change-review` and `review-worker` at `high`, `security` at `xhigh` for attack-path depth). Cross-family coverage now lives at the pipeline level per the marketplace's three-family strategy: GLM writes (`implementer`), GPT-5.5 reviews, Fable plans and judges — so the reviewer never shares a training distribution with the code's author. `change-review` carries the strict label-list output contract and `[P<n>·<conf>]` confidence labels; `security` focuses on attack-path and cross-domain issues through STRIDE and OWASP lenses.
+Assignments are provisional. Their evidence status and decision records are listed in
+[`evals/model-assignments.json`](../../evals/model-assignments.json).
 
 ## Related plugins
 

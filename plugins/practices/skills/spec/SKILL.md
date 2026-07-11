@@ -1,17 +1,10 @@
 ---
 name: spec
-version: 1.3.0
+version: 1.4.0
 description: |
-  Turn a fuzzy feature request into a concrete spec (goal, acceptance criteria, scope, constraints,
-  open questions) AND decompose it into agent-sized units, each tagged with the recommended sagar
-  droid or worker for delegation. The starting point for any non-trivial new work.
-  Use when:
-  - User says "spec this out", "plan this", "decompose", "break this into steps"
-  - User says "give me a spec for X", "let me think through", "draft a plan for", "scope this"
-  - User says "what would it take to", "how should we approach X"
-  - User says "come up with a full plan", "lets spec out all the work", "scope this out properly"
-  - A new feature, refactor, or migration is being scoped
-  - A request is ambiguous and needs concrete shape before any code is written
+  Plan non-trivial features, refactors, and migrations. Converts short or detailed requests
+  into evidence-backed decisions, testable acceptance criteria, and executable units; adds
+  unknown-discovery and technical architecture automatically when the request demands them.
 tags: [planning, decomposition, scoping, workflow, spec]
 ---
 
@@ -35,7 +28,22 @@ This skill owns scope and decomposition. Before writing implementation-facing de
 - `../coding-standards/OBSERVABILITY.md` for logging, tracing, metrics, safe summaries, or redaction.
 - `../coding-standards/VOCABULARY.md` for shared failure, boundary, module, runtime, and adoption language.
 
-When the approved plan needs typed contracts, seams, call stacks, or architecture alternatives, hand it to `tech-spec`. When the question is "what should we refactor or where should this live?", use `architecture-scan` first. When the plan itself needs stress-testing, use `grilling` or `grill-me`.
+When the approved plan needs typed contracts, seams, call stacks, or architecture alternatives, hand it to `tech-spec`. When the question is "what should we refactor or where should this live?", use `architecture-scan` first. When the plan itself needs stress-testing, use `grilling`.
+
+## Prompt-depth routing
+
+Prompt length is evidence about the user's intent, not a quality setting:
+
+- A **short directive** receives the complete standard planning method. Short never means
+  shallow.
+- A **detailed execution prompt** supplies constraints and acceptance evidence. Preserve
+  those inputs, then run the standard method without making the user restate them.
+- A **design- or architecture-shaped prompt** automatically adds `discovering-unknowns`,
+  `architecture-scan`, and `tech-spec` before implementation units are finalized.
+- An **unfamiliar-territory prompt** ("I am new to this", "find my blind spots") adds the
+  evidence-backed blind-spot pass before decisions.
+
+The user chooses the outcome. The toolchain chooses the required method.
 
 ## When to Activate
 
@@ -91,7 +99,8 @@ Goal: ground the spec in what already exists. A spec written without knowing the
 - If the question is about something external (a library's API, a known pattern, a CVE applicability) → **delegate to `deep-research`** with the focused question.
 - If the system is already familiar (you've worked in it this session) → skip this phase.
 
-Capture what comes back as a **"System anchor"** block in the spec. Cite file paths and droid session IDs so the user can re-open the investigation if needed.
+Capture what comes back as a **"System anchor"** block in the spec. Cite repository paths
+and name the droid or source that produced the evidence.
 
 ### Phase 3 — Write the spec
 
@@ -116,7 +125,7 @@ Inline. Use this exact template:
 
 **System anchor (from Phase 2):**
 - <key facts about the current system relevant to this spec, with file:line if applicable>
-- Source: <droid that gathered this, with session ID if delegated>
+- Source: <droid or repository source that gathered this>
 
 **Open questions:**
 - <unresolved item the user should answer before execution>
@@ -185,7 +194,7 @@ Recommend the next action explicitly:
 
 ## Delegation Map
 
-For each unit shape, here's the recommended delegate. Use exact names — these are the sagar marketplace droids and the Factory built-in `worker`.
+For each unit shape, use exact names from this marketplace and the Factory built-in `worker`.
 
 | Unit shape | Delegate | Plugin / origin | Why |
 |---|---|---|---|
@@ -220,9 +229,11 @@ User request: "I need to add rate limiting to our API."
 
 ### Phase 2 output (anchor — delegated)
 
-> Delegating to `quick-analysis` on `/Users/sagar/code/factory/<repo>` to find the API framework, current middleware stack, and existing rate-limit infrastructure.
+> Delegating to `quick-analysis` in `<repository-path>` to find the API framework,
+> current middleware stack, and existing rate-limit infrastructure.
 >
-> Result (quick-analysis session abc123): Next.js 15 App Router, no current rate-limiter middleware, uses Upstash Redis already for caching, API keys validated in `lib/auth/api-key.ts:42`.
+> Result: Next.js 15 App Router, no current rate-limiter middleware, uses Upstash Redis
+> already for caching, API keys validated in `lib/auth/api-key.ts:42`.
 
 ### Phase 3 output (spec)
 
@@ -251,7 +262,7 @@ User request: "I need to add rate limiting to our API."
 - API framework: Next.js 15 App Router; routes under `app/api/v1/`.
 - API-key validation lives at `lib/auth/api-key.ts:42`; current middleware order is auth → handler.
 - Redis client is `lib/redis.ts:10` (Upstash); already used for response cache.
-- Source: `quick-analysis` session abc123.
+- Source: `quick-analysis`, with the file references above.
 
 **Open questions:**
 - Should health checks (`/api/v1/health`) be exempt from rate limiting? (recommend: yes)

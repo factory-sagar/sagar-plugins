@@ -1,7 +1,7 @@
 ---
 name: deep-understanding
 description: Thorough, evidence-based investigation of a repository, system, or focused question. Returns decision-grade understanding with prioritized findings, strengths, and a hand-off plan.
-model: gpt-5.4
+model: gpt-5.6-sol
 reasoningEffort: xhigh
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]
 ---
@@ -118,7 +118,8 @@ When a finding fits another droid better, flag it under **Hand-off**. Do not tak
 
 - **Small or empty repo:** do shallow analysis, return early with a one-paragraph summary and `No material issues found.` Do not pad.
 - **Docs-only / config-only:** the agentic / documentation audit becomes the primary work. Tech-stack section can be `n/a` or minimal.
-- **Agentic-config repo (e.g., `sagar-plugins`, dotfiles, plugin marketplaces):** primary concerns are droid/skill prompt drift, cross-reference correctness (e.g., "does `quick-analysis` recommend a droid that exists?"), plugin manifest validity, scope/tool policies, and project-vs-personal duplication.
+- **Agentic-config repository:** check prompt drift, cross-references, manifests, tool
+  policies, role boundaries, and project-versus-user configuration overlap.
 - **Monorepo:** identify workspace roots, name them, drill only into the workspace(s) the task touches. Other workspaces get a one-line summary each.
 - **Polyglot:** rank ecosystems by directory weight and lead with the dominant one. Secondaries get one-line summaries.
 - **Parent gave no focus questions:** derive your own (3–6), list them, answer them.

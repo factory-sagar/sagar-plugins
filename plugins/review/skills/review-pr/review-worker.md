@@ -1,7 +1,7 @@
-# Review-Fix Worker Prompts
+# Review-PR Worker Prompts
 
 This file contains only instructions the manager copies into `Task` prompts for the deep-tier
-Review subagent. Manager-only orchestration rules live in `SKILL.md`.
+Review subagent. Manager-only orchestration rules live in `deep-review.md`.
 
 Every prompt that mentions the notes doc relies on `review-notes-format.md`. The manager passes
 the notes-doc path as `<NOTES_PATH>` and the absolute path of the format file as `<FORMAT_DOC>`.
@@ -32,11 +32,12 @@ description:
    description (e.g. "Closes #123", a Linear/Jira link). Fetch it (the `linear` MCP tools, `gh
    issue view`, or `FetchUrl`). Read the full description, acceptance criteria, and comments. If
    none is linked or access is unavailable, proceed with the description and note the gap.
-3. **Follow the context chain upward.** If the ticket is a subtask, read the parent; if part of a
-   project/epic, skim it — that is often where the real "why" and constraints live.
-4. **Read attached context.** Linked Slack threads, error reports, design docs — fetch and read
-   them for ground truth about what the change should accomplish.
-5. **Check for related tickets** that reveal constraints or dependencies this change must satisfy.
+3. **Follow only requirement-bearing context.** Read a parent, project, or epic only when the
+   direct ticket lacks the motivation or acceptance rule needed to judge this diff.
+4. **Read attached context selectively.** Fetch at most three linked artifacts, prioritized by
+   direct relevance to a named requirement, reproduced failure, or unresolved ambiguity.
+5. **Stop expanding context** once intent, constraints, and acceptance behavior are sufficient
+   to review the changed code. Record skipped links rather than recursively loading them.
 
 Then load the full diff against the base ref.
 
@@ -61,7 +62,7 @@ You are working on the <Pass name> review pass.
 Notes doc path: <NOTES_PATH>
 Review notes format: <FORMAT_DOC>
 
-<Pass instructions copied from the Pass Order section of SKILL.md>
+<Pass instructions copied from `deep-review.md` Step 3b-iii for this model-driven pass>
 
 <Pass Expectations copied from SKILL.md Step 3b-iii.2>
 
@@ -99,7 +100,7 @@ You are working on the <Pass name> review pass.
 Notes doc path: <NOTES_PATH>
 Review notes format: <FORMAT_DOC>
 
-<Pass instructions copied from the Pass Order section of SKILL.md>
+<Pass instructions copied from `deep-review.md` Step 3b-iii for this convention category>
 
 This is a convention pass. Before reviewing, make sure you have read the relevant convention
 documents for this pass in full. If a doc is already in your context from a prior pass, skip

@@ -1,16 +1,12 @@
 ---
 name: coding-standards
-version: 1.2.0
+version: 1.3.0
 description: |
-  Standards router for naming/layout, module design, boundaries, error handling, async workflows,
-  testing, observability, and type contracts. Load the topic docs that match the code you are touching.
-  Use when:
-  - Another engineering skill needs the user's coding standards
-  - Reviewing or refactoring code against a shared rubric
-  - Shaping naming, layout, boundaries, seams, errors, async flows, tests, or observability
-  - Establishing code review criteria before implementation or review
-  - User says "follow strict coding rules", "good quality code", "code quality pass", "clean this up properly"
+  Standards router for modules, boundaries, failures, async ownership, tests, observability,
+  naming, and type contracts. Invoke from design, implementation, and review when changed
+  responsibilities need the user's shared engineering bar.
 tags: [standards, code-quality, design, review, testing, architecture]
+user-invocable: false
 ---
 
 # Coding Standards

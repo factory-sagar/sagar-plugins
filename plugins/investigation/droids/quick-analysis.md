@@ -1,7 +1,7 @@
 ---
 name: quick-analysis
 description: Fast repo triage for stack, structure, entry points, anomalies, and the right next droid to delegate to.
-model: glm-5.2
+model: gpt-5.6-luna
 reasoningEffort: high
 tools: ["Read", "LS", "Grep", "Glob"]
 ---

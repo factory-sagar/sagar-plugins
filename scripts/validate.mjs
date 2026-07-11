@@ -26,6 +26,9 @@ const warn = (file, msg) => warnings.push(`${path.relative(ROOT, file)}: ${msg}`
 // A typo'd slug or an unsupported effort silently degrades a droid.
 const EFFORT_BY_MODEL = {
   'claude-fable-5': ['off', 'low', 'medium', 'high', 'xhigh', 'max'],
+  'gpt-5.6-sol': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+  'gpt-5.6-terra': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
+  'gpt-5.6-luna': ['none', 'low', 'medium', 'high', 'xhigh', 'max'],
   'glm-5.2': ['off', 'high', 'max'],
   'glm-5.1': ['off', 'high'],
   'kimi-k2.6': ['off', 'high'],
@@ -83,6 +86,15 @@ const readJson = (f) => {
   try { return JSON.parse(read(f)); }
   catch (e) { fail(f, `invalid JSON: ${e.message}`); return null; }
 };
+const collectHookCommands = (value, commands = []) => {
+  if (Array.isArray(value)) {
+    for (const item of value) collectHookCommands(item, commands);
+  } else if (value && typeof value === 'object') {
+    if (typeof value.command === 'string') commands.push(value.command);
+    for (const child of Object.values(value)) collectHookCommands(child, commands);
+  }
+  return commands;
+};
 const listDirs = (p) => existsSync(p)
   ? readdirSync(p).filter((d) => !d.startsWith('.') && statSync(path.join(p, d)).isDirectory())
   : [];
@@ -100,6 +112,8 @@ const skillFiles = pluginDirs.flatMap((p) => {
   return listDirs(skillsRoot).map((s) => path.join(skillsRoot, s, 'SKILL.md'));
 });
 const fleetNames = new Set();
+const droidConfigs = new Map();
+const publicSkillNames = new Set();
 
 // ---------- 1. marketplace.json <-> plugin dirs/manifests ----------
 const marketplaceFile = path.join(ROOT, '.factory-plugin', 'marketplace.json');
@@ -136,6 +150,28 @@ if (marketplace) {
   }
 }
 
+for (const dir of pluginDirs) {
+  const hooksFile = path.join(pluginsDir, dir, 'hooks', 'hooks.json');
+  if (!existsSync(hooksFile)) continue;
+  const hooksConfig = readJson(hooksFile);
+  if (!hooksConfig) continue;
+  if (!hooksConfig.hooks || typeof hooksConfig.hooks !== 'object') {
+    fail(hooksFile, 'missing hooks object');
+    continue;
+  }
+  const commands = collectHookCommands(hooksConfig);
+  if (commands.length === 0) fail(hooksFile, 'declares no hook commands');
+  for (const command of commands) {
+    if (!command.includes('${DROID_PLUGIN_ROOT}')) {
+      fail(hooksFile, `plugin hook command must use \${DROID_PLUGIN_ROOT}: ${command}`);
+    }
+    const script = command.match(/\$\{DROID_PLUGIN_ROOT\}\/([^"\s]+)/)?.[1];
+    if (script && !existsSync(path.join(pluginsDir, dir, script))) {
+      fail(hooksFile, `hook script does not exist: ${script}`);
+    }
+  }
+}
+
 // ---------- 2. droid frontmatter ----------
 for (const file of droidFiles) {
   const fm = parseFrontmatter(file, read(file));
@@ -143,6 +179,11 @@ for (const file of droidFiles) {
   const { data, body } = fm;
   const base = path.basename(file, '.md');
   fleetNames.add(data.name);
+  droidConfigs.set(data.name, {
+    file,
+    model: data.model,
+    reasoningEffort: data.reasoningEffort,
+  });
   if (data.name !== base) fail(file, `name "${data.name}" != filename "${base}"`);
   if (!data.description) fail(file, 'missing description');
   else if (data.description.length > 500) fail(file, `description is ${data.description.length} chars (max 500)`);
@@ -174,9 +215,13 @@ for (const file of skillFiles) {
   if (!fm) { fail(file, 'missing or unterminated YAML frontmatter'); continue; }
   const dirName = path.basename(path.dirname(file));
   fleetNames.add(fm.data.name);
+  if (fm.data['user-invocable'] !== 'false') publicSkillNames.add(fm.data.name);
   if (fm.data.name !== dirName) fail(file, `name "${fm.data.name}" != directory "${dirName}"`);
   if (!SEMVER.test(fm.data.version ?? '')) fail(file, `version "${fm.data.version}" is not X.Y.Z semver`);
   if (!fm.data.description) fail(file, 'missing description');
+  else if (fm.data.description.length > 320) {
+    fail(file, `description is ${fm.data.description.length} chars (max 320 standing-context budget)`);
+  }
   if (!fm.body.trim()) fail(file, 'empty skill body');
 }
 for (const file of commandFiles) {
@@ -185,8 +230,113 @@ for (const file of commandFiles) {
   if (!fm.data.description) fail(file, 'missing description');
 }
 
-// ---------- 4. README counts ----------
+// ---------- 4. public workflow surface + evaluation policy ----------
 const readmeFile = path.join(ROOT, 'README.md');
+const expectedPublicSkills = new Set(['spec', 'implement', 'review-pr', 'ship']);
+for (const name of publicSkillNames) {
+  if (!expectedPublicSkills.has(name)) {
+    fail(readmeFile, `unexpected user-invocable skill "${name}" — public workflow surface is spec, implement, review-pr, ship`);
+  }
+}
+for (const name of expectedPublicSkills) {
+  if (!publicSkillNames.has(name)) {
+    fail(readmeFile, `required public workflow skill "${name}" is missing or hidden`);
+  }
+}
+
+const decisionsDir = path.join(ROOT, 'evals', 'model-decisions');
+const decisionIds = new Set();
+if (existsSync(decisionsDir)) {
+  for (const file of readdirSync(decisionsDir).filter((name) => name.endsWith('.json'))) {
+    const fullPath = path.join(decisionsDir, file);
+    const decision = readJson(fullPath);
+    if (!decision) continue;
+    if (!decision.id) fail(fullPath, 'missing decision id');
+    else if (decisionIds.has(decision.id)) fail(fullPath, `duplicate decision id "${decision.id}"`);
+    else decisionIds.add(decision.id);
+  }
+}
+
+const assignmentsFile = path.join(ROOT, 'evals', 'model-assignments.json');
+const assignments = readJson(assignmentsFile);
+if (assignments) {
+  if (assignments.schemaVersion !== 1) fail(assignmentsFile, 'schemaVersion must be 1');
+  const entries = assignments.assignments ?? {};
+  for (const [name, config] of droidConfigs) {
+    const assignment = entries[name];
+    if (!assignment) {
+      fail(assignmentsFile, `missing assignment for droid "${name}"`);
+      continue;
+    }
+    if (assignment.model !== config.model) {
+      fail(assignmentsFile, `"${name}" model "${assignment.model}" != frontmatter "${config.model}"`);
+    }
+    if (assignment.reasoningEffort !== config.reasoningEffort) {
+      fail(assignmentsFile, `"${name}" effort "${assignment.reasoningEffort}" != frontmatter "${config.reasoningEffort}"`);
+    }
+    if (!['provisional', 'validated'].includes(assignment.status)) {
+      fail(assignmentsFile, `"${name}" status must be provisional or validated`);
+    }
+    const evidence = Array.isArray(assignment.evidence) ? assignment.evidence : [];
+    if (assignment.status === 'validated' && evidence.length === 0) {
+      fail(assignmentsFile, `"${name}" is validated without evidence`);
+    }
+    for (const id of evidence) {
+      if (!decisionIds.has(id)) fail(assignmentsFile, `"${name}" references missing decision "${id}"`);
+    }
+  }
+  for (const name of Object.keys(entries)) {
+    if (!droidConfigs.has(name)) fail(assignmentsFile, `assignment "${name}" has no droid`);
+  }
+}
+
+const policyFile = path.join(ROOT, 'evals', 'policy.json');
+const policy = readJson(policyFile);
+if (policy) {
+  if (policy.schemaVersion !== 1) fail(policyFile, 'schemaVersion must be 1');
+  for (const [label, value] of [
+    ['routing.criticalRecall', policy.routing?.criticalRecall],
+    ['routing.criticalPrecision', policy.routing?.criticalPrecision],
+    ['routing.negativeFalseInvocationRate', policy.routing?.negativeFalseInvocationRate],
+    ['quality.criticalPassRate', policy.quality?.criticalPassRate],
+    ['quality.maxReviewFalsePositiveRate', policy.quality?.maxReviewFalsePositiveRate],
+  ]) {
+    if (typeof value !== 'number' || value < 0 || value > 1) {
+      fail(policyFile, `${label} must be a number between 0 and 1`);
+    }
+  }
+}
+
+const routingFile = path.join(ROOT, 'evals', 'routing', 'cases.json');
+const routing = readJson(routingFile);
+if (routing) {
+  if (routing.schemaVersion !== 1) fail(routingFile, 'schemaVersion must be 1');
+  const ids = new Set();
+  for (const testCase of routing.cases ?? []) {
+    if (!testCase.id || ids.has(testCase.id)) fail(routingFile, `missing or duplicate routing case id "${testCase.id}"`);
+    else ids.add(testCase.id);
+    if (!testCase.prompt?.trim()) fail(routingFile, `routing case "${testCase.id}" has no prompt`);
+    if (testCase.expectedPrimary !== null && !publicSkillNames.has(testCase.expectedPrimary)) {
+      fail(routingFile, `routing case "${testCase.id}" targets non-public skill "${testCase.expectedPrimary}"`);
+    }
+    if (testCase.expectedSequence !== undefined) {
+      if (!Array.isArray(testCase.expectedSequence) || testCase.expectedSequence.length === 0) {
+        fail(routingFile, `routing case "${testCase.id}" expectedSequence must be a non-empty array`);
+      } else {
+        if (testCase.expectedSequence[0] !== testCase.expectedPrimary) {
+          fail(routingFile, `routing case "${testCase.id}" sequence must start with expectedPrimary`);
+        }
+        for (const name of testCase.expectedSequence) {
+          if (!publicSkillNames.has(name)) {
+            fail(routingFile, `routing case "${testCase.id}" sequence targets non-public skill "${name}"`);
+          }
+        }
+      }
+    }
+  }
+}
+
+// ---------- 5. README counts ----------
 const readme = read(readmeFile);
 const totals = readme.match(/Total: (\d+) droids, (\d+) skills, (\d+) commands?/);
 if (!totals) fail(readmeFile, 'no "Total: X droids, Y skills, Z commands" line found');
@@ -250,7 +400,11 @@ if (bumpIdx !== -1) {
   const gitShow = (ref, p) => {
     try { return git('show', `${ref}:${p}`); } catch { return null; }
   };
-  const changed = git('diff', '--name-only', `${baseRef}...HEAD`).split('\n').filter(Boolean);
+  const changed = [...new Set([
+    ...git('diff', '--name-only', `${baseRef}...HEAD`).split('\n'),
+    ...git('diff', '--name-only').split('\n'),
+    ...git('diff', '--name-only', '--cached').split('\n'),
+  ].filter(Boolean))];
   const touchedPlugins = new Set(
     changed.map((f) => f.match(/^plugins\/([^/]+)\//)?.[1]).filter(Boolean),
   );
@@ -264,10 +418,11 @@ if (bumpIdx !== -1) {
   }
   for (const f of changed.filter((f) => f.endsWith('/SKILL.md') && f.startsWith('plugins/'))) {
     const before = gitShow(baseRef, f);
-    if (before === null) continue; // new skill
+    const currentPath = path.join(ROOT, f);
+    if (before === null || !existsSync(currentPath)) continue; // new or deleted skill
     const vBefore = before.match(/^version: (.+)$/m)?.[1];
-    const vAfter = read(path.join(ROOT, f)).match(/^version: (.+)$/m)?.[1];
-    if (vBefore && vBefore === vAfter) fail(path.join(ROOT, f), `SKILL.md changed vs ${baseRef} but frontmatter version was not bumped`);
+    const vAfter = read(currentPath).match(/^version: (.+)$/m)?.[1];
+    if (vBefore && vBefore === vAfter) fail(currentPath, `SKILL.md changed vs ${baseRef} but frontmatter version was not bumped`);
   }
 }
 

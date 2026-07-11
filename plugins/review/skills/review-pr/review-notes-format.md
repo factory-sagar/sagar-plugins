@@ -1,7 +1,7 @@
-# Review-Fix Notes Format
+# Review-PR Notes Format
 
-This file defines the shared notes-doc format used by the deep tier of `review-fix/SKILL.md`,
-`review-fix/review-worker.md`, the Discovery subagent, and the Review subagent. The notes doc is
+This file defines the shared notes-doc format used by `review-pr` deep mode,
+`review-worker.md`, the Discovery subagent, and the Review subagent. The notes doc is
 the source of truth for every pattern-check, codepath note, finding, and filter annotation.
 
 ## Notes doc skeleton
@@ -9,10 +9,10 @@ the source of truth for every pattern-check, codepath note, finding, and filter 
 The manager MUST create one stable notes doc path outside the repo before spawning subagents:
 
 ```bash
-mkdir -p /tmp/factory-review-fix-notes
-NOTES_PATH=/tmp/factory-review-fix-notes/$(date +%s)-$(openssl rand -hex 4).md
+mkdir -p /tmp/factory-review-pr-notes
+NOTES_PATH=/tmp/factory-review-pr-notes/$(date +%s)-$(openssl rand -hex 4).md
 cat > "$NOTES_PATH" <<'EOF'
-# Review-Fix Notes for <PR URL / branch / scope specified by the user>
+# Review-PR Notes for <PR URL / branch / scope>
 
 ## Pattern Checks
 <!-- Discovery appends one entry per pattern-check here. Review fills verdicts. Manager annotates filters. -->

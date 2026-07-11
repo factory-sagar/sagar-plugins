@@ -2,7 +2,9 @@
 
 > Tools that change code: apply approved changes, write the missing tests, and fix PRs end-to-end.
 
-Most of the marketplace investigates, reviews, and synthesizes. The build plugin applies and lands: `implementer` turns approved findings and spec units into minimal diffs, `test-engineer` turns coverage gaps into tests, the `implement` skill routes "implement this" to the right executor, the `fix-pr` skill fetches review comments, reasons about each one, fixes the valid bugs, replies and resolves threads, waits for CI, and approves the PR, and the `ship` skill owns everything after "the code is done" — commit, push, PR body, CI watch, thread resolution.
+The build plugin applies and lands: `implementer` executes approved units, `test-engineer`
+pins risky behavior, `implement` chooses the execution discipline, and `ship` owns commit,
+push, PR freshness, CI, and thread closure. Review-comment handling lives in `review-pr`.
 
 ## Install
 
@@ -14,34 +16,34 @@ droid plugin install build@sagar-plugins
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `implementer` | Apply an approved change set: `change-review` / `security` findings, a `spec` unit, or an explicit fix list. Makes the smallest change that closes each item, with targeted verification. | `claude-fable-5` | `xhigh` | full read/write + `Execute` (verification only) |
-| `test-engineer` | Find the riskiest untested behavior (gap analysis) or write the missing tests (write mode, including TDD RED). Pins current behavior; never encodes guesses. | `gpt-5.4` | `high` | full read/write + `Execute` (test runs only) |
+| `implementer` | Apply an approved change set with minimal edits and targeted verification. | `gpt-5.6-terra` | `high` | full read/write + verification |
+| `test-engineer` | Rank untested risk or write behavior-pinning tests, including TDD RED. | `gpt-5.6-terra` | `high` | tests-only writes + execution |
 
 ## Skills
 
 | Skill | Triggers on | What it does |
 | --- | --- | --- |
-| `fix-pr` | "fix this PR", "fix droid comments", "resolve PR comments", "address review feedback", or a PR URL with intent to address comments | Fetches all review comments (bot and human), reasons about whether each is a real bug, fixes the valid ones, replies to every comment, resolves threads, waits for CI, and approves the PR (or says "done" if it is your own). |
 | `implement` | "implement this", "apply this change set", "build this unit" | Routes an approved change set to `implementer`, new behavior without one to `tdd-workflow`, and small mechanical changes inline. Carries the Deviations contract in every path and finishes with `verification-loop`. |
-| `ship` | "ship it", "push", "monitor ci", "clean up the PR", "merge it if CI passes" | Lands finished work: commit (via `commit-message-writer`), push, create or update the PR with a template-conformant body (via `pr-describer`), watch CI until green (delegating `debugger` for non-obvious failures), resolve review threads, and report merge-ready. Never merges on its own. |
+| `ship` | "ship it", "push", "monitor ci", "clean up the PR", "merge it if CI passes" | Lands finished work: commit, push, update the template-conformant PR body, watch CI, and resolve review threads. It merges only when explicitly requested and all delivery gates pass. |
 
-All three register direct slash entry points: `/fix-pr <PR URL or number>`, `/implement <task>`, and `/ship` run them deterministically, no description matching involved.
+The public entry points are `/implement <task>` and `/ship`.
 
 ## Usage
 
 1. `change-review` / `security` return findings → `implementer` applies them → re-review the delta.
 2. `spec` decomposes a feature → `implementer` implements a unit → `test-engineer` covers it (or `tdd-workflow` orchestrates RED first).
 3. `test-engineer` gap analysis ranks untested risk → parent picks gaps → `test-engineer` write mode fills them.
-4. Review comments on a PR → `fix-pr` (or `/fix-pr <PR>`) triages, fixes, replies, resolves, waits for CI, and approves.
-5. Root cause unknown? `debugger` (investigation plugin) diagnoses first, then `implementer` fixes.
+4. Review comments on a PR → `review-pr` comments mode.
+5. Root cause unknown? `debugger` diagnoses first, then `implementer` fixes.
 
 ## Models
 
-`implementer` runs `glm-5.2` at `max` per the three-family strategy: GLM writes, GPT-5.5 reviews, Fable plans — the stronger review gate catches what the cheaper writer misses, and no line is written and reviewed by the same family. Plan-tagged `risk: high` units warrant a stronger implementation tier than the default pin. `test-engineer` runs `gpt-5.5` at `high` for test gap analysis and test writing. The `fix-pr`, `implement`, and `ship` skills run inline on your session model.
+These assignments are provisional. Their evidence status and decision records are listed in
+[`evals/model-assignments.json`](../../evals/model-assignments.json).
 
 ## Related plugins
 
-- **[`review`](../review/)**: `change-review` and `security` produce the findings `implementer` consumes and the comments `fix-pr` resolves; both re-review its output.
+- **[`review`](../review/)**: `review-pr`, `change-review`, and `security` produce the findings `implementer` consumes.
 - **[`investigation`](../investigation/)**: `debugger` hands `implementer` a fix plan and `test-engineer` a pin-it test; `deep-understanding` owns architectural questions too big for a minimal edit.
 - **[`practices`](../practices/)**: `tdd-workflow` orchestrates `test-engineer` (RED) and `implementer` (GREEN); `verification-loop` gates the result.
 

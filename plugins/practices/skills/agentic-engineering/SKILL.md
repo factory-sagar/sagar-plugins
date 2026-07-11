@@ -1,19 +1,12 @@
 ---
 name: agentic-engineering
-version: 1.1.0
+version: 1.2.0
 description: |
-  Decide how to run AI-assisted work: which model for a subtask, when to delegate to a droid or
-  worker vs do it inline, when to continue a session vs start fresh, and how to review AI output.
-  Defines completion criteria, decomposition rules, the model-routing matrix, session strategy,
-  the eval-first loop, and a 5-lens review checklist.
-  Use when:
-  - User says "which model should I use", "should I delegate this", "whats the best way to run this"
-  - Scoping AI-assisted work or deciding which model for a specific subtask
-  - Structuring sessions for delegation, continuation, or fresh start
-  - Reviewing AI-generated code through a structured lens checklist
-  - Orchestrating multi-step agent chains
-  - Onboarding a teammate to the marketplace's delegation model
+  Route AI-assisted engineering work by risk, complexity, and evidence. Supplies completion,
+  delegation, session, model, evaluation, and review policy when another workflow must decide
+  how work should run.
 tags: [principles, methodology, delegation, model-routing, ai-assisted, agentic]
+user-invocable: false
 ---
 
 # Agentic Engineering
@@ -59,17 +52,21 @@ The **15-minute rule**: if a unit would take a focused engineer more than 15 min
 
 ### Principle 3 — Route model tiers by task complexity
 
-Different models for different jobs. The sagar marketplace uses this matrix:
+Different models fit different jobs. This marketplace uses the provisional matrix below:
 
-| Task shape | Model tier | Example droid | Reason |
+| Task shape | Current provisional model | Example droid | Reason |
 |---|---|---|---|
-| Triage, classification, format-mechanical work | Fast / cheap (e.g. `glm-5.2`) | `quick-analysis`, `commit-message-writer` | Output is short and constrained; speed wins |
-| Implementation, refactors, focused code edits | Highest implementation reasoning (e.g. `gpt-5.5 xhigh`) | `implementer` | Needs to reason about invariants and repo conventions before editing |
-| Test gap analysis and test writing | Strong reasoning (e.g. `gpt-5.4 high`) | `test-engineer` | Needs focused behavior coverage without overpaying for every test |
-| Architecture, root-cause, multi-file invariants, deep audits | Deep reasoning (e.g. `gpt-5.4 xhigh`) | `deep-understanding`, `debugger`, `security`, `doc-generator` | Needs to hold multiple things in working memory |
-| Prompt critique and adherence diagnosis | Strong natural-language judgment (e.g. `claude-opus-4-8 xhigh`) | `prompt-optimizer` | Prompt quality benefits from language-model diversity |
-| Long-form prose synthesis, external research | Strongest natural prose (e.g. Claude Opus via `inherit`) | `pr-describer`, `deep-research` | Output quality dominates token cost |
-| Catching what gpt misses (regulatory, consent, subtle correctness) | Different training distribution at max reasoning (e.g. `glm-5.2 xhigh`) | `change-review` | Distributional diversity catches different bugs |
+| Triage, classification, format-mechanical work | `gpt-5.6-luna` | `quick-analysis`, `commit-message-writer` | Provisional; see the assignment registry and linked decision record |
+| Implementation, refactors, focused code edits | `gpt-5.6-terra` high | `implementer` | Provisional; see the assignment registry and linked decision record |
+| Test gap analysis and test writing | `gpt-5.6-terra` high | `test-engineer` | Provisional; see the assignment registry and linked decision record |
+| Architecture, root cause, multi-file invariants | `gpt-5.6-sol` xhigh | `planner`, `deep-understanding`, `debugger` | Provisional; see the assignment registry and linked decision record |
+| Correctness review | `gpt-5.2` xhigh | `change-review`, `review-worker` | Provisional; see the assignment registry and linked decision record |
+| Security, prompt critique, external research | `claude-opus-4-8` xhigh | `security`, `prompt-optimizer`, `deep-research` | Provisional; see the assignment registry and linked decision record |
+| PR prose synthesis | `claude-opus-4-8` high | `pr-describer` | Provisional; see the assignment registry and linked decision record |
+
+These assignments are provisional. `evals/model-assignments.json` is the machine-readable
+source of truth and names the evidence for every pin. A model change requires the repeated
+comparison policy in `evals/policy.json`; anecdotes may open a trial but cannot close one.
 
 **Apply this:** when picking a delegate in a `spec` decomposition or when orchestrating ad-hoc, consult this matrix. Don't default to "the best model" — default to the right tier.
 

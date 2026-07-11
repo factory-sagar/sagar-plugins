@@ -1,0 +1,65 @@
+{
+  "id": "2026-07-11-role-routing",
+  "date": "2026-07-11",
+  "status": "provisional",
+  "scope": [
+    "planning",
+    "implementation",
+    "review",
+    "routing"
+  ],
+  "protocol": {
+    "planningCandidates": [
+      "gpt-5.6-sol:xhigh",
+      "gpt-5.6-terra:high",
+      "gpt-5.6-luna:high",
+      "claude-fable-5:xhigh",
+      "claude-opus-4-8:xhigh",
+      "gemini-3.1-pro-preview:high",
+      "glm-5.2:max"
+    ],
+    "implementationCandidates": [
+      "gpt-5.6-sol:xhigh",
+      "gpt-5.6-terra:high",
+      "gpt-5.6-luna:high",
+      "claude-fable-5:xhigh",
+      "claude-opus-4-8:xhigh",
+      "gpt-5.5:xhigh",
+      "glm-5.2:max",
+      "gemini-3.5-flash:high",
+      "kimi-k2.7-code:high"
+    ],
+    "reviewCandidates": [
+      "gpt-5.6-sol:xhigh",
+      "gpt-5.5:xhigh",
+      "gpt-5.2:xhigh",
+      "claude-opus-4-8:xhigh",
+      "gemini-3.1-pro-preview:high",
+      "glm-5.2:max"
+    ],
+    "routingCandidates": [
+      "gpt-5.6-terra:high",
+      "glm-5.2:high"
+    ],
+    "repetitions": 1,
+    "artifactPolicy": "Raw transcripts are not committed."
+  },
+  "results": {
+    "planning": "Single-run provisional result; comparative artifacts are not published.",
+    "implementation": "Single-run provisional result; five candidates passed the recorded contract checks.",
+    "review": "Single-run provisional result; the cited external benchmark is not included in this repository.",
+    "routing": "Single-run provisional result; invocation counts were recorded but raw transcripts are not published."
+  },
+  "decisions": {
+    "heavyReasoning": "gpt-5.6-sol:xhigh",
+    "standardImplementation": "gpt-5.6-terra:high",
+    "mechanical": "gpt-5.6-luna:medium-high",
+    "correctnessReview": "gpt-5.2:xhigh",
+    "securityAndResearch": "claude-opus-4-8:xhigh"
+  },
+  "limitations": [
+    "Single-run local evidence is sufficient only for provisional assignments.",
+    "Droid-targeted runs did not reproduce the exact Task boundary for every role.",
+    "Role pins require five-repeat public and held-out evaluation before becoming validated."
+  ]
+}

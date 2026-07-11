@@ -19,11 +19,12 @@ IDEA
   │            approved change set → implementer · new behavior → tdd-workflow
   │            every path carries the Deviations contract
   ▼
-3. GATE        /review-fix <target>
+3. GATE        /review-pr <target>
   │            existing PR threads fetched first and triaged as findings,
-  │            change-review ∥ security reviews, fixes applied, verified,
-  │            committed locally — STOPS
-  │            YOU: "push"                                            ← gate 2
+  │            deterministic policy selects every applicable review lens,
+  │            change-review ∥ security run as required
+  │            plain "review" reports only; explicit "review and fix" commits locally
+  │            stronger authority already present in the request continues to LAND
   ▼
 4. LAND        /ship  (or just "push")
   │            commit → push → PR body per repo template → CI watch →
@@ -34,7 +35,7 @@ IDEA
                executes only with green CI + zero unresolved review threads,
                verified against the live API                          ← gate 3
 
-LATER          /fix-pr <PR> — review comments arrived on an open PR:
+LATER          review-pr comments mode — review comments arrived on an open PR:
                triage every one, fix, reply, resolve, CI green
 ```
 
@@ -44,15 +45,29 @@ LATER          /fix-pr <PR> — review comments arrived on an open PR:
 | --- | --- | --- |
 | Scope new work | `/spec <request>` | Clarify → `planner`: territory scan with evidence, decisions with rejected alternatives, agent-sized units, sequencing, open questions with recommended answers |
 | Build a unit | `/implement U<n>` | Routes to `implementer` / `tdd-workflow` / inline; Deviations contract; verification |
-| Review + fix | `/review-fix <PR\|branch\|staged>` | Thread triage + parallel reviews + fixes + local commit; stops before push |
+| Review | `/review-pr <PR\|branch\|staged>` | Mandatory and diff-selected review lenses; read-only unless stronger authority is explicit |
+| Review + fix | `review and fix <target>` | Review + fixes + local verification and commit; stops before push |
 | Land it | `push` or `/ship` | Commit, push, templated PR body, CI watch loop, thread resolution, merge-ready report |
-| Late comments | `/fix-pr <PR>` | Full comment triage, fix, reply, resolve, CI green, approve/done |
+| Late comments | `address <PR>` | `review-pr` comments mode: triage, fix, reply, resolve, CI green |
 | Merge | `merge it` | Hard-gated: explicit instruction + green CI + zero unresolved threads (live re-fetch) |
 
-## Stop typing these
+## Prompt depth
 
-Each of these chores has exactly one owner in the loop. Needing to type one mid-flow means
-a contract broke — treat it as a defect and fix the skill, not the symptom:
+- Short prompts choose an outcome: `plan this`, `implement U3`, `review PR 123`, `ship it`.
+  They still receive the complete method.
+- Detailed prompts contribute constraints and known risks; the workflow preserves them and
+  adds its standard policy.
+- Design- and architecture-shaped prompts automatically add blind-spot discovery,
+  architecture scanning, alternatives, typed contracts, and call stacks.
+- Failure-shaped prompts root-cause the behavior before planning or patching it.
+
+The user chooses the outcome and authority. Skills, droids, selectors, and hooks choose and
+enforce the method.
+
+## Workflow-owned follow-up
+
+Each responsibility below has one owner in the loop. If the operator must request one
+manually, record it as a workflow defect and fix the owning stage:
 
 `monitor ci` · `why is ci failing` · `fix the PR body` · `resolve comments` ·
 `push and update PR` · `make sure everything passes` · `continue` / `proceed`

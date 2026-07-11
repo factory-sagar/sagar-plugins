@@ -1,19 +1,12 @@
 ---
 name: discovering-unknowns
-version: 1.0.0
+version: 1.1.0
 description: |
-  Map-territory discipline: surface the operator's unknowns before, during, and after
-  implementation. Blind-spot pass for unknown unknowns, interview and brainstorm patterns for
-  known unknowns and taste, source-code references for hard-to-articulate wants, the shared
-  Deviations contract for territory surprises mid-implementation, and an optional quiz gate
-  before merge. The prompt is the map; the codebase is the territory; the gap is unknowns.
-  Use when:
-  - Starting work in an unfamiliar area of a codebase ("blindspot pass", "unknown unknowns")
-  - A request has taste-shaped criteria the operator will only recognize on sight
-  - The user asks "what am I missing?", "what haven't I considered?", "help me prompt better"
-  - An implementation plan is about to be handed to a worker or droid (attach the Deviations contract)
-  - A long session finished and the operator wants to verify their own understanding before merge
+  Map the gap between the user's request and repository reality. Invoke for unfamiliar
+  territory, taste-shaped criteria, blind spots, or worker hand-offs; returns evidence-backed
+  unknowns and the shared deviations contract.
 tags: [planning, unknowns, blindspot, interview, deviations, map-territory]
+user-invocable: false
 ---
 
 # Discovering Unknowns
@@ -152,7 +145,7 @@ before push, not as a formality. Offer it; never force it.
 | Requirements fuzzy after brainstorm | Interview (full session → `grilling`) | spec's resolved decisions |
 | Taste-shaped criteria | Brainstorm and react | `tech-spec` alternatives |
 | Handing a unit to `implementer` / `worker` | Deviations contract in the prompt | report's `## Deviations` |
-| `tdd-workflow` Step 4, `review-fix` Step 5 | Deviations contract | `pr-describer` Notes for Reviewers |
+| `tdd-workflow` Step 4, `review-pr` fix mode | Deviations contract | `pr-describer` Notes for Reviewers |
 | Before push/merge of a long session | Quiz gate (on request only — not part of the standard loop) | operator confidence |
 
 Long-horizon models (the Fable-class tier) raise the ceiling on all of this: the more work

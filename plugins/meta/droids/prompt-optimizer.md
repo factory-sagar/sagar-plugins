@@ -1,7 +1,7 @@
 ---
 name: prompt-optimizer
 description: Audits a droid or skill prompt and recommends minimal-edit improvements. Use when authoring a new droid, diagnosing poor output from an existing one, or comparing prompt versions.
-model: claude-fable-5
+model: claude-opus-4-8
 reasoningEffort: xhigh
 tools: ["Read", "LS", "Grep", "Glob"]
 ---

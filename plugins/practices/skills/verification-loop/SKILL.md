@@ -1,20 +1,12 @@
 ---
 name: verification-loop
-version: 1.2.0
+version: 1.3.0
 description: |
-  Four-phase quality gate (build, type-check, lint, tests with coverage) with explicit worker
-  delegation per phase for long-running commands. Catches regressions before review, surfaces
-  pre-existing issues without blocking on them, and hands the gate-ready diff to `change-review`
-  and `security`.
-  Use when:
-  - Completing a feature or non-trivial change
-  - Preparing to open a PR
-  - Finishing a refactor (suite must stay green; this confirms it)
-  - Finishing a `tdd-workflow` loop (the natural next step)
-  - User asks "is this ready", "did I break anything", "run the checks"
-  - User says "make sure everything passes", "verify everything", "ensure no issues", "ensure everything looks good"
-  - As the regression eval in an `agentic-engineering` eval-first loop
+  Verification policy for completed changes. Discovers repository gates, runs affected checks
+  for fast feedback and the canonical milestone gate before hand-off, distinguishes introduced
+  failures from baseline debt, and records exact evidence.
 tags: [quality-gates, verification, testing, ci, build, lint, type-check]
+user-invocable: false
 ---
 
 # Verification Loop

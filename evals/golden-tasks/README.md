@@ -25,9 +25,10 @@ Droid-targeted tasks run inline on the exec session model because `droid exec` h
 | [`07-verification-loop.md`](./07-verification-loop.md) | `verification-loop` | no |
 | [`08-implementer-minimal-fix.md`](./08-implementer-minimal-fix.md) | `implementer` | yes |
 | [`09-security-seeded-vuln.md`](./09-security-seeded-vuln.md) | `security` | yes |
-| [`10-review-fix-tier-selection.md`](./10-review-fix-tier-selection.md) | `review-fix` | yes |
-| [`11-fix-pr-comment-triage.md`](./11-fix-pr-comment-triage.md) | `fix-pr` | no |
+| [`10-review-pr-tier-selection.md`](./10-review-pr-tier-selection.md) | `review-pr` | yes |
+| [`11-review-pr-comment-triage.md`](./11-review-pr-comment-triage.md) | `review-pr` comments mode | no |
 | [`12-blindspot-pass.md`](./12-blindspot-pass.md) | `discovering-unknowns` | no |
+| [`13-language-agnostic-review-selection.md`](./13-language-agnostic-review-selection.md) | `review-pr` | yes |
 
 ## Scoring
 

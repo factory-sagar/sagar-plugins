@@ -1,25 +1,20 @@
 ---
 name: audit-and-apply-loop
-version: 1.0.0
+version: 1.1.0
 description: |
-  Methodology for evolving droid or skill prompts using `prompt-optimizer` (audit) + `doc-generator`
-  (apply) as an audit-fix-verify cycle, with explicit delegation per phase and re-test verification
-  before each loop iteration. The same loop produced the v2-quality prompts in this marketplace.
-  Use when:
-  - Authoring a new droid prompt and want a quality pass before shipping
-  - Diagnosing a droid whose output keeps missing sections, hallucinating, or running forbidden commands
-  - Comparing prompt v1 vs v2 to decide which to ship
-  - Cleaning up drift in an existing droid set
-  - Adopting droids from another marketplace into your own
-  - Auditing a project's `.factory/droids/**` or `AGENTS.md` for quality and consistency
+  Prompt evolution policy: capture observed behavior, audit the prompt, apply the smallest
+  justified change, rerun the same case, and keep only measured improvement. Invoke for prompt,
+  droid, skill, hook, or agentic-configuration changes.
 tags: [meta, prompt-engineering, methodology, droids, agentic-config, iteration]
+user-invocable: false
 ---
 
 # Audit-and-Apply Loop
 
 A repeatable six-step cycle for evolving droid and skill prompts. Audit with `prompt-optimizer`, apply minimal-edit fixes with `doc-generator`, re-test against a real target, re-audit to confirm. The loop converges when no new findings appear or when remaining findings are intentionally accepted.
 
-This skill is meta — it describes how to use the meta plugin to improve any droid or skill prompt, including the meta plugin's own droids. The same loop produced the v2-quality prompts in the sagar-plugins marketplace over multiple iterations.
+This skill describes how to audit and revise droid or skill prompts, including prompts in
+the meta plugin.
 
 ## When to Activate
 
@@ -97,7 +92,7 @@ This skill is meta — it describes how to use the meta plugin to improve any dr
 
 ### Step 1 — Author or modify the prompt
 
-Use the v2-quality structure for any new droid:
+Use the prompt structure below for any new droid:
 - Identity (`When to Use Me` / `When NOT to Use Me`).
 - Hard constraints (read-only, tool boundaries, confidence labels, findings caps).
 - Phased procedure (numbered phases, not flat rules).
