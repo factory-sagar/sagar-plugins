@@ -4,7 +4,7 @@
     {
       "id": "review-short-pr",
       "critical": true,
-      "prompt": "Review PR 383.",
+      "prompt": "Review PR 123.",
       "expectedPrimary": "review-pr"
     },
     {
@@ -107,7 +107,7 @@
     {
       "id": "review-and-merge",
       "critical": true,
-      "prompt": "Review PR 383, fix every valid blocker, then merge it when current-head CI is green and all threads are resolved.",
+      "prompt": "Review PR 123, fix every valid blocker, then merge it when current-head CI is green and all threads are resolved.",
       "expectedPrimary": "review-pr",
       "expectedSequence": ["review-pr", "ship"]
     },

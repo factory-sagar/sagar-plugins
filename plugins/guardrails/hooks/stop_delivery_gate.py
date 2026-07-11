@@ -10,6 +10,8 @@ from dataclasses import dataclass
 
 from delivery_ledger import load_state, state_directory, state_path
 
+BODY_HEAD_MARKER = "pr-body-head"
+
 
 @dataclass(frozen=True, slots=True)
 class DeliverySnapshot:
@@ -21,6 +23,10 @@ class DeliverySnapshot:
     checks_green: bool | None
     unresolved_threads: int | None
     body_fresh: bool | None
+
+
+def body_is_fresh(body: str, head: str) -> bool:
+    return f"<!-- {BODY_HEAD_MARKER}={head} -->" in body
 
 
 def pending_obligations(
@@ -202,7 +208,7 @@ def snapshot_delivery(state: dict[str, object]) -> DeliverySnapshot:
     if pr_number is not None:
         checks_complete, checks_green = fetch_checks(repo_root, pr_number)
         unresolved_threads = fetch_unresolved_threads(repo_root, pr_number)
-        body_fresh = bool(pr_head and f"<!-- sagar-plugins:head={pr_head} -->" in body)
+        body_fresh = bool(pr_head and body_is_fresh(body, pr_head))
 
     return DeliverySnapshot(
         local_head=local_head,

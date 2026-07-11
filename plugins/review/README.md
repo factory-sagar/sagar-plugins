@@ -41,9 +41,8 @@ The deep tier treats the notes doc as the single source of truth: it verifies ea
 
 ## Models
 
-`change-review` and `review-worker` use the current published review-benchmark incumbent,
-`gpt-5.2`. `security` uses `claude-opus-4-8` for an independent attack-path pass. Both
-assignments remain provisional until repeated public and held-out suites validate them.
+Assignments are provisional. Their evidence status and decision records are listed in
+[`evals/model-assignments.json`](../../evals/model-assignments.json).
 
 ## Related plugins
 

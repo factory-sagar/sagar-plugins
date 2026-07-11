@@ -83,11 +83,10 @@ findings list with source `pr-thread` and triage it like any other finding — f
 it with a written reason. A review-pr pass on a PR that ends with untriaged existing threads
 is incomplete, no matter what else it fixed.
 
-**Rolling / stacked PRs:** if the branch follows a one-commit-per-unit convention (commit
-subjects like `U0`, `A4 [WP2]`, lane/unit prefixes, or the PR body describes per-unit landing),
-do not review the whole branch as one blob. Ask which unit(s) to review, or default to the
-commits not yet reviewed, and scope the diff per commit (`git show <sha>`). The tier heuristic
-then applies per unit, not to the branch total.
+**Rolling / stacked PRs:** if commit subjects or the PR body describe per-unit landing, do
+not review the whole branch as one blob. Use the unit named by the request; otherwise scope
+to commits not yet reviewed. Apply the tier heuristic to each unit rather than the branch
+total.
 
 If the target is a PR, use an isolated worktree and follow `fix-comments.md` for checkout so you can
 apply fixes locally. For a local branch / staged changes, work in place. Confirm the working
@@ -446,8 +445,8 @@ bias the filter's closed-list reasons exist to prevent.
 - In `report` and `fix` modes, do not push. Stronger modes continue only because the
   original request already granted remote-write authority.
 - Do not approve or merge while any review thread is unresolved. Untriaged existing comments
-  are a hard blocker even when the user said "merge when green" — burying reviewer comments
-  under a merge is the one failure this skill must never repeat.
+  are a hard blocker even when the user said "merge when green"; burying reviewer comments
+  under a merge is a hard failure of this workflow.
 - Do not skip fetching existing PR threads in Step 1. Absence of knowledge about threads is
   not absence of threads.
 - Do not run the deep tier on a small routine diff. Default light; escalate only on the heuristic.

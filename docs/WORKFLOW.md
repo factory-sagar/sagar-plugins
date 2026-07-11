@@ -53,7 +53,7 @@ LATER          review-pr comments mode — review comments arrived on an open PR
 
 ## Prompt depth
 
-- Short prompts choose an outcome: `plan this`, `implement U3`, `review PR 383`, `ship it`.
+- Short prompts choose an outcome: `plan this`, `implement U3`, `review PR 123`, `ship it`.
   They still receive the complete method.
 - Detailed prompts contribute constraints and known risks; the workflow preserves them and
   adds its standard policy.
@@ -64,10 +64,10 @@ LATER          review-pr comments mode — review comments arrived on an open PR
 The user chooses the outcome and authority. Skills, droids, selectors, and hooks choose and
 enforce the method.
 
-## Stop typing these
+## Workflow-owned follow-up
 
-Each of these chores has exactly one owner in the loop. Needing to type one mid-flow means
-a contract broke — treat it as a defect and fix the skill, not the symptom:
+Each responsibility below has one owner in the loop. If the operator must request one
+manually, record it as a workflow defect and fix the owning stage:
 
 `monitor ci` · `why is ci failing` · `fix the PR body` · `resolve comments` ·
 `push and update PR` · `make sure everything passes` · `continue` / `proceed`

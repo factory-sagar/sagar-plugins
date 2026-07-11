@@ -1,4 +1,4 @@
-# Review-Fix Notes Format
+# Review-PR Notes Format
 
 This file defines the shared notes-doc format used by `review-pr` deep mode,
 `review-worker.md`, the Discovery subagent, and the Review subagent. The notes doc is
@@ -12,7 +12,7 @@ The manager MUST create one stable notes doc path outside the repo before spawni
 mkdir -p /tmp/factory-review-pr-notes
 NOTES_PATH=/tmp/factory-review-pr-notes/$(date +%s)-$(openssl rand -hex 4).md
 cat > "$NOTES_PATH" <<'EOF'
-# Review-Fix Notes for <PR URL / branch / scope specified by the user>
+# Review-PR Notes for <PR URL / branch / scope>
 
 ## Pattern Checks
 <!-- Discovery appends one entry per pattern-check here. Review fills verdicts. Manager annotates filters. -->

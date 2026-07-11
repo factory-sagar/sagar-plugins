@@ -5,8 +5,8 @@ triage, replies, resolution, push, and CI follow-through. It does not run unless
 authorized comment handling or a stronger remote-write mode.
 
 Given a PR URL or number, fetch all review comments, reason about each one, fix the valid
-bugs, reply to every comment, resolve the threads, push, wait for CI, then approve the PR
-(or say "done" if the PR is authored by factory-droid[bot]).
+bugs, reply to every comment, resolve the threads, push, wait for CI, then finalize the
+authorized state. Approval requires explicit approve or merge intent.
 
 ## Inputs
 
@@ -221,8 +221,8 @@ git push origin <branch-name>
 
 After every push, invoke `pr-describer` against the current PR, preserve the repository's
 template, and update the body so it ends with
-`<!-- sagar-plugins:head=<full-head-sha> -->`. The delivery stop gate treats a body stamped
-for an older revision as incomplete.
+`<!-- pr-body-head=<full-head-sha> -->`. The `guardrails` plugin's stop hook, when installed,
+treats a body stamped for an older revision as incomplete.
 
 ### 7. Reply to Every Comment and Resolve Threads
 

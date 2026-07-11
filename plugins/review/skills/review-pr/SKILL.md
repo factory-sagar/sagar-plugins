@@ -131,8 +131,7 @@ Completion criterion: one canonical finding exists per defect, with no inflated 
   milestone gate, commit locally, and stop.
 - **comments**: read and follow `fix-comments.md`, then push and watch CI.
 - **ship**: follow `ship` from preflight through merge-ready.
-- **land**: re-fetch CI and threads for the current remote SHA, then merge only if green and
-  zero unresolved threads remain.
+- **land**: pass the four-point landing gate in `deep-review.md` Step 9, then merge.
 
 Completion criterion: the workflow reaches exactly the authorized end state and no stronger
 one.

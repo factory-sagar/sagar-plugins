@@ -13,7 +13,8 @@ user-invocable: false
 
 A repeatable six-step cycle for evolving droid and skill prompts. Audit with `prompt-optimizer`, apply minimal-edit fixes with `doc-generator`, re-test against a real target, re-audit to confirm. The loop converges when no new findings appear or when remaining findings are intentionally accepted.
 
-This skill is meta — it describes how to use the meta plugin to improve any droid or skill prompt, including the meta plugin's own droids. The same loop produced the v2-quality prompts in the sagar-plugins marketplace over multiple iterations.
+This skill describes how to audit and revise droid or skill prompts, including prompts in
+the meta plugin.
 
 ## When to Activate
 
@@ -91,7 +92,7 @@ This skill is meta — it describes how to use the meta plugin to improve any dr
 
 ### Step 1 — Author or modify the prompt
 
-Use the v2-quality structure for any new droid:
+Use the prompt structure below for any new droid:
 - Identity (`When to Use Me` / `When NOT to Use Me`).
 - Hard constraints (read-only, tool boundaries, confidence labels, findings caps).
 - Phased procedure (numbered phases, not flat rules).

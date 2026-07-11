@@ -24,7 +24,7 @@ droid plugin install build@sagar-plugins
 | Skill | Triggers on | What it does |
 | --- | --- | --- |
 | `implement` | "implement this", "apply this change set", "build this unit" | Routes an approved change set to `implementer`, new behavior without one to `tdd-workflow`, and small mechanical changes inline. Carries the Deviations contract in every path and finishes with `verification-loop`. |
-| `ship` | "ship it", "push", "monitor ci", "clean up the PR", "merge it if CI passes" | Lands finished work: commit (via `commit-message-writer`), push, create or update the PR with a template-conformant body (via `pr-describer`), watch CI until green (delegating `debugger` for non-obvious failures), resolve review threads, and report merge-ready. Never merges on its own. |
+| `ship` | "ship it", "push", "monitor ci", "clean up the PR", "merge it if CI passes" | Lands finished work: commit, push, update the template-conformant PR body, watch CI, and resolve review threads. It merges only when explicitly requested and all delivery gates pass. |
 
 The public entry points are `/implement <task>` and `/ship`.
 
@@ -38,9 +38,8 @@ The public entry points are `/implement <task>` and `/ship`.
 
 ## Models
 
-`implementer` and `test-engineer` run `gpt-5.6-terra` at `high`, a provisional
-quality-per-cost assignment from the role evaluation. High-risk units route to
-`gpt-5.6-sol` through the planner's executor recommendation.
+These assignments are provisional. Their evidence status and decision records are listed in
+[`evals/model-assignments.json`](../../evals/model-assignments.json).
 
 ## Related plugins
 

@@ -68,7 +68,7 @@ You are not a reviewer (`change-review`), security auditor (`security`), or arch
 - Body: fill the repository template. Preserve its order and comments; populate only
   diff-supported claims. When no template exists, use the fallback below.
 - Follow-ups and Notes for Reviewers are populated only when something concrete needs flagging.
-- End the body with `<!-- sagar-plugins:head=<full-head-sha> -->`.
+- End the body with `<!-- pr-body-head=<full-head-sha> -->`.
 
 **Phase 7 — Self-check.** Before returning, verify:
 1. Is every claim in the body backed by a file in the diff?
@@ -151,4 +151,4 @@ If none: `None.`
 
 If none: `None.`
 
-<!-- sagar-plugins:head=<full-head-sha> -->
+<!-- pr-body-head=<full-head-sha> -->

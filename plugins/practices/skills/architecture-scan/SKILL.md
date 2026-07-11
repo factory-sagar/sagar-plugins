@@ -179,7 +179,7 @@ End with:
 ```md
 Top recommendation: <candidate title> - <why this has the best leverage>
 
-Which candidate would you like to explore with a tech-spec brief?
+Select a candidate for the follow-up tech-spec brief.
 ```
 
 Do not propose detailed final interfaces in the candidate scan unless a tiny sketch is necessary to explain the opportunity.

@@ -28,11 +28,9 @@ droid plugin install investigation@sagar-plugins
 
 ## Models
 
-- `gpt-5.6-luna`: low-cost triage.
-- `gpt-5.6-sol` (xhigh): architecture and root-cause work.
-- `claude-opus-4-8` (xhigh): strongest natural prose for synthesizing external sources.
-
-Models are pinned by policy — no droid uses `inherit`, so its output distribution never depends on the parent session's model (and `reasoningEffort` is ignored under `inherit`). `scripts/validate.mjs` enforces this.
+Assignments are provisional. Their evidence status and decision records are listed in
+[`evals/model-assignments.json`](../../evals/model-assignments.json). The structural
+validator keeps this registry aligned with droid frontmatter.
 
 ## Related plugins
 

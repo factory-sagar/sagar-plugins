@@ -51,8 +51,9 @@ menu; internal policy skills remain model-invoked.
 
 ## Usage
 
-**[docs/WORKFLOW.md](./docs/WORKFLOW.md)** is the operating loop: one entry point per stage,
-three human gates, and the chore list the pipeline owns so you never type it.
+**[docs/WORKFLOW.md](./docs/WORKFLOW.md)** defines one entry point per stage, explicit
+authority boundaries, and named owners for verification, PR maintenance, CI, and comments.
+Blocked stages still return to the operator with the unresolved evidence.
 
 The plugins compose into one delegation and procedure loop:
 

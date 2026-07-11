@@ -1,6 +1,6 @@
 {
   "name": "sagar-plugins",
-  "description": "Sagar's personal Factory plugins marketplace — multi-model droid toolkit split into focused plugins.",
+  "description": "Factory engineering workflow plugins for planning, implementation, review, delivery, and guardrails.",
   "owner": {
     "name": "Sagar",
     "url": "https://github.com/factory-sagar"

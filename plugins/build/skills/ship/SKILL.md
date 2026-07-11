@@ -28,8 +28,7 @@ branch — create a branch first if needed.
 
 If the tree is dirty, review the full diff, then delegate the message to the
 `commit-message-writer` droid and commit. Split unrelated changes into separate commits.
-Run Droid Shield-sensitive checks yourself: no secrets, credentials, or generated noise in
-the staged diff.
+Check the staged diff for secrets, credentials, and generated noise.
 
 ### 3. Push
 
@@ -39,25 +38,25 @@ git push -u origin HEAD
 
 ### 4. PR create or update
 
-- **No PR yet**: follow the `create-pr` skill's conventions (Conventional Commits title,
-  linked ticket when one exists).
+- **No PR yet**: create it with a Conventional Commits title and link a ticket when one
+  exists. Follow the `create-pr` skill when installed.
 - **PR exists**: if this push meaningfully changed scope, regenerate the body.
 
 In both cases the body comes from the `pr-describer` droid and must conform to the repo's
 PR template (look in `.github/`, `docs/`, or `PULL_REQUEST_TEMPLATE*`). The body describes
-the change itself — never the session, process, or tooling that produced it. Include the
+the change itself, never the agent process or tooling that produced it. Include the
 Deviations log as reviewer notes when one exists.
 
-End the body with `<!-- sagar-plugins:head=<full-head-sha> -->`. The delivery stop gate uses
-this marker to prove that the body describes the current pushed revision.
+End the body with `<!-- pr-body-head=<full-head-sha> -->`. The `guardrails` plugin's stop
+hook, when installed, uses this marker to prove that the body describes the current pushed
+revision.
 
 ### 5. Watch CI until green
 
-Run the CI watch loop defined in
-`../../../review/skills/review-pr/fix-comments.md`:
-`gh pr checks --watch`, read failure logs, distinguish own-change failures from
-pre-existing ones, delegate to the `debugger` droid when the cause is not obvious, fix and
-repush. Max 3 fix attempts, then stop and report.
+Run `gh pr checks --watch`, read failure logs, distinguish change-caused failures from
+baseline failures, delegate to `debugger` when the mechanism is unclear, fix and repush.
+The review plugin's `review-pr/fix-comments.md` provides the expanded procedure when
+installed. Stop after three unsuccessful fix attempts and report the blocker.
 
 ### 6. Resolve review threads
 
@@ -74,15 +73,14 @@ End with a short report:
 - Threads: resolved / outstanding
 - Deviations: from the implementation log, or `none`
 
-Do not merge. Merging stays a human action unless the user explicitly asked for
-merge-on-green in this session — and even then, re-fetch the thread list first: an
-unresolved review thread is a hard merge blocker. Report the remaining threads instead
-of merging over them.
+Merge only when the current request explicitly authorizes it. When the review plugin is
+installed, apply the landing gate from `review-pr` before merging. Otherwise re-fetch
+current-head CI, PR-body freshness, and review threads; any unresolved state blocks merge.
 
 ## Anti-patterns
 
 - Ending the turn between push and CI result. The watch loop is part of shipping.
 - Writing the PR body yourself instead of delegating to `pr-describer`.
-- Describing the process ("this session refactored...") instead of the change.
+- Describing the agent process instead of the change.
 - Looping more than 3 fix attempts on red CI without reporting back.
-- Merging without an explicit instruction from this session.
+- Merging without explicit instruction in the current request.

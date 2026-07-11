@@ -52,17 +52,17 @@ The **15-minute rule**: if a unit would take a focused engineer more than 15 min
 
 ### Principle 3 — Route model tiers by task complexity
 
-Different models for different jobs. The sagar marketplace uses this matrix:
+Different models fit different jobs. This marketplace uses the provisional matrix below:
 
 | Task shape | Current provisional model | Example droid | Reason |
 |---|---|---|---|
-| Triage, classification, format-mechanical work | `gpt-5.6-luna` | `quick-analysis`, `commit-message-writer` | Constrained output benefits from the low-cost tier |
-| Implementation, refactors, focused code edits | `gpt-5.6-terra` high | `implementer` | Local contract evals showed strong correctness at moderate cost |
-| Test gap analysis and test writing | `gpt-5.6-terra` high | `test-engineer` | Behavior coverage needs reasoning without the heavy-tier multiplier |
-| Architecture, root cause, multi-file invariants | `gpt-5.6-sol` xhigh | `planner`, `deep-understanding`, `debugger` | Wrong first decisions are expensive; depth dominates latency |
-| Correctness review | `gpt-5.2` xhigh | `change-review`, `review-worker` | Current Factory review benchmark incumbent pending a Sol challenger run |
-| Security, prompt critique, external research | `claude-opus-4-8` xhigh | `security`, `prompt-optimizer`, `deep-research` | Attack-path and source synthesis benefit from an independent family |
-| PR prose synthesis | `claude-opus-4-8` high | `pr-describer` | Natural prose quality dominates mechanical speed |
+| Triage, classification, format-mechanical work | `gpt-5.6-luna` | `quick-analysis`, `commit-message-writer` | Provisional; see the assignment registry and linked decision record |
+| Implementation, refactors, focused code edits | `gpt-5.6-terra` high | `implementer` | Provisional; see the assignment registry and linked decision record |
+| Test gap analysis and test writing | `gpt-5.6-terra` high | `test-engineer` | Provisional; see the assignment registry and linked decision record |
+| Architecture, root cause, multi-file invariants | `gpt-5.6-sol` xhigh | `planner`, `deep-understanding`, `debugger` | Provisional; see the assignment registry and linked decision record |
+| Correctness review | `gpt-5.2` xhigh | `change-review`, `review-worker` | Provisional; see the assignment registry and linked decision record |
+| Security, prompt critique, external research | `claude-opus-4-8` xhigh | `security`, `prompt-optimizer`, `deep-research` | Provisional; see the assignment registry and linked decision record |
+| PR prose synthesis | `claude-opus-4-8` high | `pr-describer` | Provisional; see the assignment registry and linked decision record |
 
 These assignments are provisional. `evals/model-assignments.json` is the machine-readable
 source of truth and names the evidence for every pin. A model change requires the repeated

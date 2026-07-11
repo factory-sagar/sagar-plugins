@@ -14,7 +14,11 @@ from delivery_ledger import (  # noqa: E402
 )
 from intent_router import route_intent  # noqa: E402
 from pre_push_policy import push_policy_violation  # noqa: E402
-from stop_delivery_gate import DeliverySnapshot, pending_obligations  # noqa: E402
+from stop_delivery_gate import (  # noqa: E402
+    DeliverySnapshot,
+    body_is_fresh,
+    pending_obligations,
+)
 
 
 class DeliveryLedgerTests(unittest.TestCase):
@@ -129,7 +133,7 @@ class PrePushPolicyTests(unittest.TestCase):
 
 class IntentRouterTests(unittest.TestCase):
     def test_routes_short_workflow_prompts(self):
-        self.assertEqual(route_intent("Review PR 383."), ["review-pr"])
+        self.assertEqual(route_intent("Review PR 123."), ["review-pr"])
         self.assertEqual(route_intent("Address PR 42."), ["review-pr"])
         self.assertEqual(route_intent("Plan adding audit-log exports."), ["spec"])
         self.assertEqual(route_intent("Can you scope out a better architecture?"), ["spec"])
@@ -142,7 +146,7 @@ class IntentRouterTests(unittest.TestCase):
             ["implement", "ship"],
         )
         self.assertEqual(
-            route_intent("Review and merge PR 383."),
+            route_intent("Review and merge PR 123."),
             ["review-pr", "ship"],
         )
 
@@ -171,6 +175,14 @@ class StopGateTests(unittest.TestCase):
             body_fresh=True,
         )
         self.assertEqual(pending_obligations(self.state, snapshot), [])
+
+    def test_body_freshness_marker_is_generic_and_head_specific(self):
+        self.assertTrue(
+            body_is_fresh("Body\n<!-- pr-body-head=abc123 -->", "abc123")
+        )
+        self.assertFalse(
+            body_is_fresh("Body\n<!-- pr-body-head=old -->", "abc123")
+        )
 
     def test_reports_every_unfinished_delivery_obligation(self):
         snapshot = DeliverySnapshot(
