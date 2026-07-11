@@ -1,6 +1,6 @@
 ---
 name: implement
-version: 1.1.0
+version: 1.2.0
 description: |
   Build approved work. Routes explicit change sets to the implementer, new behavior through
   test-first execution, and small mechanical changes inline; every path records deviations
@@ -22,6 +22,28 @@ Route by what is in hand:
 2. **New or changed behavior without an approved change set** — run the `tdd-workflow`
    skill (RED → GREEN → REFACTOR with checkpoint commits).
 3. **Small mechanical change in known territory** — apply it inline.
+
+## Program execution
+
+When the approved artifact contains multiple ordered units, plans, work packages, or
+milestones, the main agent remains the program manager:
+
+1. Read the complete index and build the dependency graph.
+2. Create one TodoWrite item per unit plus milestone validation and final review.
+3. Delegate one independently verifiable unit per `implementer` task. Parallelize only units
+   whose dependencies are complete and whose write sets are disjoint. Use isolated worktrees
+   when independent units may touch shared files; otherwise serialize them.
+4. Before each delegation, read that unit's source artifact and pass its exact scope,
+   acceptance criteria, boundaries, and targeted validator.
+5. After each return, inspect the actual diff and run the unit's validator from the parent
+   session. Record the command, exit status, and changed paths before marking the unit done.
+6. Run milestone gates at declared boundaries and the repository's canonical gate after the
+   final unit.
+7. Invoke `review-pr` only after every unit has evidence. The review must cover the complete
+   program diff and every changed or untracked implementation file.
+
+Never hand a multi-unit program to one implementer task. A subagent's completion report is
+evidence to verify, not authority to mark the program complete.
 
 ## Deviations contract
 

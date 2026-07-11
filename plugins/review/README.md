@@ -16,9 +16,9 @@ droid plugin install review@sagar-plugins
 
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
-| `change-review` | Static correctness and contract review of a scoped diff. | `gpt-5.2` | `xhigh` | read-only + `Execute` |
+| `change-review` | Static correctness and contract review of a scoped diff. | `gpt-5.6-sol` | `xhigh` | read-only + `Execute` |
 | `security` | STRIDE/OWASP security review with verified attack paths and CVEs. | `claude-opus-4-8` | `xhigh` | read-only + web |
-| `review-worker` | Deep-mode discovery and policy passes over a shared notes document. | `gpt-5.2` | `xhigh` | read-only + notes-doc writes |
+| `review-worker` | Deep-mode discovery and policy passes over a shared notes document. | `gpt-5.6-sol` | `xhigh` | read-only + notes-doc writes |
 
 ## Skills
 

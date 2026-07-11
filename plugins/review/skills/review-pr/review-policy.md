@@ -11,17 +11,33 @@ Apply every item to every changed behavior:
 - **Correctness and invariants**: boundaries, empty states, limits, ordering, and state
   transitions preserve caller-visible guarantees.
 - **Tests and evidence**: changed behavior has a regression net through the real seam; tests
-  fail when the behavior breaks and do not merely restate mocks.
+  fail when the behavior breaks and do not merely restate mocks. Exercise the real initiating
+  owner or entrypoint rather than calling an internal callback as a substitute.
+- **Program completeness**: when implementation follows an approved program, every unit maps
+  to changed paths, behavior evidence, and its declared validator. A completion report without
+  matching repository evidence is not accepted.
 - **Failures**: expected failures are classified and observable; defects are not swallowed
   or converted into misleading success.
 - **Ownership and mutation**: every write has one owner; aliases, shared mutable state, and
   partial updates cannot violate invariants.
+- **Transition timeline**: when a change alters lifetime, cleanup, reset, or deferred work,
+  enumerate state and observers before, during, and after the terminal event. Required values
+  must remain valid until their last consumer is finished.
+- **Rule composition**: when multiple rules can apply to the same output, evaluate their
+  intersections and prove the intended winner using the system's actual precedence semantics.
 - **Async and workflow safety**: work is awaited, returned, collected, or explicitly
   detached; cancellation, retry, concurrency, and idempotency are handled where reachable.
 - **Boundaries and contracts**: external values are parsed before core logic; protocol,
   persistence, and domain shapes do not leak across their owning boundary.
 - **Scope and structure**: no drive-by behavior, duplicated policy, unearned abstraction,
   dead compatibility path, or weakened gate entered with the change.
+- **File coverage**: review tracked changes, staged changes, and every untracked
+  implementation file. Separate pre-existing user-owned artifacts from files created by the
+  program; never treat untracked as automatically out of scope. Every changed source, test,
+  and metadata path appears in the review evidence ledger.
+- **Repository claims**: for every changed directory, read the governing `AGENTS.md`,
+  README, manifest, registry, or generated-file declaration and reconcile claims such as test
+  presence, routes, mounts, exports, and ownership.
 - **Operations and rollback**: telemetry is truthful and safe; migrations, flags, and
   deployment changes have a credible recovery path.
 
@@ -36,6 +52,10 @@ hooks, event listeners, or derived UI state.
 - Dependency changes cannot create loops, stale closures, duplicate requests, or lost work.
 - User-visible state remains consistent across loading, empty, error, and retry transitions.
 - Accessibility, focus, keyboard behavior, and semantics survive the state change.
+- Trace every external and internal writer of state. A local callback is not assumed to
+  observe changes initiated by another owner.
+- Follow transitional state until its terminal event. Values needed by work that remains
+  active must outlive that work, and cleanup must occur after the last observer is finished.
 
 For React, load the installed `no-use-effect` policy when `useEffect`,
 `useLayoutEffect`, or effect-shaped custom hooks appear. Equivalent constructs in other
@@ -155,6 +175,10 @@ Use for workflows, build scripts, deployment configuration, permissions, or rele
 - Cache keys cannot restore incompatible artifacts.
 - Deployment and rollback operate on the same versioned artifact.
 - Required checks represent the behavior the PR actually changes.
+- Build a CI-parity matrix from every required workflow job. For each command, record the
+  local equivalent and result, or mark it remote-only with a reason. A convenience aggregate
+  such as `verify:quick` does not prove standalone metadata, generated-file, lockfile,
+  formatting, policy, or deployment validators ran.
 
 ## Agentic Configuration
 

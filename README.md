@@ -115,10 +115,9 @@ substitute for measured quality.
 
 | Model | Role | Used by |
 | --- | --- | --- |
-| `gpt-5.6-sol` (xhigh) | Heavy planning, investigation, and root cause | `planner`, `deep-understanding`, `debugger` |
+| `gpt-5.6-sol` (xhigh) | Heavy planning, investigation, root cause, and correctness review | `planner`, `deep-understanding`, `debugger`, `change-review`, `review-worker` |
 | `gpt-5.6-terra` (high) | Implementation, tests, and precise config edits | `implementer`, `test-engineer`, `doc-generator` |
 | `gpt-5.6-luna` (high/medium) | Triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
-| `gpt-5.2` (xhigh) | Correctness review incumbent | `change-review`, `review-worker` |
 | `claude-opus-4-8` (xhigh/high) | Security, research, prompt critique, and PR prose | `security`, `deep-research`, `prompt-optimizer`, `pr-describer` |
 
 [`evals/model-assignments.json`](./evals/model-assignments.json) is the machine-readable

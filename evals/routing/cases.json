@@ -87,6 +87,13 @@
       "expectedSequence": ["implement", "ship"]
     },
     {
+      "id": "implement-program-then-review",
+      "critical": true,
+      "prompt": "Implement the approved program in its dependency order, validate every unit, then run review-pr. Do not push or merge.",
+      "expectedPrimary": "implement",
+      "expectedSequence": ["implement", "review-pr"]
+    },
+    {
       "id": "ship-short",
       "critical": true,
       "prompt": "Ship it.",

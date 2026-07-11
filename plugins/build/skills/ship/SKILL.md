@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 1.2.0
+version: 1.3.0
 description: |
   Land finished work. Commits and pushes, writes the repository-template PR body, watches
   current-head CI, closes review threads, and reports merge-ready; merges only when the user
@@ -23,6 +23,21 @@ gh pr view --json number,url,title,body,baseRefName 2>/dev/null
 
 Establish: uncommitted changes? unpushed commits? existing PR? Never ship from the default
 branch — create a branch first if needed.
+
+### 1b. Prove CI parity
+
+Read every required workflow under `.github/workflows/` and the repository's master
+verification script. Build a matrix:
+
+| Required check | Local command | Result or remote-only reason |
+| --- | --- | --- |
+
+Run every safe local equivalent before committing or pushing. A convenience aggregate such
+as `verify:quick` is not evidence that standalone metadata, AGENTS, generated-file, lockfile,
+formatting, policy, or deployment validators ran. If a required check cannot run locally,
+name the exact remote-only dependency and keep it in the CI watch set.
+
+Do not push while any locally runnable required check is failing.
 
 ### 2. Commit
 

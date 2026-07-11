@@ -12,6 +12,17 @@
         ]
       }
     ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${DROID_PLUGIN_ROOT}/hooks/delivery_ledger.py\"",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Execute",

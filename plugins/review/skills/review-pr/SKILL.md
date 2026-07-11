@@ -1,6 +1,6 @@
 ---
 name: review-pr
-version: 1.0.0
+version: 1.1.0
 description: |
   Review a PR, branch, commit, or staged change through the mandatory review policy and
   diff-selected risk lenses. Plain "review" is read-only; "review and fix", "address
@@ -59,9 +59,15 @@ stash, discard, move, or overwrite unrelated work to enter a review branch.
 Completion criterion: the exact base SHA, head SHA, diff, existing conversation, mode, and
 working directory are known.
 
+Capture `git status --porcelain` before reviewing. Classify each untracked path as:
+
+- present before the implementation program and user-owned;
+- created by the program and reviewable;
+- unknown, which remains in scope until ownership is proven.
+
 ### 2. Build the diff manifest
 
-Classify changed paths and diff content with the sibling
+Classify tracked, staged, and untracked implementation paths plus diff content with the sibling
 `select-review-lenses.mjs` script. Write changed paths and the unified diff to temporary
 files, then run:
 
@@ -83,9 +89,20 @@ lens, with a recorded signal explaining every selected lens.
 
 ### 3. Establish intent and conventions
 
-Reconstruct what the change is meant to accomplish from the PR, linked issue, tests,
-conversation, and surrounding code. Discover the target repository's conventions and
-canonical validation commands.
+Reconstruct what the change is meant to accomplish from the PR, linked issue, approved
+program, tests, conversation, and surrounding code. Discover the target repository's
+conventions and canonical validation commands.
+
+When an approved program exists, create a coverage ledger with one row per unit:
+
+| Unit | Expected paths/behavior | Actual paths | Targeted validation | Evidence |
+| --- | --- | --- | --- | --- |
+
+Read governing `AGENTS.md`, README, manifest, or registry files for every changed directory.
+Build a CI-parity matrix from required workflow jobs and note which local command proves each
+job or why it is remote-only. Run every safe local command and record its exit status. A
+missing result or remote-only reason leaves the matrix incomplete and blocks a clean
+assessment.
 
 If implementation and stated intent disagree, treat intent as unresolved evidence, not as
 permission to rationalize the code.
@@ -99,15 +116,45 @@ Run `change-review` on every review. Add `security` whenever any selected lens h
 `reviewer: security`. For broad or high-consequence changes, read `deep-review.md` and use
 its independent passes over the shared notes format, then reconcile them.
 
+Every reviewer prompt must include the tracked diff scope and the explicit absolute path list
+for program-created untracked files. Require each untracked file to be read and entered in the
+changed-file accounting table; a normal git diff is not sufficient evidence for untracked
+content.
+
+A change is broad or high-consequence when any of these hold: more than 10 changed files,
+more than 3 approved units, externally controlled state, multi-phase transitions, migrations,
+authorization, concurrency, or 3 or more selected risk lenses. Deep review is mandatory in
+those cases.
+
+Deep review requires at least two independent reviewer contexts:
+
+1. the primary reviewer executes the full pass state machine;
+2. a fresh challenge reviewer reads the full diff and runs the mandatory ownership,
+   transition, rule-interaction, and completeness concerns without seeing the primary
+   findings.
+
+Reconcile the union. A resumed pass or comprehensive fallback inside the primary review does
+not count as independent evidence.
+
 Each selected lens must produce either:
 
 - an evidenced finding with `path:line`, mechanism, impact, and correction direction; or
 - a concrete verified-clean statement naming what was traced.
 
+Maintain a review evidence ledger:
+
+| Lens | Changed codepaths inspected | Finding or verified-clean evidence | Validator |
+| --- | --- | --- | --- |
+
+Reject a reviewer result that says "clean" without filling every selected-lens row and every
+substantial changed codepath. Resume the reviewer with the missing rows or run an independent
+pass; never translate an incomplete reviewer return into a clean assessment.
+
 Review tests as evidence, not truth. Trace the behavior the tests claim to protect.
 
-Completion criterion: every selected lens is accounted for and every finding is reachable,
-introduced by the reviewed scope, actionable, and confidence-labeled.
+Completion criterion: every selected lens, approved program unit, governing metadata claim,
+and substantial changed codepath has evidence; every finding is reachable, introduced by the
+reviewed scope, actionable, and confidence-labeled.
 
 ### 5. Reconcile
 
@@ -157,6 +204,10 @@ one.
 ### Coverage
 - Files read:
 - Behavior traced:
+- Program units: <covered / missing>
+- Lens evidence: <complete / missing rows>
+- Governing metadata:
+- CI-parity matrix:
 - Validators:
 - Existing comments: <found / replied / resolved / remaining>
 - CI at head SHA:

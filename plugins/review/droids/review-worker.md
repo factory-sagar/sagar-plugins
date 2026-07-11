@@ -1,7 +1,7 @@
 ---
 name: review-worker
 description: Deep-review subagent for review-pr. Executes manager-provided discovery and review passes on a pinned model, reads the repository without editing it, and writes findings only to the shared notes document.
-model: gpt-5.2
+model: gpt-5.6-sol
 reasoningEffort: xhigh
 tools: ["Read", "LS", "Grep", "Glob", "Execute", "Edit", "Create"]
 ---

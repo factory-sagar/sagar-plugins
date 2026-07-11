@@ -18,7 +18,7 @@ cat > "$NOTES_PATH" <<'EOF'
 <!-- Discovery appends one entry per pattern-check here. Review fills verdicts. Manager annotates filters. -->
 
 ## Codepath Notes
-<!-- Pass 1-3 model-driven findings live here, one entry per codepath. -->
+<!-- Passes 1-4 model-driven findings live here, one entry per codepath. -->
 
 ## Findings
 <!-- Every finding that may become a fix lives here, one Markdown block per finding. -->
@@ -51,7 +51,7 @@ If a pattern is violated in multiple places, replace the pending placeholder wit
 
 ## Codepath note format
 
-For Passes 1-3, the Review subagent appends one entry per considered codepath to `## Codepath Notes`:
+For Passes 1-4, the Review subagent appends one entry per considered codepath to `## Codepath Notes`:
 
 ```md
 ### [Pass N] <short codepath name>
@@ -126,8 +126,8 @@ fixes back to findings.
 
 ## Citation requirement
 
-- Correctness, impact, and completeness findings (Passes 1-3) cite `file:line` evidence — the
+- Model-driven findings (Passes 1-4) cite `file:line` evidence — the
   specific code, contract, or call site that demonstrates the issue.
-- Convention findings (Passes 4+) cite either a documented convention or a sibling-file pattern.
+- Convention findings (Passes 5+) cite either a documented convention or a sibling-file pattern.
 
 Findings without any citable source are weaker — move them to Nit or drop them.

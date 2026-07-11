@@ -1,6 +1,6 @@
 ---
 name: agentic-engineering
-version: 1.2.0
+version: 1.3.0
 description: |
   Route AI-assisted engineering work by risk, complexity, and evidence. Supplies completion,
   delegation, session, model, evaluation, and review policy when another workflow must decide
@@ -60,7 +60,7 @@ Different models fit different jobs. This marketplace uses the provisional matri
 | Implementation, refactors, focused code edits | `gpt-5.6-terra` high | `implementer` | Provisional; see the assignment registry and linked decision record |
 | Test gap analysis and test writing | `gpt-5.6-terra` high | `test-engineer` | Provisional; see the assignment registry and linked decision record |
 | Architecture, root cause, multi-file invariants | `gpt-5.6-sol` xhigh | `planner`, `deep-understanding`, `debugger` | Provisional; see the assignment registry and linked decision record |
-| Correctness review | `gpt-5.2` xhigh | `change-review`, `review-worker` | Provisional; see the assignment registry and linked decision record |
+| Correctness review | `gpt-5.6-sol` xhigh | `change-review`, `review-worker` | Provisional; see the assignment registry and linked decision record |
 | Security, prompt critique, external research | `claude-opus-4-8` xhigh | `security`, `prompt-optimizer`, `deep-research` | Provisional; see the assignment registry and linked decision record |
 | PR prose synthesis | `claude-opus-4-8` high | `pr-describer` | Provisional; see the assignment registry and linked decision record |
 

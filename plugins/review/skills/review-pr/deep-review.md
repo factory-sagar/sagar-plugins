@@ -88,33 +88,17 @@ not review the whole branch as one blob. Use the unit named by the request; othe
 to commits not yet reviewed. Apply the tier heuristic to each unit rather than the branch
 total.
 
-If the target is a PR, use an isolated worktree and follow `fix-comments.md` for checkout so you can
-apply fixes locally. For a local branch / staged changes, work in place. Confirm the working
-tree is clean before editing: `git status --porcelain`.
+In mutating modes, use an isolated worktree for a PR and follow `fix-comments.md` for
+checkout. Report mode stays in the current checkout and performs no branch or worktree
+mutation. Confirm a clean editing worktree only before applying fixes.
 
 ### 2. Choose the tier (auto-heuristic)
 
-If the user explicitly passed `light` or `deep`, honor it and skip the heuristic.
-
-Otherwise default to **light**, and auto-suggest **deep** when ANY of these hold:
-
-- **Size**: more than ~50 changed files OR more than ~2000 added+removed lines.
-- **New/rewritten risk-sensitive logic**: the diff touches authentication / authorization,
-  session or consent handling, secrets/credentials, database migrations or schema,
-  payments/billing, public API contracts or shared types, or concurrency/locking primitives —
-  **AND that sensitive logic is genuinely new or substantially rewritten**, not a small edit to
-  existing, well-tested code.
-- **User signal**: the user explicitly asked for deep, or described the change as risky.
-
-**A small, well-tested touch to a risk-sensitive path is NOT enough on its own.** In practice
-that over-escalates: deep then runs many sequential passes only to return convention nits at high
-latency. When a risk-sensitive path is touched but the change is small and the existing code is
-already well-built and tested, prefer **light** — `change-review` + `security` in parallel surface
-the same findings at a fraction of the cost — and note why. Reserve deep for diffs that are also
-large, or where the risk-sensitive logic itself is new or rewritten.
-
-When the heuristic selects deep, state the evidence and proceed. If no signal fires, proceed
-light. The user chooses the outcome and authority; the workflow chooses the review method.
+Use the canonical classification in `review-pr/SKILL.md`: deep review is mandatory above its
+file/unit/lens thresholds and for the high-consequence responsibilities it names. An explicit
+`deep` request upgrades review; an explicit `light` request cannot bypass a mandatory deep
+condition. Otherwise use light review. State the evidence and proceed without asking the user
+to select the method.
 
 ---
 
@@ -185,7 +169,8 @@ The resumed-session pattern is leaky in two observed ways. Guard against both:
    **Sanctioned fallback (comprehensive worker):** when resume is verified not to be writing to
    the notes doc, stop resuming. Spawn ONE fresh `review-worker` that loads the diff once and, in a single
    session, walks ALL pattern-checks already enumerated in the notes doc by Discovery PLUS the
-   mandatory model-driven concerns (Functional Correctness, Impact, Completeness), appending every
+   mandatory model-driven concerns (Functional Correctness; Ownership, Transition, and Rule
+   Interaction; Impact; Completeness), appending every
    codepath note and finding to the notes doc in the normal format. This preserves the deep tier's
    thoroughness and is far more reliable than many broken resume round-trips. For very large diffs
    (20+ categories), prefer this fallback proactively — the per-category round-trip model is
@@ -234,6 +219,7 @@ Group the pattern-checks by `category`. Each unique category becomes one pass. U
 to create one TODO per pass, in this order, then a Final reconciliation TODO:
 
 - **Functional Correctness** (mandatory, model-driven — does not consume pattern-checks)
+- **Ownership, Transition, and Rule Interaction** (mandatory, model-driven)
 - **User and System Impact** (mandatory, model-driven)
 - **Completeness** (mandatory, model-driven)
 - **Code Organization** (mandatory — runs all `Code Organization` pattern-checks)
@@ -242,7 +228,7 @@ to create one TODO per pass, in this order, then a Final reconciliation TODO:
 - A dedicated **Security** pass via the `security` droid when risk-sensitive paths are present
 - **Final reconciliation**
 
-The first five passes are mandatory and run even if Discovery emitted zero pattern-checks for
+The first six passes are mandatory and run even if Discovery emitted zero pattern-checks for
 them. Never start with style or cosmetic observations.
 
 #### Step 3b-iii — Execute passes one at a time (strict state machine)
@@ -251,14 +237,16 @@ For each pass, in order:
 
 1. **Mark `in_progress`** (only this pass; later passes stay `pending`).
 2. **Prepare the Pass Expectations** for the Review subagent:
-   - **Passes 1-3 (model-driven)** do NOT consume pattern-checks. For each new/changed codepath
+   - **Passes 1-4 (model-driven)** do NOT consume pattern-checks. For each new/changed codepath
      in scope, the Review must emit at least one finding OR a detailed verified-clean explanation
-     (Pass 1: reachable + validated + error/state contract handled; Pass 2: user/ops impact is
-     acceptable and observable; Pass 3: fully wired, tested, documented for what it adds).
-   - **Passes 4+ (pattern-check-driven)**: every pattern-check in the pass's category must get a
+     (Pass 1: reachable + validated + error/state contract handled; Pass 2: every state writer,
+     terminal event, retained dependency, and simultaneously applicable rule has been traced and
+     the intended winner proven; Pass 3: user/ops impact is acceptable and observable; Pass 4:
+     fully wired, tested, documented, and represented in repository metadata and CI).
+   - **Passes 5+ (pattern-check-driven)**: every pattern-check in the pass's category must get a
      finding OR a detailed explanation of why it does not apply.
 3. **Execute the pass** with a `Task` call `resume: <Review task_id>` using the matching template
-   from `<WORKER_DOC>` (`Model-driven pass prompt` for 1-3, `Convention pass prompt` for 4+).
+   from `<WORKER_DOC>` (`Model-driven pass prompt` for 1-4, `Convention pass prompt` for 5+).
    For convention passes, filter the pattern-checks to the pass's category and compute the unique
    `source_doc` set; the prompt tells the Review to Read those docs first (if not already read).
    When the filtered list is empty, instruct it to Read the matching default doc and walk every
@@ -290,6 +278,21 @@ For each pass, in order:
    prompt` in `<WORKER_DOC>`. It marks invalid findings filtered using the closed-list reasons;
    it does not rewrite finding bodies.
 3. **Manager reads the notes doc**, takes every unfiltered finding into Step 4.
+
+#### Step 3b-v — Independent challenge review
+
+Spawn one fresh `review-worker` that has not seen the primary notes or findings. Give it the
+full scope, intent, selected lenses, governing repository metadata, and these model-driven
+concerns:
+
+- functional correctness;
+- ownership, transition, and rule interaction;
+- completeness, test seams, metadata, and CI parity.
+
+Require one finding or verified-clean `path:line` entry for every changed file and substantial
+codepath. Store its output separately from the primary notes. The manager then reconciles the
+union of primary and challenge findings in Step 4. The primary comprehensive-worker fallback
+does not replace this independent pass.
 
 ---
 

@@ -7,16 +7,19 @@ HOOKS = Path(__file__).resolve().parents[1] / "hooks"
 sys.path.insert(0, str(HOOKS))
 
 from delivery_ledger import (  # noqa: E402
+    clear_push_state,
     is_push_command,
     load_state,
     parse_push_command,
     record_push,
+    record_session_baseline,
 )
 from intent_router import route_intent  # noqa: E402
 from pre_push_policy import push_policy_violation  # noqa: E402
 from stop_delivery_gate import (  # noqa: E402
     DeliverySnapshot,
     body_is_fresh,
+    classify_worktree,
     pending_obligations,
 )
 
@@ -50,14 +53,80 @@ class DeliveryLedgerTests(unittest.TestCase):
             self.assertEqual(
                 load_state(path),
                 {
-                    "version": 1,
+                    "version": 2,
                     "session_id": "session-1",
                     "repo_root": "/repo",
                     "branch": "feature",
                     "pushed_head": "abc123",
                     "pr_number": 42,
+                    "baseline_untracked": [],
                 },
             )
+
+    def test_push_preserves_session_start_untracked_baseline(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            record_session_baseline(
+                state_dir=state_dir,
+                session_id="session-1",
+                repo_root="/repo",
+                baseline_untracked=["plans/README.md"],
+            )
+            path = record_push(
+                state_dir=state_dir,
+                session_id="session-1",
+                repo_root="/repo",
+                branch="feature",
+                pushed_head="abc123",
+                pr_number=42,
+                baseline_untracked=["plans/README.md", "src/forgotten.ts"],
+            )
+
+            self.assertEqual(
+                load_state(path)["baseline_untracked"],
+                ["plans/README.md"],
+            )
+
+    def test_baselines_are_scoped_by_repository(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            first = record_session_baseline(
+                state_dir=state_dir,
+                session_id="session-1",
+                repo_root="/repo-a",
+                baseline_untracked=["owned.txt"],
+            )
+            second = record_push(
+                state_dir=state_dir,
+                session_id="session-1",
+                repo_root="/repo-b",
+                branch="feature",
+                pushed_head="abc123",
+                pr_number=42,
+                baseline_untracked=["new.txt"],
+            )
+
+            self.assertNotEqual(first, second)
+            self.assertEqual(load_state(second)["baseline_untracked"], ["new.txt"])
+
+    def test_clearing_push_preserves_session_baseline(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            path = record_push(
+                state_dir=state_dir,
+                session_id="session-1",
+                repo_root="/repo",
+                branch="feature",
+                pushed_head="abc123",
+                pr_number=42,
+                baseline_untracked=["owned.txt"],
+            )
+            state = load_state(path)
+            clear_push_state(path, state)
+
+            cleared = load_state(path)
+            self.assertIsNone(cleared["pushed_head"])
+            self.assertEqual(cleared["baseline_untracked"], ["owned.txt"])
 
 
 class PrePushPolicyTests(unittest.TestCase):
@@ -149,11 +218,31 @@ class IntentRouterTests(unittest.TestCase):
             route_intent("Review and merge PR 123."),
             ["review-pr", "ship"],
         )
+        self.assertEqual(
+            route_intent(
+                "Implement the approved program in plans/README.md. "
+                "Execute every plan in dependency order and run review-pr at the end. "
+                "Do not push or merge."
+            ),
+            ["implement", "review-pr"],
+        )
+        self.assertEqual(
+            route_intent("Review this change, then apply every valid fix."),
+            ["review-pr"],
+        )
+        self.assertEqual(
+            route_intent("Push this branch but do not merge it."),
+            ["ship"],
+        )
 
     def test_avoids_routing_informational_questions(self):
         self.assertIsNone(route_intent("What does git status show?"))
         self.assertIsNone(route_intent("Explain what a pull request review is."))
         self.assertIsNone(route_intent("Do not push this branch."))
+        self.assertIsNone(route_intent("Do not review this PR."))
+        self.assertIsNone(route_intent("Do not plan this change."))
+        self.assertIsNone(route_intent("Execute the test suite."))
+        self.assertIsNone(route_intent("Do not push or merge this branch."))
 
 
 class StopGateTests(unittest.TestCase):
@@ -161,6 +250,7 @@ class StopGateTests(unittest.TestCase):
         self.state = {
             "pushed_head": "abc123",
             "pr_number": 42,
+            "baseline_untracked": ["plans/README.md"],
         }
 
     def test_green_current_pr_is_complete(self):
@@ -168,13 +258,30 @@ class StopGateTests(unittest.TestCase):
             local_head="abc123",
             remote_head="abc123",
             pr_head="abc123",
-            dirty_worktree=False,
+            dirty_tracked=False,
+            unexpected_untracked=(),
             checks_complete=True,
             checks_green=True,
             unresolved_threads=0,
             body_fresh=True,
         )
         self.assertEqual(pending_obligations(self.state, snapshot), [])
+
+    def test_preexisting_untracked_files_do_not_block_delivery(self):
+        dirty_tracked, unexpected = classify_worktree(
+            "?? plans/README.md\n",
+            ["plans/README.md"],
+        )
+        self.assertFalse(dirty_tracked)
+        self.assertEqual(unexpected, ())
+
+    def test_new_untracked_files_block_delivery(self):
+        dirty_tracked, unexpected = classify_worktree(
+            "?? plans/README.md\n?? src/new.ts\n",
+            ["plans/README.md"],
+        )
+        self.assertFalse(dirty_tracked)
+        self.assertEqual(unexpected, ("src/new.ts",))
 
     def test_body_freshness_marker_is_generic_and_head_specific(self):
         self.assertTrue(
@@ -189,7 +296,8 @@ class StopGateTests(unittest.TestCase):
             local_head="def456",
             remote_head="abc123",
             pr_head="abc123",
-            dirty_worktree=True,
+            dirty_tracked=True,
+            unexpected_untracked=("src/new.ts",),
             checks_complete=False,
             checks_green=False,
             unresolved_threads=2,
@@ -197,7 +305,7 @@ class StopGateTests(unittest.TestCase):
         )
         obligations = pending_obligations(self.state, snapshot)
 
-        self.assertEqual(len(obligations), 6)
+        self.assertEqual(len(obligations), 7)
         self.assertTrue(any("worktree" in item for item in obligations))
         self.assertTrue(any("unpushed" in item for item in obligations))
         self.assertTrue(any("CI" in item for item in obligations))
@@ -209,7 +317,8 @@ class StopGateTests(unittest.TestCase):
             local_head="abc123",
             remote_head=None,
             pr_head=None,
-            dirty_worktree=None,
+            dirty_tracked=None,
+            unexpected_untracked=None,
             checks_complete=None,
             checks_green=None,
             unresolved_threads=None,
