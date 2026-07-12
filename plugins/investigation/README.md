@@ -26,12 +26,6 @@ droid plugin install investigation@sagar-plugins
 3. Question lives outside the repo (library docs, CVE, best practice) → `deep-research`.
 4. Something concrete is failing (test, stack trace, regression, incident) → `debugger` (root cause plus a fix plan for `implementer`).
 
-## Models
-
-Assignments are provisional. Their evidence status and decision records are listed in
-[`evals/model-assignments.json`](../../evals/model-assignments.json). The structural
-validator keeps this registry aligned with droid frontmatter.
-
 ## Related plugins
 
 - **[`review`](../review/)**: `quick-analysis` and `deep-understanding` recommend handing diffs and PRs to `change-review`, and security-shaped findings to `security`.

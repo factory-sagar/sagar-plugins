@@ -85,23 +85,10 @@ ship (skill): commit → push → PR body per template → CI watch → resolve 
 
 A separate meta loop improves the droid prompts themselves: `prompt-optimizer` audits, `doc-generator` applies, governed by the `audit-and-apply-loop` skill.
 
-## Evals
-
-Prompt upgrades are checked against the golden-task pack in
-[`evals/golden-tasks/`](./evals/golden-tasks/) and the unforced routing corpus in
-[`evals/routing/`](./evals/routing/). [`evals/policy.json`](./evals/policy.json)
-defines critical quality, routing, false-positive, repetition, cost, and latency gates.
-
-Run a task headlessly with [`scripts/run-golden-task.sh`](./scripts/run-golden-task.sh).
-Score captured routing results with [`scripts/eval-routing.mjs`](./scripts/eval-routing.mjs).
-Model pins are mirrored in [`evals/model-assignments.json`](./evals/model-assignments.json)
-and link to versioned decision records.
-
 ## Validation
 
 `node scripts/validate.mjs` enforces manifests, droid frontmatter, the four-skill public
-surface, model-assignment parity and evidence links, routing-case integrity, policy bounds,
-README counts, cross-plugin references, golden targets, and plugin/skill version bumps.
+surface, README counts, cross-plugin references, and plugin/skill version bumps.
 
 ## Versioning
 
@@ -109,9 +96,7 @@ One rule: any change under `plugins/<name>/` bumps that plugin's `plugin.json` v
 
 ## Models
 
-Each droid pins a model and reasoning effort, but assignments are provisional until they
-clear repeated role-specific evaluations. Family diversity is useful evidence, not a
-substitute for measured quality.
+Each droid pins a model and reasoning effort suited to its role.
 
 | Model | Role | Used by |
 | --- | --- | --- |
@@ -119,9 +104,6 @@ substitute for measured quality.
 | `gpt-5.6-terra` (high) | Implementation, tests, and precise config edits | `implementer`, `test-engineer`, `doc-generator` |
 | `gpt-5.6-luna` (high/medium) | Triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
 | `claude-opus-4-8` (xhigh/high) | Security, research, prompt critique, and PR prose | `security`, `deep-research`, `prompt-optimizer`, `pr-describer` |
-
-[`evals/model-assignments.json`](./evals/model-assignments.json) is the machine-readable
-source of truth for current assignments and evidence status.
 
 ## Layout
 
@@ -131,10 +113,7 @@ sagar-plugins/
 │   └── marketplace.json
 ├── .github/
 │   └── workflows/            # validate.yml — structural invariants + version bumps
-├── scripts/                  # validate.mjs, run-golden-task.sh
-├── evals/
-│   ├── golden-tasks/         # prompt regression tasks, rubrics, JUDGE.md
-│   └── baselines/            # accepted golden-task outputs (regression reference)
+├── scripts/                  # marketplace validation
 └── plugins/
     ├── investigation/        # 4 droids
     ├── review/               # 3 droids + 1 skill

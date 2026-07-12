@@ -36,11 +36,6 @@ The public entry points are `/implement <task>` and `/ship`.
 4. Review comments on a PR → `review-pr` comments mode.
 5. Root cause unknown? `debugger` diagnoses first, then `implementer` fixes.
 
-## Models
-
-These assignments are provisional. Their evidence status and decision records are listed in
-[`evals/model-assignments.json`](../../evals/model-assignments.json).
-
 ## Related plugins
 
 - **[`review`](../review/)**: `review-pr`, `change-review`, and `security` produce the findings `implementer` consumes.

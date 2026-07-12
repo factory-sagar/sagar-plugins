@@ -1,6 +1,6 @@
 {
   "name": "investigation",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Investigation droids: fast triage (quick-analysis), thorough repo investigation (deep-understanding), external web research (deep-research), and root-cause debugging (debugger).",
   "author": {
     "name": "Sagar",

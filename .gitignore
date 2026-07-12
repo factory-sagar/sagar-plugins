@@ -21,5 +21,8 @@ tmp/
 __pycache__/
 *.pyc
 
-# Golden-task run transcripts (baselines are committed; runs are transient)
-evals/runs/
+# Local prompt evaluation harness
+/evals/
+/scripts/eval-routing.mjs
+/scripts/eval-routing.test.mjs
+/scripts/run-golden-task.sh
