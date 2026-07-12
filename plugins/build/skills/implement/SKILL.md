@@ -1,6 +1,6 @@
 ---
 name: implement
-version: 1.2.0
+version: 1.3.0
 description: |
   Build approved work. Routes explicit change sets to the implementer, new behavior through
   test-first execution, and small mechanical changes inline; every path records deviations
@@ -31,8 +31,8 @@ milestones, the main agent remains the program manager:
 1. Read the complete index and build the dependency graph.
 2. Create one TodoWrite item per unit plus milestone validation and final review.
 3. Delegate one independently verifiable unit per `implementer` task. Parallelize only units
-   whose dependencies are complete and whose write sets are disjoint. Use isolated worktrees
-   when independent units may touch shared files; otherwise serialize them.
+   whose dependencies are complete and whose write sets are disjoint. All delegates operate
+   in the current native checkout. Serialize units that could touch shared files.
 4. Before each delegation, read that unit's source artifact and pass its exact scope,
    acceptance criteria, boundaries, and targeted validator.
 5. After each return, inspect the actual diff and run the unit's validator from the parent
