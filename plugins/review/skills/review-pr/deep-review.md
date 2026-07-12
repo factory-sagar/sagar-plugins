@@ -88,9 +88,11 @@ not review the whole branch as one blob. Use the unit named by the request; othe
 to commits not yet reviewed. Apply the tier heuristic to each unit rather than the branch
 total.
 
-In mutating modes, use an isolated worktree for a PR and follow `fix-comments.md` for
-checkout. Report mode stays in the current checkout and performs no branch or worktree
-mutation. Confirm a clean editing worktree only before applying fixes.
+Every mode stays in the current repository checkout. Report mode performs no branch mutation.
+In mutating modes, follow the disposable-checkout policy in `fix-comments.md`, then check out
+the PR branch natively. Only a checkout explicitly marked with
+`workflow.disposableCheckout=true` may discard local state; an unmarked dirty checkout blocks
+the workflow. Never create a secondary checkout or clone.
 
 ### 2. Choose the tier (auto-heuristic)
 

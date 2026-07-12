@@ -1,6 +1,6 @@
 ---
 name: review-pr
-version: 1.1.0
+version: 1.2.0
 description: |
   Review a PR, branch, commit, or staged change through the mandatory review policy and
   diff-selected risk lenses. Plain "review" is read-only; "review and fix", "address
@@ -53,8 +53,15 @@ Resolve the PR, branch, commit range, named files, or staged diff. For PRs, fetc
 - PR conversation comments;
 - GraphQL review-thread IDs and resolution state.
 
-Use an isolated worktree for a remote PR whenever any mode beyond `report` may edit. Never
-stash, discard, move, or overwrite unrelated work to enter a review branch.
+Use the current repository checkout for every mode and never create a secondary checkout or
+clone. In mutating modes, check out the PR branch natively in the current checkout.
+
+Before switching branches, read `git config --bool --get workflow.disposableCheckout`:
+
+- `true`: this checkout is explicitly disposable. Run `git reset --hard` and `git clean -fd`,
+  then use `gh pr checkout <number> --force`.
+- absent or `false`: require `git status --porcelain` to be empty. If it is not empty, stop and
+  report the blocker; never stash, discard, move, or overwrite existing work.
 
 Completion criterion: the exact base SHA, head SHA, diff, existing conversation, mode, and
 working directory are known.

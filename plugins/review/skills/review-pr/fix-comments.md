@@ -67,21 +67,28 @@ For each comment, extract:
 
 ### 2. Check Out the PR Branch
 
+Use the current repository checkout. First determine whether it is explicitly disposable:
+
 ```bash
-git fetch origin <branch-name>
-git checkout <branch-name>
-git pull origin <branch-name>
+git config --bool --get workflow.disposableCheckout
 ```
 
-If the branch is already checked out in a worktree, work in that worktree directory instead:
-```bash
-git worktree list
-```
+When the value is `true`, reset the dedicated checkout before loading the PR:
 
-Ensure the working tree is clean before making changes:
 ```bash
+git reset --hard
+git clean -fd
+git fetch origin --prune
+gh pr checkout <number> --force
 git status --porcelain
 ```
+
+`git clean -fd` removes untracked files but preserves ignored dependencies and local secrets.
+
+When the marker is absent or `false`, require `git status --porcelain` to be empty before
+running `git fetch origin --prune` and `gh pr checkout <number>`. If it is not empty, stop and
+report the blocker. Never stash or discard files in an unmarked checkout. Never create a
+secondary checkout or clone.
 
 #### Bring the branch up to date (conditional)
 
