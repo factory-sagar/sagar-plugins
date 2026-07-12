@@ -6,7 +6,8 @@ authorized comment handling or a stronger remote-write mode.
 
 Given a PR URL or number, fetch all review comments, reason about each one, fix the valid
 bugs, reply to every comment, resolve the threads, push, wait for CI, then finalize the
-authorized state. Approval requires explicit approve or merge intent.
+authorized state. Approval requires explicit `approve` wording; merge or land wording does not
+grant approval authority.
 
 ## Inputs
 
@@ -20,12 +21,13 @@ Use `gh` to pull structured PR data. The JSON output gives you metadata, comment
 reviews in one call:
 
 ```bash
-gh pr view <url> --json number,title,author,headRefName,baseRefName,state,body,reviews,comments
+gh pr view <url> --json number,title,author,headRefName,headRefOid,baseRefName,state,body,reviews,comments
 ```
 
 Capture these fields:
-- **author.login** - needed later to decide approve vs. done
+- **author.login** - needed later to prevent self-approval
 - **headRefName** - the branch to check out
+- **headRefOid** - the reviewed head SHA to compare immediately before approval
 - **baseRefName** - the target branch (for context)
 - **reviews** and **comments** - the full comment set
 
@@ -113,8 +115,8 @@ git pull origin <base-branch> --rebase
 2. Resolve conflicts, preserving the PR's intent while incorporating base changes
 3. `git add <resolved-files>` then `git rebase --continue`
 
-After a rebase you must push with `--force-with-lease` in step 6. If you did NOT rebase, use
-a plain push.
+After a rebase, use `--force-with-lease` only for the initial post-rebase push in step 6. Every
+later correction must be a new commit followed by a plain, fast-forward push.
 
 ### 3. Triage: Reason About Each Comment
 
@@ -194,6 +196,9 @@ If any check fails, fix the failure before proceeding. Do not push broken code.
 
 ### 6. Commit and Push
 
+Commit only when triage or verification produced changes. If there are no changes, use the
+existing clean, verified, synchronized, committed current HEAD and never create an empty commit.
+
 ```bash
 git add -A
 git commit -m "fix: address review comments on PR #<number>
@@ -215,13 +220,30 @@ Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.g
 EOF
 ```
 
-Push to the PR branch. If you rebased in step 2, history was rewritten, so use
-`--force-with-lease` (safer than `--force`: it refuses to overwrite if the remote moved):
+#### Required final-head gate for broad or high-consequence reviews
+
+Before any push, run the final-head gate from `SKILL.md` for every broad or high-consequence
+comments review. It uses the clean, verified, synchronized, committed current HEAD whether or
+not initial findings created a fix commit. Commit fixes when they exist; otherwise use the
+existing committed head and never create an empty commit. The gate freezes the base and committed
+head SHAs, runs two fresh `change-review` contexts in parallel against that exact diff, and
+accepts only reconciled complete results. If reconciliation yields a fix, return to triage and
+verification, commit the fix, then repeat the complete gate against the new head. Record the
+passing committed head as `finalReviewedHeadSha` and carry it through the push and ship handoff.
+Do not push or finalize until the gate passes.
+
+Run this gate at most twice per user request. The first execution may trigger one correction.
+If the repeated gate finds another actionable issue, stop as blocked and do not fix it or spawn
+another reviewer until the user gives a new decision.
+
+Push to the PR branch. If this is the initial post-rebase push from step 2, history was rewritten,
+so use `--force-with-lease` (safer than `--force`: it refuses to overwrite if the remote moved):
 ```bash
 git push origin <branch-name> --force-with-lease
 ```
 
-If you did NOT rebase, use a plain push:
+Otherwise, use a plain push. After any successful push, never amend the pushed commit. Every CI
+or review correction must be a new corrective commit and this command remains fast-forward:
 ```bash
 git push origin <branch-name>
 ```
@@ -326,7 +348,10 @@ This blocks until all checks complete. If any check fails:
    - Do not assume a failure is flaky. Read the log first, and check the check's recent pass
      rate. If it passes consistently elsewhere, treat it as real and investigate.
    - If the branch is behind base, a rebase (step 2) may clear staleness failures.
-3. If caused by your changes: fix the issue, commit, push, and re-watch
+3. If caused by your changes: fix the issue, run the local verification from Step 5, then create
+   a new corrective commit. For a broad or high-consequence review, rerun the full two-context
+   final-head gate against that corrective committed head and carry its `finalReviewedHeadSha`
+   through the push. Only after the applicable gate passes may you plain-push and re-watch CI.
 4. If the cause is **not obvious from the logs** (test fails but the mechanism is unclear,
    behavior differs between CI and local, or a second fix attempt failed): delegate to the
    `debugger` droid with the failing check's logs and the diff before patching further. Apply
@@ -352,18 +377,34 @@ until every one of these is true, verified against the live API:
 - [ ] Changes are committed and pushed to the PR branch
 - [ ] CI is green (all required checks passing)
 
-Approval is a separate authority. Only approve when the original `review-pr` request
-explicitly included approve or merge intent.
+Approval is a separate authority. Run `gh pr review --approve` only when the original
+`review-pr` request uses explicit `approve` wording. Merge or land intent alone is not
+approval authority. Run the approval gate only after comments mode reaches merge-ready.
 
-**If approval is authorized and the PR author is NOT `factory-droid[bot]`:**
+If approval is authorized, after comments mode reaches merge-ready, fetch the final live
+`headRefOid` and compare it with the last `reviewedHeadSha`. If they differ, rerun the normal
+review against that exact final head and capture it as `reviewedHeadSha`. Approval requires a
+reviewed final head; a prior different-head review never substitutes for it. Verify there are no
+unresolved findings or review threads, required CI is green for the current head SHA, and the PR
+body is current and still describes the PR. Compare `author.login` with `gh api user --jq .login`;
+never infer self-authorship from bot status. If the logins match or any approval gate fails, report
+approval as blocked and do not approve. As the final API operation immediately before approval,
+re-fetch the live `headRefOid` with no intervening tool or API call and require equality with
+`reviewedHeadSha`. If it changed, block approval pending a normal review of that exact new head,
+capture its reviewed SHA, and restart the approval gate. Otherwise:
+
 ```bash
-gh pr review <url> --approve --body "All review comments addressed and resolved, CI is green. PR is merge-ready."
+gh pr review <url> --approve --body "Review complete, required checks are green, and the PR is merge-ready."
 ```
 
-Otherwise, report the PR as merge-ready without approving it. Never approve your own PR.
+If branch protection requires approval but explicit approval was not authorized, report the PR
+as blocked rather than self-approving. Never approve your own PR.
 
-To determine authorship, check the `author.login` field captured in step 1. The
-factory-droid bot author is `factory-droid[bot]`.
+In land mode, apply the final live-head continuity gate in `deep-review.md` Step 9 even when
+approval authority is absent. After all other merge gates, the final API operation immediately
+before merge re-fetches `headRefOid` and requires equality with `finalReviewedHeadSha`, with no
+intervening tool or API call. A changed head blocks merge and requires synchronization,
+verification, a new corrective commit if needed, and a full two-review final-head gate rerun.
 
 If any checklist item cannot be satisfied (e.g. CI stays red after 3 attempts, or a comment
 needs the user's decision), report the PR as **Blocked** with the specific
@@ -393,7 +434,7 @@ Summarize the full workflow result:
 - Do not rebase a branch that is already up to date and green. Rebase only when behind base
   or when staleness is causing CI failures.
 - Do not restructure the PR beyond the fixes requested by comments (and a conditional rebase).
-- Do not use `git push --force`; use `--force-with-lease` after a rebase.
+- Do not use `git push --force`; use `--force-with-lease` only for the initial post-rebase push.
 - Do not report comment/thread/CI/approval state from memory; re-verify against the live API.
 - Do not add tests unless a comment explicitly asks for them.
 - Do not push if any verification check (format, lint, typecheck, test) fails.

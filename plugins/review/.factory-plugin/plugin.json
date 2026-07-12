@@ -1,7 +1,7 @@
 {
   "name": "review",
-  "version": "2.2.0",
-  "description": "Language-agnostic review policy and droids plus the unified review-pr workflow: short review requests receive mandatory and diff-selected lenses, while explicit fix, comment, ship, and merge intent controls mutation authority.",
+  "version": "2.3.0",
+  "description": "Language-agnostic review policy and droids plus the unified review-pr workflow: short review requests receive mandatory and diff-selected lenses, while explicit approve, fix, comment, ship, and merge wording controls authority.",
   "author": {
     "name": "Sagar",
     "url": "https://github.com/factory-sagar"

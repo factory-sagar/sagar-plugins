@@ -204,6 +204,20 @@ class IntentRouterTests(unittest.TestCase):
     def test_routes_short_workflow_prompts(self):
         self.assertEqual(route_intent("Review PR 123."), ["review-pr"])
         self.assertEqual(route_intent("Address PR 42."), ["review-pr"])
+        self.assertEqual(route_intent("Approve PR 42."), ["review-pr"])
+        self.assertEqual(route_intent("Approve this PR."), ["review-pr"])
+        self.assertEqual(route_intent("Approve this pull request."), ["review-pr"])
+        self.assertEqual(route_intent("Can you approve PR 42?"), ["review-pr"])
+        self.assertEqual(
+            route_intent("Please approve the pull request 42."),
+            ["review-pr"],
+        )
+        self.assertEqual(
+            route_intent(
+                "Review the staged change and report anything that should block merge."
+            ),
+            ["review-pr"],
+        )
         self.assertEqual(route_intent("Plan adding audit-log exports."), ["spec"])
         self.assertEqual(route_intent("Can you scope out a better architecture?"), ["spec"])
         self.assertEqual(route_intent("Implement unit U3 and verify it."), ["implement"])
@@ -219,6 +233,18 @@ class IntentRouterTests(unittest.TestCase):
             ["review-pr", "ship"],
         )
         self.assertEqual(
+            route_intent("Push it, then approve PR 42."),
+            ["review-pr", "ship"],
+        )
+        self.assertEqual(
+            route_intent("Approve and merge PR 42."),
+            ["review-pr", "ship"],
+        )
+        self.assertEqual(
+            route_intent("Approve and land this PR."),
+            ["review-pr", "ship"],
+        )
+        self.assertEqual(
             route_intent(
                 "Implement the approved program in plans/README.md. "
                 "Execute every plan in dependency order and run review-pr at the end. "
@@ -230,6 +256,11 @@ class IntentRouterTests(unittest.TestCase):
             route_intent("Review this change, then apply every valid fix."),
             ["review-pr"],
         )
+        self.assertEqual(
+            route_intent("Fix every review comment on PR 42."),
+            ["review-pr"],
+        )
+        self.assertEqual(route_intent("Fix review comments on PR 42."), ["review-pr"])
         self.assertEqual(
             route_intent("Push this branch but do not merge it."),
             ["ship"],
@@ -243,6 +274,14 @@ class IntentRouterTests(unittest.TestCase):
         self.assertIsNone(route_intent("Do not plan this change."))
         self.assertIsNone(route_intent("Execute the test suite."))
         self.assertIsNone(route_intent("Do not push or merge this branch."))
+        self.assertIsNone(route_intent("Should I approve PR 42?"))
+        self.assertIsNone(route_intent("Should we approve pull request 42?"))
+        self.assertIsNone(route_intent("Would you approve PR 42?"))
+        self.assertIsNone(route_intent("Should we approve and merge PR 42?"))
+        self.assertEqual(route_intent("Approve the plan for PR 42."), ["spec"])
+        self.assertEqual(route_intent("Approve and merge the plan for PR 42."), ["spec"])
+        self.assertIsNone(route_intent("Approve this change on PR 42."))
+        self.assertIsNone(route_intent("Fix every review note in the proposal."))
 
 
 class StopGateTests(unittest.TestCase):

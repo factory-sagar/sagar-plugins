@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 1.3.0
+version: 1.4.0
 description: |
   Land finished work. Commits and pushes, writes the repository-template PR body, watches
   current-head CI, closes review threads, and reports merge-ready; merges only when the user
@@ -51,6 +51,17 @@ Check the staged diff for secrets, credentials, and generated noise.
 git push -u origin HEAD
 ```
 
+Use a plain, fast-forward push after local verification and any required broad-review final-head
+gate. `--force-with-lease` is allowed only for the initial post-rebase push. After any successful
+push, do not amend the pushed commit: every CI or review correction must be a new corrective
+commit, re-verified locally, and pushed fast-forward.
+
+When `review-pr` hands off `finalReviewedHeadSha`, preserve it through this workflow. A
+head-changing correction must rerun synchronization, local verification, commit if needed, and
+the full two-review final-head gate before it supplies a replacement `finalReviewedHeadSha`.
+Never exceed review-pr's two-execution final-head budget in the same user request. If the
+repeated gate finds another actionable issue, stop as blocked instead of restarting review.
+
 ### 4. PR create or update
 
 - **No PR yet**: create it with a Conventional Commits title and link a ticket when one
@@ -69,9 +80,11 @@ revision.
 ### 5. Watch CI until green
 
 Run `gh pr checks --watch`, read failure logs, distinguish change-caused failures from
-baseline failures, delegate to `debugger` when the mechanism is unclear, fix and repush.
-The review plugin's `review-pr/fix-comments.md` provides the expanded procedure when
-installed. Stop after three unsuccessful fix attempts and report the blocker.
+baseline failures, delegate to `debugger` when the mechanism is unclear, fix, create a new
+corrective commit, and repush. For a broad or high-consequence review, rerun synchronization,
+local verification, and the full two-review final-head gate before the plain corrective push.
+The review plugin's `review-pr/fix-comments.md` provides the expanded procedure when installed.
+Stop after three unsuccessful fix attempts and report the blocker.
 
 ### 6. Resolve review threads
 
@@ -89,7 +102,9 @@ End with a short report:
 - Deviations: from the implementation log, or `none`
 
 Merge only when the current request explicitly authorizes it. When the review plugin is
-installed, apply the landing gate from `review-pr` before merging. Otherwise re-fetch
+installed, apply the landing gate from `review-pr` before merging. In a handoff with
+`finalReviewedHeadSha`, its final API operation immediately before merge re-fetches live
+`headRefOid` and requires equality with that SHA, with no intervening call. Otherwise re-fetch
 current-head CI, PR-body freshness, and review threads; any unresolved state blocks merge.
 
 ## Anti-patterns

@@ -26,6 +26,36 @@
       "expectedPrimary": "review-pr"
     },
     {
+      "id": "review-fix-every-comment",
+      "critical": true,
+      "prompt": "Fix every review comment on PR 42.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-approve",
+      "critical": true,
+      "prompt": "Approve PR 42 after the normal review and required checks.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-approve-this-pr",
+      "critical": true,
+      "prompt": "Approve this PR.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-approve-this-pull-request",
+      "critical": true,
+      "prompt": "Approve this pull request.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-approve-imperative-question",
+      "critical": true,
+      "prompt": "Can you approve PR 42?",
+      "expectedPrimary": "review-pr"
+    },
+    {
       "id": "review-heavy",
       "critical": true,
       "prompt": "Review this risky auth and migration PR exhaustively. Trace tenant boundaries, state mutation, rollback, async ordering, tests, and operational impact.",
@@ -119,6 +149,27 @@
       "expectedSequence": ["review-pr", "ship"]
     },
     {
+      "id": "push-then-approve",
+      "critical": true,
+      "prompt": "Push it, then approve PR 42.",
+      "expectedPrimary": "review-pr",
+      "expectedSequence": ["review-pr", "ship"]
+    },
+    {
+      "id": "approve-and-merge",
+      "critical": true,
+      "prompt": "Approve and merge PR 42.",
+      "expectedPrimary": "review-pr",
+      "expectedSequence": ["review-pr", "ship"]
+    },
+    {
+      "id": "approve-and-land",
+      "critical": true,
+      "prompt": "Approve and land this PR.",
+      "expectedPrimary": "review-pr",
+      "expectedSequence": ["review-pr", "ship"]
+    },
+    {
       "id": "negative-explain-file",
       "critical": true,
       "prompt": "Explain what src/cache.ts does.",
@@ -140,6 +191,54 @@
       "id": "negative-research-only",
       "critical": false,
       "prompt": "What is the latest stable Node.js release?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-approval-advice",
+      "critical": true,
+      "prompt": "Should I approve PR 42?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-approval-advice-we",
+      "critical": true,
+      "prompt": "Should we approve pull request 42?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-approval-nonimperative",
+      "critical": true,
+      "prompt": "Would you approve PR 42?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-approval-and-merge-advice",
+      "critical": true,
+      "prompt": "Should we approve and merge PR 42?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-approve-plan",
+      "critical": true,
+      "prompt": "Approve the plan for PR 42.",
+      "expectedPrimary": "spec"
+    },
+    {
+      "id": "negative-approve-and-merge-plan",
+      "critical": true,
+      "prompt": "Approve and merge the plan for PR 42.",
+      "expectedPrimary": "spec"
+    },
+    {
+      "id": "negative-approve-change",
+      "critical": true,
+      "prompt": "Approve this change on PR 42.",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-review-noun",
+      "critical": true,
+      "prompt": "Fix every review note in the proposal.",
       "expectedPrimary": null
     }
   ]

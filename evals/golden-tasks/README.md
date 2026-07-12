@@ -29,6 +29,11 @@ Droid-targeted tasks run inline on the exec session model because `droid exec` h
 | [`11-review-pr-comment-triage.md`](./11-review-pr-comment-triage.md) | `review-pr` comments mode | no |
 | [`12-blindspot-pass.md`](./12-blindspot-pass.md) | `discovering-unknowns` | no |
 | [`13-language-agnostic-review-selection.md`](./13-language-agnostic-review-selection.md) | `review-pr` | yes |
+| [`14-review-pr-blocker-vs-transport.md`](./14-review-pr-blocker-vs-transport.md) | `review-pr` | yes |
+| [`15-review-pr-final-head-independent-review.md`](./15-review-pr-final-head-independent-review.md) | `review-pr` | yes |
+| [`16-review-pr-approve-vs-merge-authority.md`](./16-review-pr-approve-vs-merge-authority.md) | `review-pr` | yes |
+| [`17-review-pr-explicit-approval.md`](./17-review-pr-explicit-approval.md) | `review-pr` | yes |
+| [`18-review-pr-merge-live-head-continuity.md`](./18-review-pr-merge-live-head-continuity.md) | `review-pr` | yes |
 
 ## Scoring
 
@@ -44,6 +49,7 @@ For an overall score, count `pass` as 1, `partial` as 0.5, and `fail` as 0. Crit
 
 1. Save the current output for each task as the baseline (`evals/baselines/<task>.md`).
 2. Apply one prompt change set.
-3. Re-run every task whose target the change touches (all twelve for fleet-wide changes).
+3. Re-run every task whose target the change touches (the complete registered pack for
+   fleet-wide changes).
 4. Compare against the baseline diff and score with the rubric (or `--judge`).
 5. Keep the change only if all critical tasks pass and the total score is at least 85%.

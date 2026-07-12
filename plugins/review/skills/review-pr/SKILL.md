@@ -1,10 +1,10 @@
 ---
 name: review-pr
-version: 1.2.0
+version: 1.4.0
 description: |
   Review a PR, branch, commit, or staged change through the mandatory review policy and
-  diff-selected risk lenses. Plain "review" is read-only; "review and fix", "address
-  comments", "ship", and "merge" opt into progressively stronger mutation authority.
+  diff-selected risk lenses. Plain "review" is read-only; explicit approve, fix, comment,
+  ship, and merge wording grants only the corresponding stronger authority.
 ---
 
 # Review PR
@@ -19,13 +19,28 @@ Choose the narrowest mode authorized by the user's words:
 | User intent | Mode | Allowed end state |
 | --- | --- | --- |
 | `review PR <n>` | `report` | Findings only. No edits, comments, pushes, approvals, or merges. |
+| `approve PR <n>` / `approve this PR` / `approve this pull request` | `approve` | Complete the read-only review, then approve only if every approval gate passes. No edits, pushes, or merges. |
 | `review and fix PR <n>` | `fix` | Fix valid findings, verify, commit locally, stop before push. |
-| `address PR <n>` / `fix review comments` | `comments` | Triage every existing comment, fix, reply, resolve, push, and watch CI. |
+| `address PR <n>` / `fix review comments` / `fix every review comment on PR <n>` | `comments` | Triage every existing comment, fix, reply, resolve, push, and watch CI. |
 | `ship` / `push and make merge-ready` | `ship` | Push, refresh the PR, watch CI, resolve threads, report merge-ready. |
-| `merge PR <n>` | `land` | `ship`, then merge only after every hard gate passes. |
+| `merge PR <n>` / `approve and merge PR <n>` / `approve and land this PR` | `land` | `ship`, then merge only after every hard gate passes. Combined approval wording also runs the approval gate. |
 
 Words that describe quality (`thorough`, `deep`, `security`) change review depth, not
 authority. A plain review stays read-only no matter how serious the diff is.
+
+Approval is separate authority. Approval routing recognizes only an imperative `approve` that
+targets a `PR` or `pull request` in the same clause, such as `Approve PR 42`, `Approve this PR`,
+`Can you approve PR 42?`, `Approve and merge PR 42`, or `Approve and land this PR`. Advice
+questions such as `Should I approve PR 42?` or `Should we approve PR 42?`, and approval of a plan
+or change, do not authorize or route to `review-pr`.
+`merge`, `land`, `ship`, or "make merge-ready" wording never grants approval authority. If branch
+protection requires approval and explicit approval was not authorized, report the PR as blocked
+rather than self-approving.
+
+`approve PR` with no other mutation wording is an approval-only mode: complete the normal
+read-only review, then run the approval gate. It never edits, pushes, or merges. When explicit
+approval appears with `comments`, `ship`, or `land`, run the approval gate only after that mode
+has reached merge-ready.
 
 ## Prompt-depth routing
 
@@ -123,6 +138,28 @@ Run `change-review` on every review. Add `security` whenever any selected lens h
 `reviewer: security`. For broad or high-consequence changes, read `deep-review.md` and use
 its independent passes over the shared notes format, then reconcile them.
 
+### Semantic task gate
+
+Transport success is not review success. Apply semantic acceptance by reviewer type:
+
+- `review-worker` must return `Status`, `Blockers`, and `Evidence Coverage`. It is complete only
+  when Status is `complete` and Blockers are `none`. Initial Review must evidence that `Review
+  Context` was written. Model-driven and convention passes must evidence their assigned
+  lens/codepaths or pattern coverage, respectively. The final filter must evidence its persisted
+  `Filter Status` coverage. `Status: blocked` always means the pass execution is incomplete and
+  triggers the retry-or-block path.
+- `change-review` is complete when its native `Assessment` and native `Coverage` are present,
+  and Coverage is complete for selected lenses, changed files, substantial codepaths, and
+  applicable untracked-file accounting. `Assessment: blocked` is a completed review outcome when
+  Coverage is complete; reconcile its blocking findings.
+- `security` is complete when its native `Assessment` and native `Coverage` are present, Coverage
+  is complete for its scoped review, and caveats are explicit. `Assessment: blocked` is a
+  completed review outcome when those requirements are met; reconcile its blocking findings.
+
+Retry once only for a refusal, inability to complete the pass, missing required native fields, or
+incomplete evidence. If the retry remains incomplete, stop the workflow and report it blocked; do
+not ship or land. The `review-worker` contract does not apply to `change-review` or `security`.
+
 Every reviewer prompt must include the tracked diff scope and the explicit absolute path list
 for program-created untracked files. Require each untracked file to be read and entered in the
 changed-file accounting table; a normal git diff is not sufficient evidence for untracked
@@ -163,6 +200,42 @@ Completion criterion: every selected lens, approved program unit, governing meta
 and substantial changed codepath has evidence; every finding is reachable, introduced by the
 reviewed scope, actionable, and confidence-labeled.
 
+### Final-head gate for broad or high-consequence mutating reviews
+
+For every broad or high-consequence review in `fix`, `comments`, `ship`, or `land` mode, run this
+gate before any push. It requires a clean, verified, synchronized, committed current HEAD, but
+does not require initial findings to create a fix commit. Commit review fixes when they exist; if
+there are no changes, use the existing committed current HEAD. Never create an empty commit.
+
+1. Before freezing scope, fetch the live base ref and calculate
+   `origin/<base>...HEAD` behind/ahead state. If behind, apply the active workflow's authorized
+   base-synchronization procedure. Rerun full local verification and commit any synchronization
+   result. Fetch the live base again and verify zero behind before freezing the exact base SHA
+   and committed local head SHA. If synchronization cannot complete safely, stop as blocked.
+   Then record the exact `base SHA...head SHA` diff, complete changed-file list, and applicable
+   untracked-file accounting.
+2. Spawn **two fresh `change-review` Task contexts in parallel** against that same exact
+   committed diff. Do not use `review-worker` for this gate. One performs the full selected-lens
+   final review. The other is an independent challenge that focuses on ownership, transitions,
+   rule interaction, completeness, tests, metadata, and CI parity without seeing the first
+   result. Give both the complete changed-file list and applicable untracked-file accounting.
+3. Require both contexts to inspect the frozen final head and satisfy `change-review` semantic
+   acceptance and selected-lens evidence coverage.
+4. Reconcile both final-head results into one finding set.
+
+If reconciliation produces a fix, apply it, rerun full local verification, and commit the fix.
+Freeze the new base and committed head SHAs, then repeat both final reviewers against the new
+head. A final-head gate passes only when both independent final reviewers are complete,
+evidence-covered, reconciled, and no resulting fix changes the committed local head. Record that
+head as `finalReviewedHeadSha` and carry it through every push and ship handoff. `fix` mode stops
+with that final reviewed local commit. `comments`, `ship`, and `land` may push only after the gate
+passes.
+
+**Correction budget:** execute the two-review final-head gate at most twice per user request.
+The first execution may produce one head-changing correction and one repeated gate. If the
+second execution produces any actionable finding, stop as blocked, report the remaining
+findings, and make no more reviewer calls. A new user decision is required to continue.
+
 ### 5. Reconcile
 
 Deduplicate findings by root cause and fix locus. Reject speculative, pre-existing,
@@ -181,21 +254,52 @@ Completion criterion: one canonical finding exists per defect, with no inflated 
 ### 6. Complete the authorized mode
 
 - **report**: return findings and coverage. Perform no mutation.
+- **approve**: complete **report**, then run the approval gate. Do not edit, push, or merge.
 - **fix**: apply valid findings, run affected checks followed by the repository's canonical
-  milestone gate, commit locally, and stop.
+  milestone gate, commit locally, pass the final-head gate when required, and stop.
 - **comments**: read and follow `fix-comments.md`, then push and watch CI.
 - **ship**: follow `ship` from preflight through merge-ready.
-- **land**: pass the four-point landing gate in `deep-review.md` Step 9, then merge.
+- **land**: pass the landing gate in `deep-review.md` Step 9, then merge.
 
 Completion criterion: the workflow reaches exactly the authorized end state and no stronger
 one.
+
+### Approval gate
+
+Run this gate only when the original request uses explicit approval authority. Capture the
+`reviewedHeadSha` from the PR's `headRefOid` after the normal review completes. For explicit
+approval combined with `comments`, `ship`, or `land`, wait until that mode is merge-ready, fetch
+the final live `headRefOid`, and compare it with the last `reviewedHeadSha`. If they differ,
+rerun the normal review against that exact final head and capture it as `reviewedHeadSha`.
+Approval requires a reviewed final head; a prior different-head review never substitutes for it.
+
+Before the final live-head comparison, verify against the live PR:
+
+1. The review has no unresolved findings and the PR has zero unresolved review threads.
+2. Required CI is green for the current head SHA.
+3. The PR body is current for that head and still describes the PR.
+4. The PR author's `author.login` differs from the authenticated current user. Determine the
+   current user with `gh api user --jq .login`; do not infer self-authorship from bot status.
+
+If any of these gates fails, report approval as blocked and do not approve. As the final API
+operation immediately before approval, re-fetch the live `headRefOid` and require it to equal
+`reviewedHeadSha`, with no intervening tool or API call. If it changed, block approval pending a
+normal review of that exact new head; capture its reviewed SHA and restart the approval gate.
+Otherwise, the next operation is:
+
+```bash
+gh pr review <url> --approve --body "Review complete, required checks are green, and the PR is merge-ready."
+```
+
+For `approve` mode, stop after this command. Approval remains additive permission and never
+implies push or merge authority.
 
 ## Output
 
 ```markdown
 ## Review
 
-**Mode:** <report | fix | comments | ship | land>
+**Mode:** <report | approve | fix | comments | ship | land>
 **Target:** <base SHA>...<head SHA>
 **Assessment:** <correct | needs changes | blocked | merge-ready | merged>
 
@@ -217,6 +321,7 @@ one.
 - CI-parity matrix:
 - Validators:
 - Existing comments: <found / replied / resolved / remaining>
+- Reviewer returns: <complete / blocked; type-aware acceptance and coverage>
 - CI at head SHA:
 - PR body at head SHA:
 

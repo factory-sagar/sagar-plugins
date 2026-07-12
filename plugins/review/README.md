@@ -24,7 +24,7 @@ droid plugin install review@sagar-plugins
 
 | Skill | Triggers on | What it does |
 | --- | --- | --- |
-| `review-pr` | Review a PR, branch, commit, or staged change | Selects language-agnostic mandatory and diff-driven lenses. Plain review is read-only; explicit fix, comments, ship, or merge intent enables only that stronger authority. |
+| `review-pr` | Review or approve a PR, branch, commit, or staged change | Selects language-agnostic mandatory and diff-driven lenses. Plain review is read-only; explicit approve, fix, comments, ship, or merge wording enables only that stronger authority. |
 
 The public entry point is `/review-pr <target>`. Existing comment and deep-review procedures
 are internal references, not competing skills.

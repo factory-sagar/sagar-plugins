@@ -6,13 +6,18 @@ the source of truth for every pattern-check, codepath note, finding, and filter 
 
 ## Notes doc skeleton
 
-The manager MUST create one stable notes doc path outside the repo before spawning subagents:
+The manager MUST create stable notes and initial-context paths outside the repo before spawning
+subagents:
 
 ```bash
 mkdir -p /tmp/factory-review-pr-notes
 NOTES_PATH=/tmp/factory-review-pr-notes/$(date +%s)-$(openssl rand -hex 4).md
+CONTEXT_PATH="${NOTES_PATH%.md}-context.md"
 cat > "$NOTES_PATH" <<'EOF'
 # Review-PR Notes for <PR URL / branch / scope>
+
+## Review Context
+<!-- Manager appends the completed Initial Review context here after concurrent startup. -->
 
 ## Pattern Checks
 <!-- Discovery appends one entry per pattern-check here. Review fills verdicts. Manager annotates filters. -->
@@ -22,11 +27,21 @@ cat > "$NOTES_PATH" <<'EOF'
 
 ## Findings
 <!-- Every finding that may become a fix lives here, one Markdown block per finding. -->
+
+## Filter Status
+<!-- Every final filter appends one completion entry here before returning. -->
+EOF
+cat > "$CONTEXT_PATH" <<'EOF'
+# Initial Review Context
+<!-- Initial Review writes intent, scope, constraints, and linked-context gaps here. -->
 EOF
 ```
 
-Use this exact path in every Task prompt and every audit Read. The path is what binds the three
-agents together — without it they cannot share state.
+Discovery is the only concurrent startup subagent that writes `NOTES_PATH`. Initial Review writes
+only `CONTEXT_PATH`; it must not read or write `NOTES_PATH` during that concurrent startup. After
+both return, the manager reads `CONTEXT_PATH`, appends its completed content under `## Review
+Context` in `NOTES_PATH`, then audits it before any later Review pass. All later Review passes and
+the final filter use `NOTES_PATH`. This serial handoff prevents concurrent writes to one file.
 
 ## Pattern check entry format
 
@@ -116,6 +131,20 @@ directly under that finding block in `## Findings`:
 ```
 
 Valid reason codes are defined in `review-worker.md` under the final filter prompt.
+
+## Filter status format
+
+Every final filter appends one completion entry to `## Filter Status`, including when it removes
+zero findings:
+
+```md
+### Final Filter
+- Filtered: <count>
+- Kept: <count>
+- Status: complete
+- Blockers: none
+- Evidence Coverage: all finding blocks filtered or kept
+```
 
 ## Findings carried to the fix phase
 
