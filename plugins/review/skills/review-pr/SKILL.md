@@ -231,6 +231,11 @@ head as `finalReviewedHeadSha` and carry it through every push and ship handoff.
 with that final reviewed local commit. `comments`, `ship`, and `land` may push only after the gate
 passes.
 
+**Correction budget:** execute the two-review final-head gate at most twice per user request.
+The first execution may produce one head-changing correction and one repeated gate. If the
+second execution produces any actionable finding, stop as blocked, report the remaining
+findings, and make no more reviewer calls. A new user decision is required to continue.
+
 ### 5. Reconcile
 
 Deduplicate findings by root cause and fix locus. Reject speculative, pre-existing,

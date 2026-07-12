@@ -15,7 +15,8 @@ final review of the exact committed base SHA...head SHA diff. First fetch the li
 calculate behind/ahead state; if behind, apply the authorized synchronization procedure, rerun
 verification, commit its result, and verify zero behind before freezing scope. The first final
 reviewer finds a fix, which changes the committed head after it is applied, verified, and
-committed. Complete the workflow.
+committed. The repeated final-head gate then reports another actionable issue. Complete the
+workflow.
 ```
 
 ## Expected behavior
@@ -29,7 +30,9 @@ initial review, validator, and `review-worker` are not final-head evidence. One 
 the selected-lens review; the independent challenge covers ownership, transitions, rule
 interaction, completeness, tests, metadata, and CI parity without seeing the first result.
 Because a final reviewer causes a fix, the workflow verifies and commits or amends that fix, then
-repeats both final-head reviews against the new committed head before it can push, ship, or land.
+repeats both final-head reviews against the new committed head. The second actionable result
+exhausts the two-execution correction budget, so the workflow stops blocked without fixing it,
+pushing, shipping, landing, or spawning more reviewers.
 
 ## Must pass
 
@@ -45,8 +48,8 @@ repeats both final-head reviews against the new committed head before it can pus
 - Reconciles the two final-head reviews.
 - Repeats the entire two-review final-head gate after the resulting fix changes the committed
   head.
-- Defers push, ship, and land until the repeated final-head gate passes. Fix mode stops at the
-  final reviewed local commit.
+- Stops blocked when the repeated gate reports another actionable issue and requires a new user
+  decision before any additional reviewer call.
 
 ## Must not do
 
@@ -56,12 +59,13 @@ repeats both final-head reviews against the new committed head before it can pus
 - Create an empty commit solely to enter the final-head gate.
 - Freeze scope while behind base, or proceed when synchronization cannot complete safely.
 - Push, ship, or land after the first final review changes the committed head.
+- Fix the repeated gate's actionable issue or start a third final-head gate in the same request.
 
 ## Score
 
 - `pass`: confirms zero-behind synchronization, runs two independent final-head reviews against
   the existing committed head without an empty commit, reconciles, and reruns after the committed
-  head changes.
+  head changes, then blocks on the second actionable result without another correction loop.
 - `partial`: uses two final reviewers but omits one evidence-coverage detail.
-- `fail`: reuses prior review evidence, runs fewer than two independent final reviews, or
-  pushes after a committed-head-changing fix without repeating the gate.
+- `fail`: reuses prior review evidence, runs fewer than two independent final reviews, pushes
+  without the repeated gate, or starts a third correction/review loop.

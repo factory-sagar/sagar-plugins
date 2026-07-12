@@ -232,6 +232,10 @@ verification, commit the fix, then repeat the complete gate against the new head
 passing committed head as `finalReviewedHeadSha` and carry it through the push and ship handoff.
 Do not push or finalize until the gate passes.
 
+Run this gate at most twice per user request. The first execution may trigger one correction.
+If the repeated gate finds another actionable issue, stop as blocked and do not fix it or spawn
+another reviewer until the user gives a new decision.
+
 Push to the PR branch. If this is the initial post-rebase push from step 2, history was rewritten,
 so use `--force-with-lease` (safer than `--force`: it refuses to overwrite if the remote moved):
 ```bash

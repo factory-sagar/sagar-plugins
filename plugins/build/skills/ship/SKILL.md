@@ -59,6 +59,8 @@ commit, re-verified locally, and pushed fast-forward.
 When `review-pr` hands off `finalReviewedHeadSha`, preserve it through this workflow. A
 head-changing correction must rerun synchronization, local verification, commit if needed, and
 the full two-review final-head gate before it supplies a replacement `finalReviewedHeadSha`.
+Never exceed review-pr's two-execution final-head budget in the same user request. If the
+repeated gate finds another actionable issue, stop as blocked instead of restarting review.
 
 ### 4. PR create or update
 

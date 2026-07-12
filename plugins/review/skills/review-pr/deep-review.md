@@ -445,6 +445,10 @@ fix in Step 7 and repeat the complete gate against the new head. Never create an
 Record the passing committed head as `finalReviewedHeadSha` and carry it through the push and ship
 handoff. Do not push, ship, or land until the gate passes.
 
+The correction budget is two final-head gate executions per user request. The first execution
+may trigger one correction and one repeated gate. If the repeated gate finds another actionable
+issue, stop as blocked and report it without fixing it or spawning another reviewer.
+
 ### 8. Summarize and return to the authority mode
 
 Report:
