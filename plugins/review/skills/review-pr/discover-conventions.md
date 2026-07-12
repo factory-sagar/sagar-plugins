@@ -22,7 +22,9 @@ under budget:
 - Stop expanding the search once you've covered the docs that obviously apply to the diff's
   languages/layers. Comprehensive enumeration matters less than a useful list before timeout.
 - If at the 4-minute mark you have not written your final summary, jump to Step 6 immediately with
-  whatever pattern-checks are already in the notes doc.
+  whatever pattern-checks are already in the notes doc. If any available convention source remains
+  uninspected, return `Status: blocked`; a zero-count result is not complete without source
+  coverage.
 
 ## Convention sources
 
@@ -42,7 +44,10 @@ Two sources, in priority order:
    - casts, `any`, readonly contracts, exports, toolchain → `TYPE_CONTRACTS.md`
    - shared terminology → `VOCABULARY.md`
 
-If neither source yields docs, return zero pattern-checks; the mandatory passes still run.
+If neither source yields docs, you may return zero pattern-checks only after recording that every
+available convention source was inspected and none applied. The mandatory passes still run. A
+partial, timed-out, or unsupported zero-count result is blocked and the manager must retry once
+or stop the review.
 
 ## Steps
 
@@ -136,9 +141,19 @@ the notes doc):
 ```text
 Pattern checks appended to notes doc: <count after deletions>
 Source docs cited: <comma-separated list of unique source_doc paths>
+Status: complete | blocked
+Blockers: none | <uninspected source / timeout / refusal>
+Evidence Coverage: <all available convention sources inspected and none applied, or the
+specific source coverage and emitted pattern checks>
 ```
 
 Do not return the pattern-checks as JSON or prose — they are in the notes doc.
+
+For a zero-count result, return `Status: complete` only with `Blockers: none` and Evidence
+Coverage that explicitly lists every available target-repository and coding-standards source
+inspected, including sources found unavailable, and states that none applied. Otherwise return
+`Status: blocked`; the manager retries once, then blocks the review if the retry remains
+incomplete.
 
 ## Pattern-check categories
 

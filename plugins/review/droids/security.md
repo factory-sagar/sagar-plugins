@@ -133,6 +133,11 @@ Use clean markdown.
 - Surface: <N files, +X / −Y lines>
 - Assumption (if any): <state assumption>
 
+## Coverage
+- Changed files and codepaths: <each inspected item, with `path:line` evidence>
+- Security dimensions: <applied STRIDE / OWASP dimensions and their outcome>
+- Evidence gaps: <none, or the exact unavailable evidence and its impact>
+
 ## What This Change Touches (security-relevant)
 - Trust boundaries crossed: <e.g., new public endpoint, new file write, new dep>
 - Privileged operations involved: <e.g., auth, file system, network egress>

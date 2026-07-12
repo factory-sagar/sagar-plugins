@@ -14,7 +14,7 @@
     },
     {
       "name": "review",
-      "description": "Language-agnostic review policy and droids plus the unified review-pr workflow: short review requests receive mandatory and diff-selected lenses, while explicit fix, comment, ship, and merge intent controls mutation authority.",
+      "description": "Language-agnostic review policy and droids plus the unified review-pr workflow: short review requests receive mandatory and diff-selected lenses, while explicit approve, fix, comment, ship, and merge wording controls authority.",
       "source": "./plugins/review",
       "category": "quality"
     },

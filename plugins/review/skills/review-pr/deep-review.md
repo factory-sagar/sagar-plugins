@@ -39,8 +39,8 @@ ones a run needs in full, and pass their **absolute installed paths** into subag
   enumerate applicable conventions into the notes doc.
 
 When a prompt below says `<FORMAT_DOC>`, `<WORKER_DOC>`, or `<DISCOVERY_DOC>`, substitute the
-real absolute path of that supporting file as installed on disk. When it says `<NOTES_PATH>`,
-substitute the notes-doc path you created in Step 3b.
+real absolute path of that supporting file as installed on disk. When it says `<NOTES_PATH>` or
+`<CONTEXT_PATH>`, substitute the matching path you created in Step 3b.
 
 ## Two tiers
 
@@ -122,6 +122,12 @@ Task(subagent_type: "security", description: "Security review change scope",
 ```
 
 Collect findings from both. These droids are read-only by contract; do not let them edit.
+Apply the type-aware semantic acceptance in `SKILL.md`: `change-review` and `security` require
+present native Assessment and Coverage fields, complete scoped coverage, and explicit security
+caveats where applicable. A native `Assessment: blocked` with complete Coverage is a completed
+review outcome whose blocking findings enter reconciliation. Retry only refusals,
+inability-to-complete returns, missing native fields, or incomplete evidence. If a retry remains
+incomplete, stop as blocked.
 Proceed to Step 4.
 
 ---
@@ -139,16 +145,27 @@ generic `worker` — `worker` inherits the session model, so a cheap session wou
 degrade every deep pass. If `review-worker` is unavailable (plugin not installed), fall back
 to `worker` and say so in the report.
 
+Every `review-worker` deep-tier return must include `Status: complete | blocked`, `Blockers`,
+and `Evidence Coverage`. `Status: blocked` means pass execution is incomplete. Initial Review
+must evidence the completed Review Context. Model-driven and convention passes must evidence
+their assigned lens/codepaths or pattern coverage. The final filter must evidence persisted
+Filter Status coverage. A transport-success return with a blocked, refusal, incomplete,
+missing-evidence, or absent contract is a failed pass. Retry once with the exact missing contract
+items; if the retry remains incomplete, stop as blocked and do not ship or land.
+
 - **`Discovery` subagent** (Step 3b-i only): a single `review-worker` `Task` call that follows
   `<DISCOVERY_DOC>` to crawl convention sources and append every applicable pattern-check to the
-  notes doc. It returns a two-field summary (final pattern-check count + source docs); the real
-  output lives in the notes doc.
+  notes doc. It returns the final pattern-check count, source docs, `Status`, `Blockers`, and
+  `Evidence Coverage`; the real output lives in `NOTES_PATH`. A zero-count completion is valid
+  only when Evidence Coverage proves every available convention source was inspected and none
+  applied.
 - **`Review` subagent** (Step 3b-ii to initialize, then RESUMED for every pass and the final
   filter): a single `review-worker` `Task` call to initialize, followed by `Task` calls with
   `resume: <task_id>` for every subsequent pass. It accumulates context (PR intent, prior
   findings, convention docs it has read) across passes. **Never spawn a fresh Review per pass**
-  — always resume the same one. Both subagents are **read-only on the repo** and may write only
-  to the notes doc.
+  — always resume the same one. Initial Review writes only `CONTEXT_PATH`; after the manager's
+  serial handoff, resumed Review passes and the final filter write `NOTES_PATH`. Both subagents
+  are **read-only on the repo**.
 
 Capture the `task_id` from the initial Review call and reuse it as `resume` everywhere after.
 Each resume adds ONLY what is new for that pass; do not re-send context it already has.
@@ -157,16 +174,17 @@ Each resume adds ONLY what is new for that pass; do not re-send context it alrea
 
 The resumed-session pattern is leaky in two observed ways. Guard against both:
 
-1. **The reply body is not the deliverable.** A resume often echoes the PREVIOUS pass's summary
-   text in its reply even though the new pass wrote correctly to the notes doc. Trust the notes
-   doc, not the reply. After each pass do ONE targeted check: read the notes-doc sections the pass
-   should have appended to and confirm NEW entries exist. Do not re-read or re-grep the reply body
-   to "confirm" work landed — that burns calls for nothing.
+1. **The reply body is not the entries deliverable.** A resume often echoes the PREVIOUS pass's
+   summary text in its reply even though the new pass wrote correctly to the notes doc. First
+   inspect its semantic task contract (`Status`, `Blockers`, and `Evidence Coverage`), then trust
+   the notes doc for entries. After each pass do ONE targeted check: read the notes-doc sections
+   the pass should have appended to and confirm NEW entries exist. Do not re-read or re-grep prose
+   to "confirm" work landed.
 
 2. **Resume can silently no-op.** In some environments a resume returns the prior turn's cached
    output and writes NOTHING new to the notes doc. Detect this via the audit in Step 3b-iii.4: if a
-   pass added zero new codepath notes / verdicts / findings, the resume did not actually execute —
-   do NOT trust its `completed`-looking summary.
+   pass added zero new codepath notes / verdicts / findings, the resume did not actually execute.
+   Treat even a `Status: complete` return as failed until the evidence is present.
 
    **Sanctioned fallback (comprehensive worker):** when resume is verified not to be writing to
    the notes doc, stop resuming. Spawn ONE fresh `review-worker` that loads the diff once and, in a single
@@ -180,9 +198,10 @@ The resumed-session pattern is leaky in two observed ways. Guard against both:
 
 #### Step 3b-i — Create the notes doc and launch Discovery + initial Review (in parallel)
 
-Using `<FORMAT_DOC>`, create the notes doc at a stable path outside the repo and capture
-`<NOTES_PATH>`. Then launch the Discovery `Task` and the initial Review `Task` **in the same
-message** so they load the diff concurrently.
+Using `<FORMAT_DOC>`, create the notes doc and isolated initial-context file at stable paths
+outside the repo and capture `<NOTES_PATH>` and `<CONTEXT_PATH>`. Then launch the Discovery
+`Task` and the initial Review `Task` **in the same message** so they load the diff concurrently.
+Discovery alone writes `NOTES_PATH`; Initial Review writes only `CONTEXT_PATH`.
 
 Discovery prompt:
 ```text
@@ -201,19 +220,31 @@ Append every pattern-check you produce to the "## Pattern Checks" section of the
 the entry format in the review notes format. In your final step, DELETE any pattern-check you can
 justify as definitely inapplicable. Do NOT return the pattern-checks as JSON — the notes doc is
 the deliverable. Your final response is a short summary: the count of pattern-check entries left
-and the unique source docs cited. Read-only on the repo; only the notes doc is writable.
+and the unique source docs cited, plus `Status: complete | blocked`, `Blockers`, and `Evidence
+Coverage`. If the final count is zero, `Status: complete` is valid only when `Blockers: none` and
+Evidence Coverage proves every available convention source was inspected and none applied. A
+partial or timed-out zero-count return is incomplete and follows the retry-or-block path.
+Read-only on the repo; only the notes doc is writable.
 ```
 
 **Discovery has a hard 5-minute budget.** Capture its `task_id` and poll with
 `TaskOutput(task_id, block: false)` while you wait. If it is still running 5 minutes after
-launch, call `TaskStop(task_id)` and proceed with whatever it wrote (possibly zero — the
-mandatory passes still run with default docs). Do not spawn a "finish discovery" follow-up.
+launch, call `TaskStop(task_id)` and retry Discovery once with the same exact contract. If the
+retry times out, refuses, or remains semantically incomplete, stop the review as blocked. Do not
+proceed with partial or unsupported zero-count Discovery evidence, and do not treat the mandatory
+passes as a substitute for Discovery.
 
 Initial Review prompt: use the `Initial Review prompt` section of `<WORKER_DOC>`, substituting
-`<scope>`, `<NOTES_PATH>`, and `<FORMAT_DOC>`. Capture its `task_id`.
+`<scope>`, `<CONTEXT_PATH>`, and `<FORMAT_DOC>`. Capture its `task_id`.
 
-Wait for both to return (or for Discovery's timeout-stop) before proceeding. Then `Read` the
-`## Pattern Checks` section of the notes doc; the doc, not the reply, is canonical.
+Wait for both to return, including a successful Discovery retry when applicable, before
+proceeding. Require Discovery `Status: complete` and `Blockers: none`; when its count is zero,
+require Evidence Coverage proving every available convention source was inspected and none
+applied. A partial or timed-out zero-count result is incomplete and follows the retry-or-block
+path. Then serially
+`Read` `<CONTEXT_PATH>`, append its completed content under `## Review Context` in
+`<NOTES_PATH>`, and audit that Review Context evidence. Only then `Read` the `## Pattern Checks`
+section of the notes doc; the doc, not either reply, is canonical.
 
 #### Step 3b-ii — Define the review plan
 
@@ -254,7 +285,14 @@ For each pass, in order:
    When the filtered list is empty, instruct it to Read the matching default doc and walk every
    H3 subsection. For the Security pass, instead spawn the `security` droid on the scope and fold
    its findings into the notes doc.
-4. **Audit the notes doc.** Confirm coverage: model-driven passes have a `## Codepath Notes`
+4. **Check semantic acceptance and audit the notes doc.** For a `review-worker` pass, require
+   `Status`, `Blockers`, and `Evidence Coverage`; `Status: blocked` is incomplete and triggers
+   the retry-or-block path. Model-driven passes must evidence assigned lenses and substantial
+   codepaths; convention passes must evidence every assigned pattern-check. For a Security pass,
+   require native Assessment and Coverage, complete scoped coverage, and explicit caveats. A
+   native `Assessment: blocked` with complete Coverage is a completed outcome that enters
+   reconciliation; retry only a refusal, inability to complete, missing native fields, or
+   incomplete evidence. Then confirm coverage: model-driven passes have a `## Codepath Notes`
    entry per substantial changed codepath; convention passes have a verdict for every in-scope
    pattern-check; every `finding` verdict has a `## Findings` block. If anything is `pending`,
    send a targeted resume naming the specific items before moving on.
@@ -278,8 +316,11 @@ For each pass, in order:
    compliance language; count distinct finding blocks (call it `N`).
 2. **Review final filter:** one `Task` call `resume: <Review task_id>` using the `Final filter
    prompt` in `<WORKER_DOC>`. It marks invalid findings filtered using the closed-list reasons;
-   it does not rewrite finding bodies.
-3. **Manager reads the notes doc**, takes every unfiltered finding into Step 4.
+   it does not rewrite finding bodies. It appends a completion entry under `## Filter Status`,
+   even when zero findings are filtered.
+3. **Manager reads the notes doc**, audits the new persisted `## Filter Status` completion entry
+   for filtered and kept counts plus `Status`, `Blockers`, and Filter Status Evidence Coverage,
+   then takes every unfiltered finding into Step 4.
 
 #### Step 3b-v — Independent challenge review
 
@@ -292,9 +333,9 @@ concerns:
 - completeness, test seams, metadata, and CI parity.
 
 Require one finding or verified-clean `path:line` entry for every changed file and substantial
-codepath. Store its output separately from the primary notes. The manager then reconciles the
-union of primary and challenge findings in Step 4. The primary comprehensive-worker fallback
-does not replace this independent pass.
+codepath. Store its output separately from the primary notes. The manager then checks its
+semantic task contract and reconciles the union of primary and challenge findings in Step 4.
+The primary comprehensive-worker fallback does not replace this independent pass.
 
 ---
 
@@ -377,7 +418,10 @@ Fix any failure your changes introduced before committing. Do not commit broken 
 
 Run this step only in a mutating mode. `report` mode never stages or commits.
 
-Stage and commit with a conventional-commit message summarizing the fixes. **Do not push.**
+When review fixes exist, stage and commit them with a conventional-commit message summarizing the
+fixes. **Do not push.** When no fixes exist, do not create an empty commit; retain the existing
+synchronized, verified, committed current HEAD. Amend only an unpushed local commit. After any
+push, every correction must be a new corrective commit.
 
 ```bash
 git add -A
@@ -390,6 +434,17 @@ Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.g
 
 Use a heredoc (`git commit -F -`) if the message contains special characters.
 
+#### Required final-head gate for broad or high-consequence reviews
+
+Before any push, run the final-head gate from `SKILL.md` for every broad or high-consequence
+mutating review. It uses the clean, verified, synchronized, committed current HEAD whether or
+not initial findings created a fix commit. It freezes the base and committed head SHAs, runs two
+fresh `change-review` contexts in parallel against that exact diff, and accepts only reconciled
+complete results. If reconciliation yields a fix, return to Step 5 and Step 6, then commit the
+fix in Step 7 and repeat the complete gate against the new head. Never create an empty commit.
+Record the passing committed head as `finalReviewedHeadSha` and carry it through the push and ship
+handoff. Do not push, ship, or land until the gate passes.
+
 ### 8. Summarize and return to the authority mode
 
 Report:
@@ -400,7 +455,7 @@ Report:
 - Fixed: one line per fix (file + change).
 - Deviations: any fix applied differently than the finding suggested (or `none`).
 - Verification: format/lint/typecheck/test status.
-- Commit SHA created (not pushed).
+- Committed head SHA used (created or existing, not pushed).
 
 In fix mode, stop here. In comments, ship, or land mode, continue because the original user
 request already authorized the stronger remote workflow. Never ask the user to repeat
@@ -408,18 +463,19 @@ authority they already provided.
 
 ### 9. Close the loop on a PR
 
-Run this step only in `comments`, `ship`, or `land` mode. Approval and merge require
-explicit approval or merge intent; comment handling alone does not grant either authority.
+Run this step only in `comments`, `ship`, or `land` mode. Approval and merge are distinct
+authorities. Approval requires explicit `approve` wording; merge or land wording never grants
+approval authority.
 
 This skill's core scope ends at push. What happens next depends on what the user asked for
 in the invocation:
 
 **User did not ask to land it:** after a confirmed push, offer the handoff — comment /
-resolve threads / approve / merge → `review-pr` comments mode (or `ship`) on the same PR.
+resolve threads / merge → `review-pr` comments mode (or `ship`) on the same PR.
 
 **User explicitly asked to land it ("merge when green", "keep it ready and merge", etc.):**
 landing has a hard gate. Verify ALL of the following against the live API, in order, before
-any approve or merge:
+merging:
 
 1. Every `pr-thread` finding from Step 1 is closed: fixed items have a reply on their thread
    and the thread resolved; rejected items have a reply with the reasoning. Re-fetch the
@@ -430,9 +486,26 @@ any approve or merge:
 3. CI is green (`gh pr checks`).
 4. The PR body still describes the PR after your fixes; regenerate it if the scope moved.
 
-Only when all four hold: approve (if not your own PR) and merge. If any check fails, report
-what is outstanding and stop. Never auto-merge without an explicit user instruction from this
-session.
+For broad or high-consequence mutating reviews, the final-head gate in `SKILL.md` must also
+have passed against the final reviewed local commit before push, and that commit SHA is
+`finalReviewedHeadSha`.
+
+When explicit approval is authorized, after these checks establish merge-ready, fetch the final
+live head and compare it with the last reviewed head. If it differs, rerun the normal review
+against that exact head before running the approval gate in `SKILL.md`. The approval gate verifies
+findings and threads, CI, body, and self-authorship before its final immediate live-head
+comparison. If the final head changed, it blocks pending re-review. If that gate fails, report the
+PR blocked and do not merge. If branch protection requires approval but explicit approval was not
+authorized, report the PR blocked rather than self-approving.
+
+In land mode, whether approval authority exists or not, after every other merge gate has passed,
+the final API operation immediately before merge must re-fetch the live `headRefOid` and require
+it to equal `finalReviewedHeadSha`, with no intervening tool or API call. If it differs, block
+the merge, synchronize with the changed live head, rerun local verification, commit a new
+corrective commit if needed, and rerun the full two-review final-head gate against that new head.
+Carry the resulting `finalReviewedHeadSha` through the next push and repeat this live-head check.
+Only when this comparison passes may the next operation merge the PR. Never auto-merge without an
+explicit user instruction from this session.
 
 ## Severity discipline
 
@@ -458,8 +531,9 @@ bias the filter's closed-list reasons exist to prevent.
 - Do not escalate to deep on a small, well-tested touch to a risk-sensitive path alone. Escalate
   only when the diff is also large or the risk-sensitive logic is new/rewritten.
 - Do not ask the user to select light versus deep; select from evidence and report why.
-- Do not trust a resume's `completed`-looking summary or reply body. Confirm new entries actually
-  landed in the notes doc; if a resume wrote nothing, switch to the comprehensive-worker fallback.
+- Do not accept a resume solely because its reply looks complete. Check its semantic task
+  contract and confirm new entries actually landed in the notes doc; if a resume wrote nothing,
+  switch to the comprehensive-worker fallback.
 - Do not auto-fix a finding that challenges a product/design decision; surface it to the operator.
 - Do not treat test-enforced behavior as a regression. Verify findings against the tests first.
 - Do not lead the review with style/naming. Functional correctness comes first.

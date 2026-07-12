@@ -4,7 +4,8 @@ This file contains only instructions the manager copies into `Task` prompts for 
 Review subagent. Manager-only orchestration rules live in `deep-review.md`.
 
 Every prompt that mentions the notes doc relies on `review-notes-format.md`. The manager passes
-the notes-doc path as `<NOTES_PATH>` and the absolute path of the format file as `<FORMAT_DOC>`.
+the notes-doc path as `<NOTES_PATH>`, the isolated initial-context path as `<CONTEXT_PATH>`, and
+the absolute path of the format file as `<FORMAT_DOC>`.
 
 ## Initial Review prompt
 
@@ -13,16 +14,17 @@ You are the `Review` sub-agent for a deep code review managed by an orchestratin
 manager will resume this same Task session for every subsequent step and pass — preserve
 everything you learn here for later passes. Do not output the final review output; the manager
 will ask for it at the very end. You are READ-ONLY on the repository; the only file you may write
-to is the notes doc.
+to in this startup step is the isolated initial-context file.
 
 Review: <PR URL / branch / commit range / staged, exactly as given by the user>
 Base ref: <base>
-Notes doc path: <NOTES_PATH>
+Initial context path: <CONTEXT_PATH>
 Review notes format: <FORMAT_DOC>
 
-This is the shared workspace for this review. Discovery is writing pattern-checks into the
-"## Pattern Checks" section. You will append findings and verified-clean verdicts to the doc on
-every pass using the review notes format.
+This is your isolated startup workspace. Discovery concurrently writes pattern-checks to
+`<NOTES_PATH>`; do not read or write that file during this step. Write only to
+`<CONTEXT_PATH>`. The manager will serially append your completed context to `## Review Context`
+in the notes doc before any later pass.
 
 For this step, gather the full intent and context behind the change. Do not stop at the PR
 description:
@@ -41,7 +43,7 @@ description:
 
 Then load the full diff against the base ref.
 
-After gathering context, return a short structured answer to the manager:
+After gathering context, append a short structured answer to `<CONTEXT_PATH>`:
 
 - What does this change claim to do?
 - **Why** is it being made? (the real motivation, not just the title)
@@ -50,8 +52,11 @@ After gathering context, return a short structured answer to the manager:
 - Are there constraints or requirements from the ticket/thread the code should satisfy?
 - Highlights that deserve recognition (elegant solutions, clean refactors, good tests).
 
-Keep your loaded diff and notes in your working context — the manager will ask you to use them on
-every subsequent pass.
+Keep your loaded diff and notes in your working context. Then return:
+
+Status: complete
+Blockers: none
+Evidence Coverage: Review Context written; full diff and available requirement-bearing context loaded
 ```
 
 ## Model-driven pass prompt
@@ -85,6 +90,9 @@ format:
 Considered: <files, codepaths walked>
 Findings: <short titles of findings appended to the notes doc, or "none">
 Verified-clean: <codepaths considered and appended as clean, one short phrase each>
+Status: complete
+Blockers: none
+Evidence Coverage: <completed lenses and codepaths>
 
 This summary is mandatory and the auditable proof that you executed the pass.
 
@@ -187,6 +195,9 @@ as visible response text in this exact format:
 Considered: <files, pattern-check names walked, codepaths walked>
 Findings: <short titles of findings appended in this pass, or "none">
 Verified-clean: <pattern-check names appended as clean, one short phrase each>
+Status: complete
+Blockers: none
+Evidence Coverage: <completed pattern checks and codepaths>
 
 This summary is mandatory and the auditable proof that you executed the pass.
 
@@ -227,17 +238,26 @@ can't cite a closed-list reason, the finding stays in.
 For every invalid finding, append the filter annotation format from the review notes format
 directly under that finding block in "## Findings".
 
+Before returning, append a `### Final Filter` completion entry to `## Filter Status` using the
+filter status format in the review notes format. Do this even when Filtered is `0`.
+
 Visible response format:
 
 --- Final filter complete ---
 Filtered: <count> (<title> — <reason>, ...)
 Kept: <count>
+Status: complete
+Blockers: none
+Evidence Coverage: persisted Filter Status covers all finding blocks filtered or kept
 
 If there are zero removals, write:
 
 --- Final filter complete ---
 Filtered: 0
 Kept: <count>
+Status: complete
+Blockers: none
+Evidence Coverage: persisted Filter Status covers all finding blocks kept
 ```
 
 ## Worker anti-patterns
