@@ -1,0 +1,27 @@
+plugins/build/skills/ship/SKILL.md
+  s_a79e0f34a3e7b5::t_ddfd90d616bfa1 62-63
+evals/golden-tasks/15-review-pr-final-head-independent-review.md
+  s_a79e0f34a3e7b5::t_945d6cf5e74303 18-19,33-35,51-52,62,68,70-71
+plugins/review/skills/review-pr/fix-comments.md
+  s_a79e0f34a3e7b5::t_10e4d208898dc8 235-238
+plugins/review/skills/review-pr/SKILL.md
+  s_a79e0f34a3e7b5::t_78d75ea737a14b 234-238
+plugins/review/skills/review-pr/deep-review.md
+  s_a79e0f34a3e7b5::t_a4d6e9c750bc6f 448-451
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "0e28c58145b3e4a343cb4f184a265221edf98b0b",
+  "prompts": {},
+  "sessions": {
+    "s_a79e0f34a3e7b5": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a60280ff-fd65-42eb-868d-84ccbd5b481a",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Sagar Narayan <sagar@factory.ai>"
+    }
+  }
+}
