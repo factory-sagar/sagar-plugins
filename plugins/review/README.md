@@ -39,11 +39,6 @@ The deep tier treats the notes doc as the single source of truth: it verifies ea
 2. Resolve findings → ship.
 3. Or run `/review-pr <target>`; the user's wording determines the authorized end state.
 
-## Models
-
-Assignments are provisional. Their evidence status and decision records are listed in
-[`evals/model-assignments.json`](../../evals/model-assignments.json).
-
 ## Related plugins
 
 - **[`investigation`](../investigation/)**: both reviewers hand architectural questions to `deep-understanding`.

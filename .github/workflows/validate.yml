@@ -22,10 +22,9 @@ jobs:
 
       - name: Deterministic policy tests
         run: |
-          node --test scripts/*.test.mjs plugins/review/skills/review-pr/*.test.mjs
+          node --test plugins/review/skills/review-pr/*.test.mjs
           python3 -m unittest discover -s plugins/guardrails/tests -v
           python3 -m py_compile plugins/guardrails/hooks/*.py
-          bash -n scripts/run-golden-task.sh
 
       - name: Version bumps (PRs only)
         if: github.event_name == 'pull_request'
