@@ -5,11 +5,14 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
 
 from delivery_ledger import parse_push_command
+
+PIPEFAIL_PREFIX = re.compile(r"^\s*set\s+-o\s+pipefail\s*(?:;|&&)")
 
 
 def targets_default_branch(push_args: list[str], default_branch: str) -> bool:
@@ -34,8 +37,11 @@ def push_policy_violation(
         return None
     if "--no-verify" in command:
         return "Push bypasses repository verification. Run the configured checks and push without --no-verify."
-    if "|" in command and "pipefail" not in command:
-        return "Push output is piped without pipefail, which can hide a failed push. Add `set -o pipefail;`."
+    if "|" in command and PIPEFAIL_PREFIX.search(command) is None:
+        return (
+            "Push output is piped without pipefail, which can hide a failed push. "
+            "Start the command with `set -o pipefail;`."
+        )
     try:
         tokens = shlex.split(command)
     except ValueError:

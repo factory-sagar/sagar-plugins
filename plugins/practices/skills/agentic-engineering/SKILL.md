@@ -1,6 +1,6 @@
 ---
 name: agentic-engineering
-version: 1.3.1
+version: 1.3.2
 description: |
   Route AI-assisted engineering work by risk, complexity, and evidence. Supplies completion,
   delegation, session, model, evaluation, and review policy when another workflow must decide
@@ -91,7 +91,9 @@ When reviewing what an agent (or worker) produced — whether you review inline 
 4. **Hidden coupling** — does this implicitly depend on something else changing? Will it silently break if a related file is updated independently?
 5. **Rollout risk** — is the change reversible? Does it migrate state? Are old clients still supported?
 
-**Apply this:** for every diff a human or AI ships, hand it to `change-review` (droid) for the formal pass on lenses 1, 2, 4, 5; hand to `security` for lens 3 if anything in the diff touches auth/secrets/consent/untrusted input.
+**Apply this:** for every diff a human or AI ships, hand it to `change-review` (droid) with a
+`[review:standard]` Task-description prefix for the formal pass on lenses 1, 2, 4, 5; hand to
+`security` for lens 3 if anything in the diff touches auth/secrets/consent/untrusted input.
 
 ## The Eval-First Loop
 

@@ -31,6 +31,10 @@ Apply every item to every changed behavior:
   persistence, and domain shapes do not leak across their owning boundary.
 - **Scope and structure**: no drive-by behavior, duplicated policy, unearned abstraction,
   dead compatibility path, or weakened gate entered with the change.
+- **Correction authority**: severity does not authorize new product behavior or architecture.
+  A correction that requires a new subsystem, migration, backfill, rollback mechanism,
+  compatibility layer, dependency, or product decision is quarantined as a scope-expanding
+  proposal until the user explicitly approves it.
 - **File coverage**: review tracked changes, staged changes, and every untracked
   implementation file. Separate pre-existing user-owned artifacts from files created by the
   program; never treat untracked as automatically out of scope. Every changed source, test,
@@ -54,8 +58,13 @@ hooks, event listeners, or derived UI state.
 - Accessibility, focus, keyboard behavior, and semantics survive the state change.
 - Trace every external and internal writer of state. A local callback is not assumed to
   observe changes initiated by another owner.
+- For parent-controlled or programmatically opened UI, trace the real initiating owner and
+  reopen path. Calling an internal callback directly is not evidence that external opens,
+  closes, resets, and retained state behave correctly.
 - Follow transitional state until its terminal event. Values needed by work that remains
   active must outlive that work, and cleanup must occur after the last observer is finished.
+- When CSS selectors or declarative rules overlap, calculate actual specificity/precedence and
+  prove the intended rule wins in the intersecting state.
 
 For React, load the installed `no-use-effect` policy when `useEffect`,
 `useLayoutEffect`, or effect-shaped custom hooks appear. Equivalent constructs in other

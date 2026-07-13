@@ -3,14 +3,17 @@
 
 from __future__ import annotations
 
-import json
+import fcntl
 import hashlib
+import json
 import os
 import shlex
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
 
 STATE_VERSION = 2
 SHELL_SEPARATORS = {"&&", ";", "||", "|"}
@@ -89,6 +92,18 @@ def state_path(state_dir: Path, session_id: str, repo_root: str | None = None) -
     return state_dir / f"{safe_id or 'session'}-{repo_id}.json"
 
 
+@contextmanager
+def locked_state(path: Path) -> Iterator[None]:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = path.with_suffix(".lock")
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
 def record_push(
     *,
     state_dir: Path,
@@ -100,30 +115,30 @@ def record_push(
     baseline_untracked: list[str] | None = None,
 ) -> Path:
     path = state_path(state_dir, session_id, repo_root)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    existing = load_state(path) or {}
-    existing_baseline = (
-        existing.get("baseline_untracked")
-        if existing.get("repo_root") == repo_root
-        else None
-    )
-    preserved_baseline = (
-        existing_baseline
-        if isinstance(existing_baseline, list)
-        else baseline_untracked or []
-    )
-    payload = {
-        "version": STATE_VERSION,
-        "session_id": session_id,
-        "repo_root": repo_root,
-        "branch": branch,
-        "pushed_head": pushed_head,
-        "pr_number": pr_number,
-        "baseline_untracked": sorted(set(preserved_baseline)),
-    }
-    temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
-    temporary.replace(path)
+    with locked_state(path):
+        existing = load_state(path) or {}
+        existing_baseline = (
+            existing.get("baseline_untracked")
+            if existing.get("repo_root") == repo_root
+            else None
+        )
+        preserved_baseline = (
+            existing_baseline
+            if isinstance(existing_baseline, list)
+            else baseline_untracked or []
+        )
+        payload = {
+            "version": STATE_VERSION,
+            "session_id": session_id,
+            "repo_root": repo_root,
+            "branch": branch,
+            "pushed_head": pushed_head,
+            "pr_number": pr_number,
+            "baseline_untracked": sorted(set(preserved_baseline)),
+        }
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+        temporary.replace(path)
     return path
 
 
@@ -135,19 +150,26 @@ def record_session_baseline(
     baseline_untracked: list[str],
 ) -> Path:
     path = state_path(state_dir, session_id, repo_root)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "version": STATE_VERSION,
-        "session_id": session_id,
-        "repo_root": repo_root,
-        "branch": None,
-        "pushed_head": None,
-        "pr_number": None,
-        "baseline_untracked": sorted(set(baseline_untracked)),
-    }
-    temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
-    temporary.replace(path)
+    with locked_state(path):
+        existing = load_state(path)
+        if (
+            existing is not None
+            and existing.get("session_id") == session_id
+            and existing.get("repo_root") == repo_root
+        ):
+            return path
+        payload = {
+            "version": STATE_VERSION,
+            "session_id": session_id,
+            "repo_root": repo_root,
+            "branch": None,
+            "pushed_head": None,
+            "pr_number": None,
+            "baseline_untracked": sorted(set(baseline_untracked)),
+        }
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+        temporary.replace(path)
     return path
 
 
@@ -162,18 +184,22 @@ def load_state(path: Path) -> dict[str, object] | None:
 
 
 def clear_push_state(path: Path, state: dict[str, object]) -> None:
-    payload = {
-        "version": STATE_VERSION,
-        "session_id": state.get("session_id"),
-        "repo_root": state.get("repo_root"),
-        "branch": None,
-        "pushed_head": None,
-        "pr_number": None,
-        "baseline_untracked": state.get("baseline_untracked", []),
-    }
-    temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
-    temporary.replace(path)
+    with locked_state(path):
+        current = load_state(path) or state
+        if current.get("pushed_head") != state.get("pushed_head"):
+            return
+        payload = {
+            "version": STATE_VERSION,
+            "session_id": current.get("session_id"),
+            "repo_root": current.get("repo_root"),
+            "branch": None,
+            "pushed_head": None,
+            "pr_number": None,
+            "baseline_untracked": current.get("baseline_untracked", []),
+        }
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+        temporary.replace(path)
 
 
 def run(command: list[str], cwd: str) -> str | None:

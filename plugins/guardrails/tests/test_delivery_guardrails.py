@@ -16,12 +16,169 @@ from delivery_ledger import (  # noqa: E402
 )
 from intent_router import route_intent  # noqa: E402
 from pre_push_policy import push_policy_violation  # noqa: E402
+from review_budget import (  # noqa: E402
+    begin_request,
+    load_review_state,
+    review_task_violation,
+    reserve_review_call,
+    review_state_path,
+)
 from stop_delivery_gate import (  # noqa: E402
     DeliverySnapshot,
     body_is_fresh,
     classify_worktree,
+    delivery_gate_output,
     pending_obligations,
 )
+
+
+class ReviewBudgetTests(unittest.TestCase):
+    def test_requires_a_valid_review_stage_tag(self):
+        self.assertIn(
+            "stage tag",
+            review_task_violation("Review final branch", state={"final_slots": []}),
+        )
+        self.assertIsNone(
+            review_task_violation(
+                "[review:standard] Review change scope",
+                state={"final_slots": []},
+            )
+        )
+        self.assertIsNone(
+            review_task_violation(
+                "[review:deep:primary] Review broad change",
+                state={"final_slots": []},
+            )
+        )
+
+    def test_allows_exactly_two_complete_final_head_rounds(self):
+        state = {"final_slots": []}
+        for description in (
+            "[review:final:1:primary] Review frozen head",
+            "[review:final:1:challenge] Challenge frozen head",
+            "[review:final:2:primary] Re-review corrected head",
+            "[review:final:2:challenge] Challenge corrected head",
+        ):
+            self.assertIsNone(review_task_violation(description, state=state))
+            state["final_slots"].append(description.split("]", 1)[0] + "]")
+
+        self.assertIn(
+            "at most two",
+            review_task_violation(
+                "[review:final:3:primary] Review another corrected head",
+                state=state,
+            ),
+        )
+
+    def test_rejects_duplicate_and_out_of_order_final_head_calls(self):
+        state = {"final_slots": ["[review:final:1:primary]"]}
+        self.assertIn(
+            "already used",
+            review_task_violation(
+                "[review:final:1:primary] Retry frozen head",
+                state=state,
+            ),
+        )
+        self.assertIn(
+            "Complete round 1",
+            review_task_violation(
+                "[review:final:2:primary] Review corrected head",
+                state=state,
+            ),
+        )
+
+    def test_rejects_final_head_work_disguised_as_another_stage(self):
+        for description in (
+            "[review:standard] Review the frozen final head",
+            "[review:standard] Review final Reviews diff",
+            "[review:deep:primary] Recheck hardened final branch",
+        ):
+            with self.subTest(description=description):
+                self.assertIn(
+                    "final-head tag",
+                    review_task_violation(
+                        description,
+                        state={"final_slots": []},
+                    ),
+                )
+        self.assertIn(
+            "final-head tag",
+            review_task_violation(
+                "[review:standard] Review change scope",
+                state={"final_slots": []},
+                prompt="Review the frozen committed head before this push.",
+            ),
+        )
+
+    def test_duplicate_prompt_delivery_preserves_budget_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            transcript = state_dir / "session.jsonl"
+            transcript.write_text(
+                '{"type":"message","id":"message-1","message":{"role":"user"}}\n',
+                encoding="utf-8",
+            )
+            begin_request(
+                state_dir=state_dir,
+                session_id="session-1",
+                prompt="Review and fix the change.",
+                transcript_path=str(transcript),
+            )
+            self.assertIsNone(
+                reserve_review_call(
+                    state_dir=state_dir,
+                    session_id="session-1",
+                    description="[review:final:1:primary] Review frozen head",
+                )
+            )
+
+            begin_request(
+                state_dir=state_dir,
+                session_id="session-1",
+                prompt="Review and fix the change.",
+                transcript_path=str(transcript),
+            )
+            state = load_review_state(
+                review_state_path(state_dir, "session-1")
+            )
+            self.assertEqual(
+                state["final_slots"],
+                ["[review:final:1:primary]"],
+            )
+
+            with transcript.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    '{"type":"message","id":"hook-1","message":'
+                    '{"role":"user","hookEventName":"UserPromptSubmit"}}\n'
+                )
+            begin_request(
+                state_dir=state_dir,
+                session_id="session-1",
+                prompt="Review and fix the change.",
+                transcript_path=str(transcript),
+            )
+            state = load_review_state(
+                review_state_path(state_dir, "session-1")
+            )
+            self.assertEqual(
+                state["final_slots"],
+                ["[review:final:1:primary]"],
+            )
+
+            with transcript.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    '{"type":"message","id":"message-2","message":{"role":"user"}}\n'
+                )
+            begin_request(
+                state_dir=state_dir,
+                session_id="session-1",
+                prompt="Review and fix the change.",
+                transcript_path=str(transcript),
+            )
+            state = load_review_state(
+                review_state_path(state_dir, "session-1")
+            )
+            self.assertEqual(state["final_slots"], [])
 
 
 class DeliveryLedgerTests(unittest.TestCase):
@@ -87,6 +244,48 @@ class DeliveryLedgerTests(unittest.TestCase):
                 ["plans/README.md"],
             )
 
+    def test_repeated_session_start_preserves_first_baseline_and_push(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            record_session_baseline(
+                state_dir=state_dir,
+                session_id="session-1",
+                repo_root="/repo",
+                baseline_untracked=["owned-before-start.txt"],
+            )
+            path = record_push(
+                state_dir=state_dir,
+                session_id="session-1",
+                repo_root="/repo",
+                branch="feature",
+                pushed_head="abc123",
+                pr_number=42,
+            )
+
+            repeated = record_session_baseline(
+                state_dir=state_dir,
+                session_id="session-1",
+                repo_root="/repo",
+                baseline_untracked=[
+                    "owned-before-start.txt",
+                    "created-during-session.txt",
+                ],
+            )
+
+            self.assertEqual(repeated, path)
+            self.assertEqual(
+                load_state(path),
+                {
+                    "version": 2,
+                    "session_id": "session-1",
+                    "repo_root": "/repo",
+                    "branch": "feature",
+                    "pushed_head": "abc123",
+                    "pr_number": 42,
+                    "baseline_untracked": ["owned-before-start.txt"],
+                },
+            )
+
     def test_baselines_are_scoped_by_repository(self):
         with tempfile.TemporaryDirectory() as directory:
             state_dir = Path(directory)
@@ -127,6 +326,31 @@ class DeliveryLedgerTests(unittest.TestCase):
             cleared = load_state(path)
             self.assertIsNone(cleared["pushed_head"])
             self.assertEqual(cleared["baseline_untracked"], ["owned.txt"])
+
+    def test_clear_does_not_erase_a_newer_recorded_push(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            path = record_push(
+                state_dir=state_dir,
+                session_id="session-1",
+                repo_root="/repo",
+                branch="feature",
+                pushed_head="old-head",
+                pr_number=42,
+            )
+            stale = load_state(path)
+            record_push(
+                state_dir=state_dir,
+                session_id="session-1",
+                repo_root="/repo",
+                branch="feature",
+                pushed_head="new-head",
+                pr_number=42,
+            )
+
+            clear_push_state(path, stale)
+
+            self.assertEqual(load_state(path)["pushed_head"], "new-head")
 
 
 class PrePushPolicyTests(unittest.TestCase):
@@ -171,6 +395,30 @@ class PrePushPolicyTests(unittest.TestCase):
             "pipefail",
             push_policy_violation(
                 "git push origin feature | tail -5",
+                branch="feature",
+                default_branch="main",
+            ),
+        )
+        self.assertIn(
+            "pipefail",
+            push_policy_violation(
+                "git push origin feature 2>&1 | tail -20",
+                branch="feature",
+                default_branch="main",
+            ),
+        )
+        self.assertIn(
+            "pipefail",
+            push_policy_violation(
+                "git push origin feature | tee /tmp/push.log",
+                branch="feature",
+                default_branch="main",
+            ),
+        )
+        self.assertIn(
+            "pipefail",
+            push_policy_violation(
+                "git push origin feature | tail -5; echo pipefail",
                 branch="feature",
                 default_branch="main",
             ),
@@ -367,6 +615,73 @@ class StopGateTests(unittest.TestCase):
 
         self.assertGreaterEqual(len(obligations), 4)
         self.assertTrue(any("could not verify" in item for item in obligations))
+
+    def test_pending_ci_block_requires_one_foreground_watch(self):
+        snapshot = DeliverySnapshot(
+            local_head="abc123",
+            remote_head="abc123",
+            pr_head="abc123",
+            dirty_tracked=False,
+            unexpected_untracked=(),
+            checks_complete=False,
+            checks_green=False,
+            unresolved_threads=0,
+            body_fresh=True,
+        )
+
+        output = delivery_gate_output(
+            self.state,
+            snapshot,
+            stop_hook_active=False,
+        )
+
+        self.assertEqual(output["decision"], "block")
+        self.assertIn("Do not retry Stop", output["reason"])
+        self.assertIn("gh pr checks 42 --watch --interval 10", output["reason"])
+
+    def test_pending_ci_reentry_stops_without_another_continuation(self):
+        snapshot = DeliverySnapshot(
+            local_head="abc123",
+            remote_head="abc123",
+            pr_head="abc123",
+            dirty_tracked=False,
+            unexpected_untracked=(),
+            checks_complete=False,
+            checks_green=False,
+            unresolved_threads=0,
+            body_fresh=True,
+        )
+
+        output = delivery_gate_output(
+            self.state,
+            snapshot,
+            stop_hook_active=True,
+        )
+
+        self.assertFalse(output["continue"])
+        self.assertIn("not accepted as complete", output["stopReason"])
+
+    def test_actionable_reentry_still_blocks(self):
+        snapshot = DeliverySnapshot(
+            local_head="abc123",
+            remote_head="abc123",
+            pr_head="abc123",
+            dirty_tracked=True,
+            unexpected_untracked=(),
+            checks_complete=True,
+            checks_green=True,
+            unresolved_threads=0,
+            body_fresh=True,
+        )
+
+        output = delivery_gate_output(
+            self.state,
+            snapshot,
+            stop_hook_active=True,
+        )
+
+        self.assertEqual(output["decision"], "block")
+        self.assertIn("uncommitted tracked changes", output["reason"])
 
 
 if __name__ == "__main__":

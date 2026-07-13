@@ -1,6 +1,6 @@
 ---
 name: review-pr
-version: 1.4.0
+version: 1.5.0
 description: |
   Review a PR, branch, commit, or staged change through the mandatory review policy and
   diff-selected risk lenses. Plain "review" is read-only; explicit approve, fix, comment,
@@ -138,6 +138,16 @@ Run `change-review` on every review. Add `security` whenever any selected lens h
 `reviewer: security`. For broad or high-consequence changes, read `deep-review.md` and use
 its independent passes over the shared notes format, then reconcile them.
 
+Every `change-review` Task description starts with exactly one stage tag:
+
+- `[review:standard]` for a single ordinary pass or an evidence-completion retry;
+- `[review:deep:primary]` and `[review:deep:challenge]` for independent non-final deep passes;
+- `[review:final:<round>:primary]` and `[review:final:<round>:challenge]` for the two frozen-head
+  reviewers, where `<round>` is `1` or `2`.
+
+The guardrails plugin enforces these tags when installed. Never disguise a frozen/current/final
+head review as `standard` or `deep`, and never reuse a final-head slot.
+
 ### Semantic task gate
 
 Transport success is not review success. Apply semantic acceptance by reviewer type:
@@ -185,6 +195,12 @@ Each selected lens must produce either:
 - an evidenced finding with `path:line`, mechanism, impact, and correction direction; or
 - a concrete verified-clean statement naming what was traced.
 
+The selector's `evidenceRequirements` are mandatory, not advisory. In particular, a selected
+`ui-state-reactivity` lens is incomplete unless its evidence names the real initiating owner and
+programmatic writers, follows retained state through the terminal transition event, and proves
+the winning rule where selectors or declarative policies overlap. Mock-only callback invocation
+does not satisfy this evidence.
+
 Maintain a review evidence ledger:
 
 | Lens | Changed codepaths inspected | Finding or verified-clean evidence | Validator |
@@ -215,10 +231,13 @@ there are no changes, use the existing committed current HEAD. Never create an e
    Then record the exact `base SHA...head SHA` diff, complete changed-file list, and applicable
    untracked-file accounting.
 2. Spawn **two fresh `change-review` Task contexts in parallel** against that same exact
-   committed diff. Do not use `review-worker` for this gate. One performs the full selected-lens
-   final review. The other is an independent challenge that focuses on ownership, transitions,
-   rule interaction, completeness, tests, metadata, and CI parity without seeing the first
-   result. Give both the complete changed-file list and applicable untracked-file accounting.
+   committed diff. In the first execution, prefix their descriptions with
+   `[review:final:1:primary]` and `[review:final:1:challenge]`; if a head-changing correction
+   requires the repeated execution, use `[review:final:2:primary]` and
+   `[review:final:2:challenge]`. Do not use `review-worker` for this gate. The primary performs
+   the full selected-lens final review. The challenge focuses on ownership, transitions, rule
+   interaction, completeness, tests, metadata, and CI parity without seeing the first result.
+   Give both the complete changed-file list and applicable untracked-file accounting.
 3. Require both contexts to inspect the frozen final head and satisfy `change-review` semantic
    acceptance and selected-lens evidence coverage.
 4. Reconcile both final-head results into one finding set.
@@ -238,9 +257,21 @@ findings, and make no more reviewer calls. A new user decision is required to co
 
 ### 5. Reconcile
 
-Deduplicate findings by root cause and fix locus. Reject speculative, pre-existing,
-intentional, or test-disproved candidates. Do not turn product choices into automatic code
-changes.
+Deduplicate findings by root cause and fix locus. Classify every candidate before applying it:
+
+- **in-scope fix** — the smallest correction needed to satisfy approved intent or restore a
+  pre-existing contract changed by this diff;
+- **scope-expanding proposal** — a new subsystem, workflow, migration, backfill, rollback
+  mechanism, compatibility layer, dependency, or product behavior not authorized by the
+  approved request;
+- **invalid / pre-existing** — speculative, intentional, test-disproved, unreachable, or not
+  introduced by the reviewed scope.
+
+Apply only in-scope fixes. Reject invalid/pre-existing candidates. A scope-expanding proposal
+is not an actionable review finding: stop before editing, explain the concrete risk and smallest
+known options, and require a new user decision. Do not let severity labels silently grant scope
+authority, turn product choices into automatic code changes, or let a fix for one finding create
+an unapproved architecture program.
 
 Order surviving findings by consequence:
 

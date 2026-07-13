@@ -232,6 +232,10 @@ verification, commit the fix, then repeat the complete gate against the new head
 passing committed head as `finalReviewedHeadSha` and carry it through the push and ship handoff.
 Do not push or finalize until the gate passes.
 
+Prefix the first pair's Task descriptions with `[review:final:1:primary]` and
+`[review:final:1:challenge]`. If a correction changes HEAD, prefix the repeated pair with
+`[review:final:2:primary]` and `[review:final:2:challenge]`.
+
 Run this gate at most twice per user request. The first execution may trigger one correction.
 If the repeated gate finds another actionable issue, stop as blocked and do not fix it or spawn
 another reviewer until the user gives a new decision.
