@@ -1,0 +1,92 @@
+plugins/review/skills/review-pr/deep-review.md
+  s_60ff9b21d0eb05::t_146edb307ccef8 113
+  s_60ff9b21d0eb05::t_b718e9816cd95a 442-446
+plugins/review/skills/review-pr/SKILL.md
+  s_60ff9b21d0eb05::t_f92bda816f2e90 3
+  s_60ff9b21d0eb05::t_f7ab3e2738a17a 260-274
+  s_60ff9b21d0eb05::t_45f2c888089284 141-150,234-240
+  s_60ff9b21d0eb05::t_9a51344a01be3f 198-203
+plugins/practices/skills/verification-loop/SKILL.md
+  s_60ff9b21d0eb05::t_d77b5db829e785 221-223
+  s_60ff9b21d0eb05::t_0d4eafeabf08cb 3
+plugins/review/.factory-plugin/plugin.json
+  s_60ff9b21d0eb05::t_845ef35d7c4888 3
+plugins/guardrails/hooks/delivery_ledger.py
+  s_60ff9b21d0eb05::t_72649231cbe893 6,14,16,95-106,118-141,153-172,187-188,191-202
+  s_60ff9b21d0eb05::t_356745090ab515 189-190
+  s_60ff9b21d0eb05::t_e401a604117996 8
+plugins/guardrails/hooks/pre_push_policy.py
+  s_60ff9b21d0eb05::t_f05f3e8fa4136b 8,15-16,40-44
+plugins/review/skills/review-pr/review-policy.md
+  s_60ff9b21d0eb05::t_2162b341f68819 34-37
+  s_60ff9b21d0eb05::t_446d56bcc639f7 61-63,66-67
+plugins/review/skills/review-pr/fix-comments.md
+  s_60ff9b21d0eb05::t_be640993dee428 235-238
+plugins/guardrails/hooks/review_budget.py
+  s_60ff9b21d0eb05::t_42c6492faa4e38 22-25,143-144
+  s_60ff9b21d0eb05::t_fdb6735de1341f 71-79,81-95
+  s_60ff9b21d0eb05::t_7191fdbe485b87 1-21,26-70,80,96-127,129-140,142,145-149,151-169,171-179,181-233,235-242
+  s_60ff9b21d0eb05::t_b4300f91505478 128,141,170,180,234
+  s_60ff9b21d0eb05::t_aa5ee9f9c2a002 150
+plugins/review/droids/change-review.md
+  s_60ff9b21d0eb05::t_526d4e74de90a2 23-27,101-102,115-116,187
+plugins/guardrails/tests/test_delivery_guardrails.py
+  s_60ff9b21d0eb05::t_ddbe1ecd767521 19-25,35-82,84-90,112-116,121-132,140,148,154-167,172-181
+  s_60ff9b21d0eb05::t_880cf6f1994164 91-103
+  s_60ff9b21d0eb05::t_242a9f70062e8f 402-417
+  s_60ff9b21d0eb05::t_854fb88ad920b8 418-425
+  s_60ff9b21d0eb05::t_d685b09579e832 104-111
+  s_60ff9b21d0eb05::t_2eed9b8739a8ed 247-288
+  s_60ff9b21d0eb05::t_43c1d0b29ed48d 83
+  s_60ff9b21d0eb05::t_571b38abe73646 30,619-684
+  s_60ff9b21d0eb05::t_1ca90b8e178dc1 117-120,133-139,141-147,149-153,168-171
+  s_60ff9b21d0eb05::t_235d8a5516d13c 330-354
+  s_60ff9b21d0eb05::t_b939d557ef2e39 182-183
+  s_60ff9b21d0eb05::t_8323a1e6b54678 685
+plugins/guardrails/hooks/hooks.json
+  s_60ff9b21d0eb05::t_b97ee4392bd1fd 11-15
+  s_60ff9b21d0eb05::t_aab91613e4f5eb 41-48
+  s_60ff9b21d0eb05::t_c9ac71a61cf799 49-50
+plugins/practices/skills/tdd-workflow/SKILL.md
+  s_60ff9b21d0eb05::t_45f6fd2b76a1c9 3
+  s_60ff9b21d0eb05::t_72beda5fd614ec 251-252
+plugins/build/skills/ship/SKILL.md
+  s_60ff9b21d0eb05::t_307582c5e4a479 54-57,84-87,90-100
+  s_60ff9b21d0eb05::t_1efb4ca174337c 3
+plugins/review/skills/review-pr/select-review-lenses.test.mjs
+  s_60ff9b21d0eb05::t_56b8264bd50078 19,22-23,31-36
+plugins/guardrails/.factory-plugin/plugin.json
+  s_60ff9b21d0eb05::t_14defeb99cd24d 3
+  s_60ff9b21d0eb05::t_d97762d7874c0e 4
+plugins/build/.factory-plugin/plugin.json
+  s_60ff9b21d0eb05::t_db50199fdf4102 3
+scripts/validate.mjs
+  s_60ff9b21d0eb05::t_79c03170f846df 238-274,285,305
+plugins/practices/skills/agentic-engineering/SKILL.md
+  s_60ff9b21d0eb05::t_aa78f317991f20 94-96
+  s_60ff9b21d0eb05::t_164269b2f1f13d 3
+.factory-plugin/marketplace.json
+  s_60ff9b21d0eb05::t_5398299345ba96 47
+plugins/review/skills/review-pr/select-review-lenses.mjs
+  s_60ff9b21d0eb05::t_274293177a3f4b 11-15,163
+plugins/guardrails/hooks/stop_delivery_gate.py
+  s_60ff9b21d0eb05::t_a850cee7cfa399 105-149,325-330,334
+plugins/practices/.factory-plugin/plugin.json
+  s_60ff9b21d0eb05::t_5af19a17d846e3 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "a8bf86f0eb965d133e6768308c64f6faf2bffdd7",
+  "prompts": {},
+  "sessions": {
+    "s_60ff9b21d0eb05": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "dab60d2b-58af-4775-8054-74a1dff8bf0e",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Sagar Narayan <sagar@factory.ai>"
+    }
+  }
+}
