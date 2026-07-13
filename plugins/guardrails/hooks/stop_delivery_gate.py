@@ -102,6 +102,51 @@ def pending_obligations(
     return obligations
 
 
+def delivery_gate_output(
+    state: dict[str, object],
+    snapshot: DeliverySnapshot,
+    *,
+    stop_hook_active: bool,
+) -> dict[str, object] | None:
+    obligations = pending_obligations(state, snapshot)
+    if not obligations:
+        return None
+
+    ci_pending = "CI is still running for the current PR head." in obligations
+    if stop_hook_active and obligations == [
+        "CI is still running for the current PR head."
+    ]:
+        raw_pr_number = state.get("pr_number")
+        pr_target = (
+            f" {raw_pr_number}" if isinstance(raw_pr_number, int) else ""
+        )
+        return {
+            "continue": False,
+            "stopReason": (
+                "Delivery is still waiting for CI and this turn is not accepted as "
+                "complete. Run `gh pr checks"
+                f"{pr_target} --watch --interval 10` in the foreground and resume "
+                "only after it exits."
+            ),
+        }
+
+    message = "Delivery remains incomplete:\n" + "\n".join(
+        f"- {item}" for item in obligations
+    )
+    if ci_pending:
+        raw_pr_number = state.get("pr_number")
+        pr_target = (
+            f" {raw_pr_number}" if isinstance(raw_pr_number, int) else ""
+        )
+        message += (
+            "\n\nDo not retry Stop or emit an interim final response while CI is "
+            "pending. Run `gh pr checks"
+            f"{pr_target} --watch --interval 10` in the foreground and wait for it "
+            "to exit."
+        )
+    return {"decision": "block", "reason": message}
+
+
 def run(command: list[str], cwd: str, timeout: int = 20) -> subprocess.CompletedProcess[str] | None:
     try:
         return subprocess.run(
@@ -277,15 +322,16 @@ def main() -> int:
     if not state.get("pushed_head"):
         return 0
 
-    obligations = pending_obligations(state, snapshot_delivery(state))
-    if not obligations:
+    output = delivery_gate_output(
+        state,
+        snapshot_delivery(state),
+        stop_hook_active=bool(hook_input.get("stop_hook_active")),
+    )
+    if output is None:
         clear_push_state(path, state)
         return 0
 
-    message = "Delivery remains incomplete:\n" + "\n".join(
-        f"- {item}" for item in obligations
-    )
-    print(json.dumps({"decision": "block", "reason": message}))
+    print(json.dumps(output))
     return 0
 
 

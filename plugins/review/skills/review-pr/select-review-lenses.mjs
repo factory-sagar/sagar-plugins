@@ -8,6 +8,11 @@ export const REVIEW_LENSES = [
     id: 'ui-state-reactivity',
     policySection: '## UI State and Reactivity',
     reviewer: 'change-review',
+    evidenceRequirements: [
+      'trace the real initiating owner and every programmatic writer',
+      'follow retained state through the terminal transition event',
+      'prove precedence where selectors or declarative rules overlap',
+    ],
     patterns: [
       /\b(useEffect|useLayoutEffect|watchEffect|watch|computed|subscribe|observer)\b/i,
       /\b(addEventListener|removeEventListener|onMount|onDestroy|componentDidMount)\b/i,
@@ -155,6 +160,7 @@ export function selectReviewLenses({ paths = [], diff = '' } = {}) {
       signal,
       policySection: lens.policySection,
       reviewer: lens.reviewer,
+      evidenceRequirements: lens.evidenceRequirements ?? [],
     });
   }
 

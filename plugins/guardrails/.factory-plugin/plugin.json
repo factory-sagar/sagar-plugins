@@ -1,7 +1,7 @@
 {
   "name": "guardrails",
-  "version": "1.2.0",
-  "description": "Deterministic workflow and delivery guardrails: four-intent routing, safe push policy, per-session delivery ledger, and a stop gate that requires current-head CI, PR-body freshness, and resolved review threads.",
+  "version": "1.3.0",
+  "description": "Deterministic workflow and delivery guardrails: four-intent routing, bounded review calls, safe push policy, idempotent delivery ledger, and a stop gate for current-head CI, PR-body freshness, and review threads.",
   "author": {
     "name": "Sagar"
   }

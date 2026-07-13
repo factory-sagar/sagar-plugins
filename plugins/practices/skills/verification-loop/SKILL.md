@@ -1,6 +1,6 @@
 ---
 name: verification-loop
-version: 1.3.0
+version: 1.3.1
 description: |
   Verification policy for completed changes. Discovers repository gates, runs affected checks
   for fast feedback and the canonical milestone gate before hand-off, distinguishes introduced
@@ -218,7 +218,9 @@ Deliverables:
 
 The change is **gate-ready**, not necessarily **merge-ready**. The next moves are mandatory:
 
-1. **Delegate to `change-review`** (droid in the `review` plugin) — strict pre-merge correctness review of the diff. Catches what tests miss: race conditions, rollback hazards, event reliability, consent gaps.
+1. **Delegate to `change-review`** (droid in the `review` plugin) with a Task description
+   prefixed by `[review:standard]` — strict pre-merge correctness review of the diff. Catches
+   what tests miss: race conditions, rollback hazards, event reliability, consent gaps.
 2. **Delegate to `security`** (droid in the `review` plugin) **in parallel with change-review** if the change touches:
    - Authentication / authorization paths
    - Secrets, tokens, API keys, env vars

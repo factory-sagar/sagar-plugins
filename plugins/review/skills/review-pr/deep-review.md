@@ -110,7 +110,7 @@ Spawn the `change-review` droid once on the scope. If any risk-sensitive path is
 spawn `security` in parallel (same message, two `Task` calls).
 
 ```
-Task(subagent_type: "change-review", description: "Review change scope",
+Task(subagent_type: "change-review", description: "[review:standard] Review change scope",
   prompt: "Review <scope: PR URL / base..head / staged>. Return your standard label-list
   output (Summary, Assessment, What This Change Does, Coverage, Findings, Validation Notes).
   Every finding carries a [P<n>·<conf>] label and a path:line anchor. Read-only; do not edit.")
@@ -439,9 +439,11 @@ Use a heredoc (`git commit -F -`) if the message contains special characters.
 Before any push, run the final-head gate from `SKILL.md` for every broad or high-consequence
 mutating review. It uses the clean, verified, synchronized, committed current HEAD whether or
 not initial findings created a fix commit. It freezes the base and committed head SHAs, runs two
-fresh `change-review` contexts in parallel against that exact diff, and accepts only reconciled
-complete results. If reconciliation yields a fix, return to Step 5 and Step 6, then commit the
-fix in Step 7 and repeat the complete gate against the new head. Never create an empty commit.
+fresh `change-review` contexts in parallel against that exact diff, tags them
+`[review:final:1:primary]` and `[review:final:1:challenge]`, and accepts only reconciled complete
+results. If reconciliation yields a fix, return to Step 5 and Step 6, then commit the fix in
+Step 7 and repeat the complete gate with the corresponding `review:final:2` tags against the
+new head. Never create an empty commit.
 Record the passing committed head as `finalReviewedHeadSha` and carry it through the push and ship
 handoff. Do not push, ship, or land until the gate passes.
 

@@ -235,7 +235,43 @@ for (const name of expectedPublicSkills) {
   }
 }
 
-// ---------- 5. README counts ----------
+// ---------- 5. cross-plugin workflow contracts ----------
+const requireText = (file, expected, contract) => {
+  if (!existsSync(file) || !read(file).includes(expected)) {
+    fail(file, `missing ${contract}: ${expected}`);
+  }
+};
+const guardrailHooksFile = path.join(pluginsDir, 'guardrails', 'hooks', 'hooks.json');
+const guardrailHooks = readJson(guardrailHooksFile);
+if (guardrailHooks?.hooks) {
+  const promptCommands = collectHookCommands(guardrailHooks.hooks.UserPromptSubmit ?? []);
+  const taskCommands = collectHookCommands(
+    (guardrailHooks.hooks.PreToolUse ?? []).filter(({ matcher }) => matcher === 'Task'),
+  );
+  if (!promptCommands.some((command) => command.includes('/review_budget.py'))) {
+    fail(guardrailHooksFile, 'review budget must initialize on UserPromptSubmit');
+  }
+  if (!taskCommands.some((command) => command.includes('/review_budget.py'))) {
+    fail(guardrailHooksFile, 'review budget must guard PreToolUse Task calls');
+  }
+}
+requireText(
+  path.join(pluginsDir, 'review', 'skills', 'review-pr', 'SKILL.md'),
+  '[review:final:<round>:primary]',
+  'final-head review stage protocol',
+);
+requireText(
+  path.join(pluginsDir, 'review', 'droids', 'change-review.md'),
+  'scope-expanding proposal',
+  'review correction-scope quarantine',
+);
+requireText(
+  path.join(pluginsDir, 'build', 'skills', 'ship', 'SKILL.md'),
+  'Do not background it, poll a',
+  'foreground CI watch contract',
+);
+
+// ---------- 6. README counts ----------
 const readme = read(readmeFile);
 const totals = readme.match(/Total: (\d+) droids, (\d+) skills, (\d+) commands?/);
 if (!totals) fail(readmeFile, 'no "Total: X droids, Y skills, Z commands" line found');
@@ -246,7 +282,7 @@ else {
   if (c !== commandFiles.length) fail(readmeFile, `README says ${c} commands, filesystem has ${commandFiles.length}`);
 }
 
-// ---------- 5. relative .md cross-references resolve ----------
+// ---------- 7. relative .md cross-references resolve ----------
 function* walkMd(dir) {
   for (const entry of readdirSync(dir)) {
     if (entry.startsWith('.')) continue;
@@ -266,7 +302,7 @@ for (const file of [...walkMd(pluginsDir)]) {
   }
 }
 
-// ---------- 6. version bumps vs a base ref ----------
+// ---------- 8. version bumps vs a base ref ----------
 const bumpIdx = process.argv.indexOf('--require-bumps');
 if (bumpIdx !== -1) {
   const baseRef = process.argv[bumpIdx + 1];

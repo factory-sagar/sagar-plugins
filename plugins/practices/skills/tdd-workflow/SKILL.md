@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-version: 1.4.0
+version: 1.4.1
 description: |
   Test-first execution policy for new or changed behavior: prove RED through the real seam,
   implement the smallest GREEN change, refactor only under the regression net, and preserve
@@ -248,7 +248,8 @@ GREEN: all tests still passing
 Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready**. Hand off:
 
 1. **Run `verification-loop`** (skill, inline): build / type-check / lint / full suite with coverage. Address any gaps.
-2. **Delegate to `change-review`** (droid): strict pre-merge correctness review of the diff. Catches what tests miss.
+2. **Delegate to `change-review`** (droid) with a Task description prefixed by
+   `[review:standard]`: strict pre-merge correctness review of the diff. Catches what tests miss.
 3. **Delegate to `security`** (droid) in parallel with change-review if the change touches auth, secrets, consent, untrusted input, or sensitive data.
 4. **Delegate to `pr-describer`** (droid): synthesize the PR body from the same diff.
 5. **Delegate to `commit-message-writer`** (droid) if the final squash-commit message needs polish.

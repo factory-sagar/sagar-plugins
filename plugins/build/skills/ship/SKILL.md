@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 1.4.0
+version: 1.5.0
 description: |
   Land finished work. Commits and pushes, writes the repository-template PR body, watches
   current-head CI, closes review threads, and reports merge-ready; merges only when the user
@@ -51,6 +51,10 @@ Check the staged diff for secrets, credentials, and generated noise.
 git push -u origin HEAD
 ```
 
+Use the plain command above. Do not pipe push output through `tail`, `tee`, `grep`, or another
+consumer. If a diagnostic pipeline is unavoidable, the same Execute command must begin with
+`set -o pipefail;` so a failed push cannot be hidden by a successful downstream command.
+
 Use a plain, fast-forward push after local verification and any required broad-review final-head
 gate. `--force-with-lease` is allowed only for the initial post-rebase push. After any successful
 push, do not amend the pushed commit: every CI or review correction must be a new corrective
@@ -77,14 +81,23 @@ End the body with `<!-- pr-body-head=<full-head-sha> -->`. The `guardrails` plug
 hook, when installed, uses this marker to prove that the body describes the current pushed
 revision.
 
+If the PR is a draft and the requested end state is merge-ready, mark it ready after the
+current-head body is stamped and before the final CI watch. Ready-only checks must have a chance
+to register before completion is assessed.
+
 ### 5. Watch CI until green
 
-Run `gh pr checks --watch`, read failure logs, distinguish change-caused failures from
-baseline failures, delegate to `debugger` when the mechanism is unclear, fix, create a new
-corrective commit, and repush. For a broad or high-consequence review, rerun synchronization,
-local verification, and the full two-review final-head gate before the plain corrective push.
-The review plugin's `review-pr/fix-comments.md` provides the expanded procedure when installed.
-Stop after three unsuccessful fix attempts and report the blocker.
+Run `gh pr checks --watch --interval 10` in the foreground. Do not background it, poll a
+background log, retry Stop, or emit an interim/final response while it is running. After it
+exits, run one plain `gh pr checks` refresh to catch checks that registered late; if that refresh
+shows a pending check, rerun the foreground watch before continuing.
+
+Read failure logs, distinguish change-caused failures from baseline failures, delegate to
+`debugger` when the mechanism is unclear, fix, create a new corrective commit, and repush. For a
+broad or high-consequence review, rerun synchronization, local verification, and the full
+two-review final-head gate before the plain corrective push. The review plugin's
+`review-pr/fix-comments.md` provides the expanded procedure when installed. Stop after three
+unsuccessful fix attempts and report the blocker.
 
 ### 6. Resolve review threads
 

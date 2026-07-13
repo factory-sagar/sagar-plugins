@@ -16,10 +16,11 @@ test('always includes the mandatory policy', () => {
 });
 
 test('selects reactivity by behavior rather than language', () => {
-  const react = ids(selectReviewLenses({
+  const reactResult = selectReviewLenses({
     paths: ['src/Panel.tsx'],
     diff: '+useEffect(() => subscribe(store), [store]);',
-  }));
+  });
+  const react = ids(reactResult);
   const vue = ids(selectReviewLenses({
     paths: ['src/Panel.vue'],
     diff: '+watch(selection, () => refresh());',
@@ -27,6 +28,12 @@ test('selects reactivity by behavior rather than language', () => {
 
   assert.ok(react.includes('ui-state-reactivity'));
   assert.ok(vue.includes('ui-state-reactivity'));
+  const uiLens = reactResult.find(({ id }) => id === 'ui-state-reactivity');
+  assert.deepEqual(uiLens.evidenceRequirements, [
+    'trace the real initiating owner and every programmatic writer',
+    'follow retained state through the terminal transition event',
+    'prove precedence where selectors or declarative rules overlap',
+  ]);
 });
 
 test('selects mutation, input, auth, and persistence lenses together', () => {
