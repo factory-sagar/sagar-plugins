@@ -494,23 +494,74 @@ class ReviewBudgetTests(unittest.TestCase):
                         ),
                     )
 
-    def test_final_round_two_rejects_security_evidence_retries_as_decision_only(self):
-        violation = review_task_violation(
+    def test_primary_and_challenge_passes_allow_one_prerequisite_gated_retry(self):
+        retry_cases = (
             (
-                "[review:final:2:retry:security] "
-                "Complete missing final security evidence"
+                "[review:deep:primary] Review broad changes",
+                "[review:deep:retry:primary] Complete primary evidence",
             ),
-            state={
-                "final_slots": [
-                    "[review:final:1:primary]",
-                    "[review:final:1:challenge]",
-                ]
-            },
+            (
+                "[review:deep:challenge] Challenge broad changes",
+                "[review:deep:retry:challenge] Complete challenge evidence",
+            ),
+            (
+                "[review:final:1:primary] Review frozen head",
+                "[review:final:1:retry:primary] Complete primary evidence",
+            ),
+            (
+                "[review:final:1:challenge] Challenge frozen head",
+                "[review:final:1:retry:challenge] Complete challenge evidence",
+            ),
         )
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            for index, descriptions in enumerate(retry_cases):
+                with self.subTest(descriptions=descriptions):
+                    test_state_dir = state_dir / str(index)
+                    test_state_dir.mkdir()
+                    retry_without_initial = review_task_violation(
+                        descriptions[1],
+                        state={"final_slots": []},
+                    )
+                    self.assertIsNotNone(retry_without_initial)
+                    if retry_without_initial is not None:
+                        self.assertIn("Complete", retry_without_initial)
 
-        self.assertIsNotNone(violation)
-        if violation is not None:
-            self.assertIn("decision-only", violation)
+                    results = self.reserve_review_calls(
+                        test_state_dir,
+                        descriptions,
+                    )
+                    for result in results:
+                        self.assertIsNone(result)
+                    self.assertIn(
+                        "already used",
+                        reserve_review_call(
+                            state_dir=test_state_dir,
+                            session_id="session-1",
+                            description=descriptions[-1],
+                        ),
+                    )
+
+    def test_final_round_two_rejects_all_evidence_retries_as_decision_only(self):
+        for tag in (
+            "[review:final:2:retry:primary]",
+            "[review:final:2:retry:challenge]",
+            "[review:final:2:retry:security]",
+        ):
+            with self.subTest(tag=tag):
+                violation = review_task_violation(
+                    f"{tag} Complete missing final evidence",
+                    state={
+                        "final_slots": [
+                            "[review:final:1:primary]",
+                            "[review:final:1:challenge]",
+                        ]
+                    },
+                )
+
+                self.assertIsNotNone(violation)
+                if violation is not None:
+                    self.assertIn("decision-only", violation)
 
     def test_duplicate_prompt_delivery_preserves_budget_state(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1184,9 +1235,13 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             "[review:deep:primary]",
             "[review:deep:challenge]",
             "[review:deep:security]",
+            "[review:deep:retry:primary]",
+            "[review:deep:retry:challenge]",
             "[review:final:<round>:primary]",
             "[review:final:<round>:challenge]",
             "[review:final:<round>:security]",
+            "[review:final:1:retry:primary]",
+            "[review:final:1:retry:challenge]",
         ):
             with self.subTest(stage_tag=stage_tag):
                 self.assertIn(
@@ -1267,6 +1322,38 @@ class WorkflowPolicyContractTests(unittest.TestCase):
                 "change-review; it must hand review ownership to review-pr."
             ),
         )
+
+    def test_investigation_and_synthesis_droids_route_review_handoffs_through_review_pr(self):
+        for relative_path in (
+            "plugins/investigation/droids/quick-analysis.md",
+            "plugins/investigation/droids/deep-understanding.md",
+            "plugins/investigation/droids/deep-research.md",
+            "plugins/synthesis/droids/pr-describer.md",
+            "plugins/synthesis/droids/commit-message-writer.md",
+        ):
+            with self.subTest(relative_path=relative_path):
+                policy = self.policy_text(relative_path)
+                self.assertRegex(
+                    policy,
+                    r"(?is)hand.*review ownership.*review-pr",
+                    msg=(
+                        f"{relative_path} must hand review ownership to review-pr "
+                        "when review follow-up is needed."
+                    ),
+                )
+                self.assertNotRegex(
+                    policy,
+                    r"(?im)^(?:-\s*)?(?:"
+                    r".*(?:→|->)\s*`?(?:change-review|security)"
+                    r"|.*\b(?:delegate|recommend|flag|hand.{0,40}off)\b.*"
+                    r"\b(?:change-review|security)\b"
+                    r"|\*\*(?:change-review|security)\*\*\s+—"
+                    r")",
+                    msg=(
+                        f"{relative_path} must not directly recommend change-review "
+                        "or security for review follow-up."
+                    ),
+                )
 
     def test_review_pr_blocks_round_two_findings_before_edits_or_more_review(self):
         self.assert_policy_matches(

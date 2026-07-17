@@ -149,13 +149,17 @@ with exactly one stage tag:
 - `[review:standard:security]` for the `[security:selected]` risk-selected security pass, plus
   `[review:standard:retry:security]` for its one evidence-completion retry;
 - `[review:deep:primary]` and `[review:deep:challenge]` for independent non-final deep
-  `change-review` passes, plus `[review:deep:security]` for `[security:selected]` deep security
-  and `[review:deep:retry:security]` for its one evidence-completion retry;
+  `change-review` passes, plus `[review:deep:retry:primary]` and
+  `[review:deep:retry:challenge]` for exactly one evidence-completion retry after their
+  respective passes; `[review:deep:security]` is for `[security:selected]` deep security and
+  `[review:deep:retry:security]` is for its one evidence-completion retry;
 - `[review:final:<round>:primary]` and `[review:final:<round>:challenge]` for the two frozen-head
   reviewers, plus `[review:final:<round>:security]` when `[security:selected]` security is
-  selected. Final round 1 permits `[review:final:1:retry:security]` for that pass's one
-  evidence-completion retry; final round 2 is decision-only and permits no security retry. In all
-  cases, `<round>` is `1` or `2`.
+  selected. Final round 1 permits `[review:final:1:retry:primary]` and
+  `[review:final:1:retry:challenge]` for exactly one evidence-completion retry after their
+  respective passes, plus `[review:final:1:retry:security]` for that pass's one
+  evidence-completion retry; final round 2 is decision-only and permits no retry. In all cases,
+  `<round>` is `1` or `2`.
 
 The guardrails plugin enforces these tags when installed. Never disguise a frozen/current/final
 head review as `standard` or `deep`, and never reuse a final-head slot.

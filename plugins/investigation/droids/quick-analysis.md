@@ -68,14 +68,16 @@ If no recognized manifest exists: it's a docs / config / data / monorepo-of-conf
 
 Pick exactly one:
 
-- **`change-review`** — parent already has a diff, commit range, branch, or set of named files to ship.
+- **`review-pr`** — parent already has a diff, commit range, branch, or set of named files to ship.
 - **`deep-understanding`** — parent needs architecture, conventions, agentic-config audit, or any "why does it work this way" question. Default for non-trivial repos when no diff is in flight.
-- **`security`** — parent flagged a security concern (auth, secrets, data exposure, supply chain).
+- **`review-pr`** — parent flagged a security concern (auth, secrets, data exposure, supply chain).
 - **`debugger`** — parent arrived with a concrete failing behavior (failing test, stack trace, regression) that needs root cause, not triage.
 - **`deep-research`** — the parent's question cannot be answered from the repo at all (library evaluation, external API contract, CVE follow-up, ecosystem best practice). Rare from triage; pick only when the repo itself is not the subject.
 - **None — proceed directly** — the repo is small/simple enough that the parent now has what they need. Use this when shape is obvious and the parent's task is concrete.
 
 When recommending another droid, include 2–4 focus questions seeded from your findings.
+When review follow-up is needed, hand review ownership to `review-pr`, which selects reviewer
+fan-out.
 
 ## Anti-Patterns (do not do these)
 
@@ -145,7 +147,7 @@ Use clean markdown, compact. No filler.
 - ...
 
 ## Best Next Step
-- Recommended: <`change-review` | `deep-understanding` | `security` | `debugger` | `deep-research` | None — proceed directly>
+- Recommended: <`review-pr` | `deep-understanding` | `debugger` | `deep-research` | None — proceed directly>
 - Reason:
 - Focus to hand off (2–4 questions, omit if "None"):
   - ...

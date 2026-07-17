@@ -17,8 +17,8 @@ from typing import Iterator
 STATE_VERSION = 1
 REVIEW_TAG = re.compile(
     r"^(\[review:(?:standard(?::(?:retry(?::security)?|security))?|"
-    r"deep:(?:primary|challenge|security|retry:security)|"
-    r"final:(\d+):(?:primary|challenge|security|retry:security))\])(?:\s|$)"
+    r"deep:(?:primary|challenge|security|retry:(?:primary|challenge|security))|"
+    r"final:(\d+):(?:primary|challenge|security|retry:(?:primary|challenge|security)))\])(?:\s|$)"
 )
 SELECTED_SECURITY = re.compile(r"\[security:selected\]")
 FINAL_HEAD_HINT = re.compile(
@@ -43,7 +43,15 @@ DEEP_SLOTS = {
     "[review:deep:primary]",
     "[review:deep:challenge]",
     "[review:deep:security]",
+    "[review:deep:retry:primary]",
+    "[review:deep:retry:challenge]",
     "[review:deep:retry:security]",
+}
+RETRY_PREREQUISITES = {
+    "[review:deep:retry:primary]": "[review:deep:primary]",
+    "[review:deep:retry:challenge]": "[review:deep:challenge]",
+    "[review:final:1:retry:primary]": "[review:final:1:primary]",
+    "[review:final:1:retry:challenge]": "[review:final:1:challenge]",
 }
 SECURITY_RETRY_PREREQUISITES = {
     "[review:standard:retry:security]": "[review:standard:security]",
@@ -225,11 +233,13 @@ def review_task_violation(
                 "Complete the standard review before using the "
                 "`[review:standard:retry]` slot."
             )
-        prerequisite = SECURITY_RETRY_PREREQUISITES.get(tag)
+        prerequisite = RETRY_PREREQUISITES.get(tag) or SECURITY_RETRY_PREREQUISITES.get(
+            tag
+        )
         if prerequisite is not None and prerequisite not in slots:
             return (
-                f"Complete the selected security review {prerequisite} before using "
-                f"the {tag} evidence-completion retry slot."
+                f"Complete the review {prerequisite} before using the {tag} "
+                "evidence-completion retry slot."
             )
         return None
 
@@ -239,16 +249,15 @@ def review_task_violation(
             "The final-head gate may run at most two rounds per user request. "
             "Stop as blocked and request a new user decision."
         )
-    if round_number == 2 and tag == "[review:final:2:retry:security]":
-        return "Final round 2 is decision-only and does not allow security evidence retries."
-
     if round_number == 2 and not ROUND_ONE_SLOTS.issubset(slots):
         return "Complete round 1 primary and challenge reviews before starting round 2."
-    prerequisite = SECURITY_RETRY_PREREQUISITES.get(tag)
+    if round_number == 2 and tag.startswith("[review:final:2:retry:"):
+        return "Final round 2 is decision-only and does not allow evidence retries."
+    prerequisite = RETRY_PREREQUISITES.get(tag) or SECURITY_RETRY_PREREQUISITES.get(tag)
     if prerequisite is not None and prerequisite not in slots:
         return (
-            f"Complete the selected security review {prerequisite} before using "
-            f"the {tag} evidence-completion retry slot."
+            f"Complete the review {prerequisite} before using the {tag} "
+            "evidence-completion retry slot."
         )
     return None
 

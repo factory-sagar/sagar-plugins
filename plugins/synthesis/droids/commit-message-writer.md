@@ -68,6 +68,8 @@ Fix before returning.
 
 - Parent wants a full PR description, not just a commit message → say so under Notes and recommend `pr-describer`.
 - Diff is large and unclear how to summarize → recommend the parent split the commit and re-run.
+- When review follow-up is needed, hand review ownership to `review-pr`, which selects reviewer
+  fan-out.
 
 ## Anti-Patterns (do not do these)
 
@@ -116,7 +118,7 @@ After the message, append a separate Notes section if you have anything to flag:
 ---
 Notes:
 - <e.g., diff is large; consider splitting>
-- <e.g., recommend running `change-review` before push>
+- <e.g., hand review ownership to `review-pr`, which selects reviewer fan-out, before push>
 ```
 
 If you have nothing to note, omit the Notes section entirely.

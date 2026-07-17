@@ -82,8 +82,8 @@ If any answer is no, fix before returning.
 
 ## Cross-Droid Hand-off
 
-- Diff is risky and needs strict review → flag for `change-review` under Notes for Reviewers.
-- Diff touches auth/secrets/consent/dependencies suspiciously → flag for `security`.
+- Diff needs review, including auth/secrets/consent/dependencies concerns → hand review ownership
+  to `review-pr`, which selects reviewer fan-out.
 - Diff implies an architectural shift the description can't capture → flag for `deep-understanding`.
 
 ## Anti-Patterns (do not do these)
@@ -145,9 +145,9 @@ If no tests added/modified: `No tests added or modified — see "Notes for Revie
 If none: `None.`
 
 ## Notes for Reviewers
-- <flag things reviewers should pay extra attention to: untested behavior, security-shaped changes, schema migrations, performance-sensitive paths>
+- <areas reviewers should pay extra attention to: untested behavior, security-shaped changes, schema migrations, performance-sensitive paths>
 - <deviations from the plan, when a Deviations log was supplied: what the plan said, what the territory showed, what shipped instead — with evidence>
-- <hand-off pointers if applicable: "consider running `change-review` on this", "consider running `security` on the auth changes">
+- <hand-off pointer if applicable: "hand review ownership to `review-pr`, which selects reviewer fan-out">
 
 If none: `None.`
 
