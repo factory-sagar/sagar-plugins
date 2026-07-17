@@ -1,6 +1,6 @@
 {
   "name": "synthesis",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Synthesis droids: PR description writer (pr-describer) and Conventional Commits message writer (commit-message-writer).",
   "author": {
     "name": "Sagar",
