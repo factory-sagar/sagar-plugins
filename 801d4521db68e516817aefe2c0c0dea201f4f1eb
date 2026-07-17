@@ -1,0 +1,90 @@
+plugins/meta/.factory-plugin/plugin.json
+  ac09cb2cdb3886bd 3
+plugins/review/skills/review-pr/deep-review.md
+  31cbb950eec1c9c8 119
+plugins/practices/skills/tdd-workflow/SKILL.md
+  31cbb950eec1c9c8 58
+plugins/investigation/droids/debugger.md
+  31cbb950eec1c9c8 73,145
+plugins/guardrails/hooks/review_budget.py
+  3660bd58857b625b 205-211,357-366
+plugins/review/skills/review-pr/SKILL.md
+  31cbb950eec1c9c8 125-127,144,267-273
+plugins/meta/droids/prompt-optimizer.md
+  31cbb950eec1c9c8 99,159
+plugins/guardrails/tests/test_delivery_guardrails.py
+  ff8ab8a4bc1fd269 207-208,282-283
+  de0c4d6f74fbd7b9 460-564,1390-1403,1481-1502,1535-1561
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "801d4521db68e516817aefe2c0c0dea201f4f1eb",
+  "prompts": {
+    "31cbb950eec1c9c8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "01f90378-5fe0-422c-bc45-291c8d3f63c1",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 22,
+      "total_deletions": 22,
+      "accepted_lines": 17,
+      "overriden_lines": 0
+    },
+    "3660bd58857b625b": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d845a87b-1d50-4d36-b34a-667938b57905",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 0,
+      "accepted_lines": 17,
+      "overriden_lines": 0
+    },
+    "ac09cb2cdb3886bd": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a359d720-10d0-413c-802f-891ec885b884",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "de0c4d6f74fbd7b9": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "8493596a-d553-4fc6-8907-d9edf029fa01",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 177,
+      "total_deletions": 2,
+      "accepted_lines": 175,
+      "overriden_lines": 0
+    },
+    "ff8ab8a4bc1fd269": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "064d665b-c661-46fa-a378-040618f21be5",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 2,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
