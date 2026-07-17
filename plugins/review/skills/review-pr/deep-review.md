@@ -116,7 +116,7 @@ Task(subagent_type: "change-review", description: "[review:standard] Review chan
   Every finding carries a [P<n>·<conf>] label and a path:line anchor. Read-only; do not edit.")
 
 # only if risk signals present:
-Task(subagent_type: "security", description: "Security review change scope",
+Task(subagent_type: "security", description: "[review:standard:security] Security review change scope",
   prompt: "Security-review <scope> through STRIDE/OWASP lenses. Return findings with severity,
   confidence, attack path, and path:line anchors. Read-only; do not edit.")
 ```
@@ -283,8 +283,8 @@ For each pass, in order:
    For convention passes, filter the pattern-checks to the pass's category and compute the unique
    `source_doc` set; the prompt tells the Review to Read those docs first (if not already read).
    When the filtered list is empty, instruct it to Read the matching default doc and walk every
-   H3 subsection. For the Security pass, instead spawn the `security` droid on the scope and fold
-   its findings into the notes doc.
+   H3 subsection. For the Security pass, instead spawn the `security` droid with the
+   `[review:deep:security]` stage tag on the scope and fold its findings into the notes doc.
 4. **Check semantic acceptance and audit the notes doc.** For a `review-worker` pass, require
    `Status`, `Blockers`, and `Evidence Coverage`; `Status: blocked` is incomplete and triggers
    the retry-or-block path. Model-driven passes must evidence assigned lenses and substantial

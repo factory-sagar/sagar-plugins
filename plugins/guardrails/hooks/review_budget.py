@@ -16,8 +16,8 @@ from typing import Iterator
 
 STATE_VERSION = 1
 REVIEW_TAG = re.compile(
-    r"^(\[review:(?:standard|deep:(?:primary|challenge)|"
-    r"final:(\d+):(primary|challenge))\])(?:\s|$)"
+    r"^(\[review:(?:standard(?::(?:retry|security))?|deep:(?:primary|challenge|security)|"
+    r"final:(\d+):(primary|challenge|security))\])(?:\s|$)"
 )
 FINAL_HEAD_HINT = re.compile(
     r"\b(?:final|frozen|current)\b.{0,48}\b(?:head|branch|diff)\b",
@@ -26,6 +26,20 @@ FINAL_HEAD_HINT = re.compile(
 ROUND_ONE_SLOTS = {
     "[review:final:1:primary]",
     "[review:final:1:challenge]",
+}
+ROUND_TWO_TERMINAL_SLOTS = {
+    "[review:final:2:primary]",
+    "[review:final:2:challenge]",
+}
+STANDARD_SLOTS = {
+    "[review:standard]",
+    "[review:standard:retry]",
+    "[review:standard:security]",
+}
+DEEP_SLOTS = {
+    "[review:deep:primary]",
+    "[review:deep:challenge]",
+    "[review:deep:security]",
 }
 
 
@@ -116,9 +130,41 @@ def begin_request(
                 "session_id": session_id,
                 "request_token": token,
                 "final_slots": [],
+                "review_family": None,
+                "review_slots": [],
             },
         )
     return path
+
+
+def review_family(tag: str) -> str:
+    if tag in STANDARD_SLOTS:
+        return "standard"
+    if tag in DEEP_SLOTS:
+        return "deep"
+    return "final"
+
+
+def review_slots(state: dict[str, object]) -> set[str]:
+    raw_slots = state.get("review_slots")
+    if isinstance(raw_slots, list):
+        return {slot for slot in raw_slots if isinstance(slot, str)}
+    raw_final_slots = state.get("final_slots")
+    if isinstance(raw_final_slots, list):
+        return {slot for slot in raw_final_slots if isinstance(slot, str)}
+    return set()
+
+
+def reserved_family(state: dict[str, object], slots: set[str]) -> str | None:
+    family = state.get("review_family")
+    if isinstance(family, str):
+        return family
+    for slot in slots:
+        if slot in STANDARD_SLOTS or slot in DEEP_SLOTS or slot.startswith(
+            "[review:final:"
+        ):
+            return review_family(slot)
+    return None
 
 
 def review_task_violation(
@@ -131,18 +177,41 @@ def review_task_violation(
     if match is None:
         return (
             "Every change-review Task description must start with a review stage tag: "
-            "`[review:standard]`, `[review:deep:primary|challenge]`, or "
-            "`[review:final:<1|2>:primary|challenge]`."
+            "`[review:standard]`, `[review:standard:retry|security]`, "
+            "`[review:deep:primary|challenge|security]`, or "
+            "`[review:final:<1|2>:primary|challenge|security]`."
         )
 
     tag = match.group(1)
     round_text = match.group(2)
+    slots = review_slots(state)
+    if ROUND_TWO_TERMINAL_SLOTS.issubset(slots):
+        return (
+            "The final-head gate may run at most two rounds per user request. "
+            "Stop as blocked and request a new user decision."
+        )
+
+    family = review_family(tag)
+    existing_family = reserved_family(state, slots)
+    if existing_family is not None and existing_family != family:
+        return (
+            f"Review budget is already reserved for the {existing_family} family; "
+            f"do not start a {family} review in the same user request."
+        )
+    if tag in slots:
+        return f"Review budget slot {tag} was already used for this user request."
+
     if round_text is None:
         if FINAL_HEAD_HINT.search(f"{description}\n{prompt}"):
             return (
                 "A frozen/current/final head, branch, or diff review must use a "
                 "final-head tag so the "
                 "two-round correction budget can be enforced."
+            )
+        if tag == "[review:standard:retry]" and "[review:standard]" not in slots:
+            return (
+                "Complete the standard review before using the "
+                "`[review:standard:retry]` slot."
             )
         return None
 
@@ -153,10 +222,6 @@ def review_task_violation(
             "Stop as blocked and request a new user decision."
         )
 
-    raw_slots = state.get("final_slots")
-    slots = set(raw_slots) if isinstance(raw_slots, list) else set()
-    if tag in slots:
-        return f"Review budget slot {tag} was already used for this user request."
     if round_number == 2 and not ROUND_ONE_SLOTS.issubset(slots):
         return "Complete round 1 primary and challenge reviews before starting round 2."
     return None
@@ -181,11 +246,22 @@ def reserve_review_call(
         if violation is not None:
             return violation
         match = REVIEW_TAG.match(description)
+        if match is not None:
+            tag = match.group(1)
+            raw_slots = state.get("review_slots")
+            if not isinstance(raw_slots, list):
+                raw_final_slots = state.get("final_slots")
+                raw_slots = list(raw_final_slots) if isinstance(raw_final_slots, list) else []
+            raw_slots.append(tag)
+            state["review_slots"] = raw_slots
+            state["review_family"] = review_family(tag)
+
         if match is not None and match.group(2) is not None:
             raw_slots = state.get("final_slots")
             slots = list(raw_slots) if isinstance(raw_slots, list) else []
             slots.append(match.group(1))
             state["final_slots"] = slots
+        if match is not None:
             write_review_state(path, state)
     return None
 
@@ -225,12 +301,16 @@ def main() -> int:
     if event != "PreToolUse" or hook_input.get("tool_name") != "Task":
         return 0
     tool_input = hook_input.get("tool_input") or {}
-    if tool_input.get("subagent_type") != "change-review":
+    subagent_type = tool_input.get("subagent_type")
+    description = str(tool_input.get("description") or "")
+    if subagent_type != "change-review" and (
+        subagent_type != "security" or REVIEW_TAG.match(description) is None
+    ):
         return 0
     violation = reserve_review_call(
         state_dir=state_directory(),
         session_id=session_id,
-        description=str(tool_input.get("description") or ""),
+        description=description,
         prompt=str(tool_input.get("prompt") or ""),
     )
     if violation is not None:

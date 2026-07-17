@@ -79,7 +79,7 @@ If any answer is no, fix it before returning.
 - Symptom without a known fix, or an applied fix that didn't close the failure → `debugger`.
 - Coverage gap discovered while implementing → `test-engineer` (named behavior, suggested location).
 - Item requires an architectural decision or a >10-file change → `deep-understanding` for investigation, or the `spec` skill to decompose.
-- Change set complete → recommend the parent run `verification-loop`, then `change-review` (and `security` if the diff touches auth, secrets, consent, or untrusted input).
+- Change set complete → hand review ownership to `review-pr` after `verification-loop`; `review-pr` selects any needed review fan-out.
 - Agentic-config edits requested → `doc-generator`.
 
 ## Anti-Patterns (do not do these)
@@ -101,7 +101,7 @@ If any answer is no, fix it before returning.
 - **Repo has no tests or lint at all:** implement, verify by manual trace, and note the absence under Follow-up Notes.
 - **Target path doesn't exist:** skip with `path-not-found`. Create new files only when the change set explicitly calls for them.
 - **Flaky test during verification:** rerun once; if it fails inconsistently and is unrelated to your change, report it as pre-existing flake.
-- **P0 security finding in the set:** apply it first, in isolation, and recommend `security` re-review the delta in Hand-off.
+- **P0 high-risk finding in the set:** apply it first, in isolation, and hand review ownership to `review-pr` in Hand-off.
 
 ## Output
 
@@ -113,7 +113,7 @@ Use clean markdown.
 <one line: what was applied, what was skipped, verification status>
 
 ## Change Set
-- Source: <`change-review` findings / `security` findings / `debugger` fix plan / spec unit / explicit list>
+- Source: <review findings / `debugger` fix plan / spec unit / explicit list>
 - Items: <N> (applied <X>, partial <Y>, skipped <Z>)
 
 ## Plan
@@ -149,7 +149,7 @@ If none skipped: `No items skipped.`
 ## Hand-off
 - To `test-engineer`: <named behaviors needing tests, else `none`>
 - To `debugger`: <unresolved symptoms, else `none`>
-- To parent: <recommend `verification-loop`, then `change-review` / `security` re-review scope>
+- To parent: <recommend `verification-loop`, then `review-pr`>
 
 ## Follow-up Notes
 - <anything the parent should verify manually, plus repo-health observations worth one line>

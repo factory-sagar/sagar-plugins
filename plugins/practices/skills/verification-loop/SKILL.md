@@ -1,6 +1,6 @@
 ---
 name: verification-loop
-version: 1.3.1
+version: 1.3.2
 description: |
   Verification policy for completed changes. Discovers repository gates, runs affected checks
   for fast feedback and the canonical milestone gate before hand-off, distinguishes introduced
@@ -51,7 +51,7 @@ If commands genuinely aren't declared, look for the framework defaults (`pnpm ex
 
 If you can't determine the command for a phase, mark that phase `n/a (no tooling detected)` in the output. Don't fabricate a command.
 
-**Master gate:** if the repo declares an umbrella verification script (`npm run verify`, `make check`, a script CI runs verbatim), treat it as the canonical definition of green. Run the four phases for fast targeted feedback, then finish with the master gate — a repo-specific validator you didn't reconstruct (freeze gates, duplicate-code checks, docs validators) only shows up there.
+**Evidence reuse and integration gate:** Reuse valid validated evidence from the current change scope when it covers an applicable phase; do not rerun an equivalent command just to duplicate evidence. For a multi-unit program, consume that same-scope evidence and run one integration gate for the program head: the repository's canonical umbrella command (`npm run verify`, `make check`, or the CI script run verbatim). That gate remains required because it may cover repo-specific validators you did not reconstruct (freeze gates, duplicate-code checks, docs validators). Do not run the canonical gate per unit or repeat equivalent phase/gate combinations.
 
 **Ratchet / freeze gates:** some repos enforce shrink-only baselines (occurrence counts, size budgets, dependency-age gates). These are part of the test phase's pass condition: a change must comply with the current baseline. Never raise a baseline to pass; if the change legitimately lowers a count, lower the baseline in the same change to lock in the win, and say so in the output.
 
@@ -214,24 +214,15 @@ Deliverables:
 - Coverage drops on changed files (a new untested line was added).
 - Skipped tests added without justification.
 
-## After All Four Phases Pass
+## After Applicable Phases Are Satisfied
 
 The change is **gate-ready**, not necessarily **merge-ready**. The next moves are mandatory:
 
-1. **Delegate to `change-review`** (droid in the `review` plugin) with a Task description
-   prefixed by `[review:standard]` — strict pre-merge correctness review of the diff. Catches
-   what tests miss: race conditions, rollback hazards, event reliability, consent gaps.
-2. **Delegate to `security`** (droid in the `review` plugin) **in parallel with change-review** if the change touches:
-   - Authentication / authorization paths
-   - Secrets, tokens, API keys, env vars
-   - Consent / privacy gates
-   - Untrusted input handling
-   - Dependency additions or version bumps (CVE check)
-3. Resolve all findings from change-review and security.
-4. **Delegate to `pr-describer`** (droid in the `synthesis` plugin) — synthesize the PR body from the diff, including findings/hand-offs from the review droids.
-5. **Delegate to `commit-message-writer`** (droid in the `synthesis` plugin) for the final squash commit if needed.
+1. **Hand review ownership to `review-pr`**. It is the sole owner of review fan-out and selects the required correctness and risk-matched security review stages.
+2. Resolve the findings returned through `review-pr`.
+3. Continue to PR shaping and commit-message synthesis only after the review workflow completes.
 
-Verification is necessary but not sufficient. Tests can be green and the change still wrong (untested behavior, design flaws). The reviewer droids are the next gate.
+Verification is necessary but not sufficient. Tests can be green and the change still wrong (untested behavior, design flaws). `review-pr` is the next gate.
 
 ## Output Template
 
@@ -265,7 +256,7 @@ Use this exact format when reporting verification results:
 - Suggested commit: `chore: apply auto-fixable lint`.
 
 ## Recommendation
-- ✓ **Green-light:** all phases pass; hand off to `change-review` (+ `security` if applicable), then `pr-describer`.
+- ✓ **Green-light:** applicable phases are satisfied and the one integration gate for the program head passes; hand review ownership to `review-pr`.
 - OR ⚠ **Fix first:** <specific phase> failed with <N> issues; address before proceeding.
 - OR ⚠ **Partial green:** ship with caveats <X, Y> (only if user explicitly accepts).
 ```
@@ -279,8 +270,7 @@ Use this exact format when reporting verification results:
 | 2. Type-check | Inline if < 30s | `worker` if longer or if errors are many | Same — output volume |
 | 3. Lint | Inline | `worker` if doing auto-fix | Auto-fix touches files; worker isolates the change set |
 | 4. Tests | **Almost always delegate to `worker`** | — | Tests are long and noisy; worker summarizes |
-| After: code review | `change-review` (droid) | — | Specialized model |
-| After: security review | `security` (droid) | — | Specialized model |
+| After: review routing | `review-pr` | — | Sole owner of correctness and risk-matched review fan-out |
 | After: PR body | `pr-describer` (droid) | — | Synthesis specialist |
 
 ## Anti-Patterns
@@ -293,7 +283,7 @@ Use this exact format when reporting verification results:
 - **Hiding skipped tests.** Skipped tests should require justification (a TODO with an issue link).
 - **Fabricating a command** because you can't find one declared. Mark the phase `n/a (no tooling detected)` and surface it as a finding.
 - **Letting the worker run a phase and accepting its output without sanity-checking.** The worker's "pass" verdict still needs verification — at minimum cross-check the exit code matches.
-- **Treating verification as the final gate.** It's the FIRST gate. Code review and security review come after. Don't skip them.
+- **Treating verification as the final gate.** It is the first gate. Hand review ownership to `review-pr`; do not bypass its risk-matched review routing.
 - **Running all four phases sequentially when the user only changed docs.** Match the gate to the change shape: docs-only diff doesn't need type-check or tests.
 
 ## Edge Cases
@@ -312,10 +302,10 @@ Use this exact format when reporting verification results:
 ## Self-Check (before returning)
 
 1. Did I discover the actual commands from manifests/CI/README, not assume?
-2. Did I run (or delegate) ALL four phases that apply, none skipped silently?
+2. Did I run (or reuse valid evidence for) ALL applicable phases, none skipped silently?
 3. Did I distinguish new failures (block) from pre-existing (flag)?
 4. Did I report coverage specifically on the CHANGED files, not just overall?
-5. Did I recommend the after-loop chain (`change-review` + `security` if applicable → `pr-describer`)?
+5. Did I hand review ownership to `review-pr` without directly prescribing reviewer delegation?
 6. Did I separate auto-fix changes from the user's real change in commit recommendations?
 7. Did I surface any tooling gaps (no type-checker, no test suite, no CI) as findings?
 

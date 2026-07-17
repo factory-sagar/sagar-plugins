@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-version: 1.4.1
+version: 1.4.2
 description: |
   Test-first execution policy for new or changed behavior: prove RED through the real seam,
   implement the smallest GREEN change, refactor only under the regression net, and preserve
@@ -248,11 +248,9 @@ GREEN: all tests still passing
 Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready**. Hand off:
 
 1. **Run `verification-loop`** (skill, inline): build / type-check / lint / full suite with coverage. Address any gaps.
-2. **Delegate to `change-review`** (droid) with a Task description prefixed by
-   `[review:standard]`: strict pre-merge correctness review of the diff. Catches what tests miss.
-3. **Delegate to `security`** (droid) in parallel with change-review if the change touches auth, secrets, consent, untrusted input, or sensitive data.
-4. **Delegate to `pr-describer`** (droid): synthesize the PR body from the same diff.
-5. **Delegate to `commit-message-writer`** (droid) if the final squash-commit message needs polish.
+2. **Hand review ownership to `review-pr`**. It selects correctness and risk-matched security review stages for the diff.
+3. **Delegate to `pr-describer`** (droid) after `review-pr` completes: synthesize the PR body from the same diff.
+4. **Delegate to `commit-message-writer`** (droid) if the final squash-commit message needs polish.
 
 ## Git Checkpoint Rules
 
@@ -274,8 +272,7 @@ Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready*
 | 6. Refactor (if needed) | `implementer`, else `worker` | Scope-bound code work with explicit smell list |
 | 7. REFACTOR commit | `<self>` | Mechanical |
 | After loop: verification | `<self>` guided by `verification-loop` skill | Mechanical command runs |
-| After loop: code review | `change-review` (droid) | Specialized model for review |
-| After loop: security review | `security` (droid) | Specialized for security |
+| After loop: review routing | `review-pr` | Sole owner of correctness and risk-matched review fan-out |
 | After loop: PR body | `pr-describer` (droid) | Synthesis specialist |
 | After loop: commit message | `commit-message-writer` (droid) | Format-mechanical |
 
@@ -310,6 +307,6 @@ Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready*
 3. Did I verify GREEN by running the suite myself, including no regressions?
 4. Did I confirm the implementation is minimal (no speculative methods/parameters/abstractions)?
 5. Are the RED/GREEN/REFACTOR commits all labeled in their messages?
-6. Did I recommend the after-loop chain (`verification-loop` → `change-review` + `security` → `pr-describer` → `commit-message-writer`)?
+6. Did I recommend the after-loop chain (`verification-loop` → `review-pr` → `pr-describer` → `commit-message-writer`)?
 
 If any answer is no, complete it before declaring the unit done.

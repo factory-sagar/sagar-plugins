@@ -130,6 +130,7 @@ referenced code and surrounding context, then classify it:
 | **Style nit / preference** | Formatting, import ordering, subjective taste. | Apply only if it matches repo conventions; otherwise skip with a short reply. |
 | **False positive** | The suggestion is wrong, would break behavior, or the comment misreads the code. | Skip the code change. Reply explaining why. |
 | **Question / discussion** | Not actionable; the reviewer is asking a question or starting a discussion. | Reply briefly. Do not resolve. |
+| **Scope-expanding remedy** | A valid defect whose correction requires a new subsystem, workflow, migration, backfill, rollback mechanism, compatibility layer, dependency, or product behavior outside the approved request. | Stop before editing and require a new user decision. |
 
 #### How to reason about a comment
 
@@ -152,6 +153,10 @@ Comment #1237 (api.ts:203) - QUESTION - reviewer asks about rate limiting strate
 ```
 
 Address P0/P1 severity tags first if present.
+
+A valid defect with only scope-expanding remedies requires a user decision; review findings do
+not authorize a respec or architecture expansion. Do not edit, retry, or start more review calls
+for that remedy until the user decides the new scope.
 
 ### 4. Fix
 
@@ -226,11 +231,14 @@ Before any push, run the final-head gate from `SKILL.md` for every broad or high
 comments review. It uses the clean, verified, synchronized, committed current HEAD whether or
 not initial findings created a fix commit. Commit fixes when they exist; otherwise use the
 existing committed head and never create an empty commit. The gate freezes the base and committed
-head SHAs, runs two fresh `change-review` contexts in parallel against that exact diff, and
-accepts only reconciled complete results. If reconciliation yields a fix, return to triage and
-verification, commit the fix, then repeat the complete gate against the new head. Record the
-passing committed head as `finalReviewedHeadSha` and carry it through the push and ship handoff.
-Do not push or finalize until the gate passes.
+head SHAs, runs two fresh `change-review` contexts in parallel against that exact diff, plus a
+stage-matched security review when selected, and accepts only reconciled complete results. If
+round 1 reconciliation yields an in-scope fix, return to triage, run targeted verification plus
+one fresh integration gate, commit the fix, then repeat the complete gate against the new head.
+If final round 2 has any actionable finding, stop as blocked before edits, retries, or further
+review calls and require a new user decision. Record the passing committed head as
+`finalReviewedHeadSha` and carry it through the push and ship handoff. Do not push or finalize
+until the gate passes.
 
 Prefix the first pair's Task descriptions with `[review:final:1:primary]` and
 `[review:final:1:challenge]`. If a correction changes HEAD, prefix the repeated pair with

@@ -1,6 +1,6 @@
 ---
 name: agentic-engineering
-version: 1.3.2
+version: 1.3.3
 description: |
   Route AI-assisted engineering work by risk, complexity, and evidence. Supplies completion,
   delegation, session, model, evaluation, and review policy when another workflow must decide
@@ -60,8 +60,8 @@ Different models fit different jobs. This marketplace uses the provisional matri
 | Implementation, refactors, focused code edits | `gpt-5.6-terra` high | `implementer` | Precise code changes with strong instruction following |
 | Test gap analysis and test writing | `gpt-5.6-terra` high | `test-engineer` | Focused code and contract analysis |
 | Architecture, root cause, multi-file invariants | `gpt-5.6-sol` xhigh | `planner`, `deep-understanding`, `debugger` | Deep reasoning across broad repository context |
-| Correctness review | `gpt-5.6-sol` xhigh | `change-review`, `review-worker` | Thorough control-flow and contract tracing |
-| Security, prompt critique, external research | `claude-opus-4-8` xhigh | `security`, `prompt-optimizer`, `deep-research` | Strong adversarial analysis and prose judgment |
+| Pre-merge review routing | workflow-selected | `review-pr` | Owns correctness and risk-matched security review fan-out |
+| Prompt critique, external research | `claude-opus-4-8` xhigh | `prompt-optimizer`, `deep-research` | Strong adversarial analysis and prose judgment |
 | PR prose synthesis | `claude-opus-4-8` high | `pr-describer` | Clear synthesis from large diffs |
 
 Model pins live in each droid's frontmatter. Change them only after repeated role-specific
@@ -83,7 +83,7 @@ Without the baseline, you can't tell improvement from drift, or fix-the-bug from
 
 ### Principle 5 — Review AI-generated code through five fixed lenses
 
-When reviewing what an agent (or worker) produced — whether you review inline or delegate to `change-review` — prioritize these five lenses, in order:
+When reviewing what an agent (or worker) produced — whether you review inline or hand off to `review-pr` — prioritize these five lenses, in order:
 
 1. **Invariants and edge cases** — does the code preserve guarantees the caller depends on? What happens at boundaries (empty, max, null, concurrent)?
 2. **Error boundaries** — what happens when inputs or dependencies fail? Are errors caught at the right granularity?
@@ -91,9 +91,8 @@ When reviewing what an agent (or worker) produced — whether you review inline 
 4. **Hidden coupling** — does this implicitly depend on something else changing? Will it silently break if a related file is updated independently?
 5. **Rollout risk** — is the change reversible? Does it migrate state? Are old clients still supported?
 
-**Apply this:** for every diff a human or AI ships, hand it to `change-review` (droid) with a
-`[review:standard]` Task-description prefix for the formal pass on lenses 1, 2, 4, 5; hand to
-`security` for lens 3 if anything in the diff touches auth/secrets/consent/untrusted input.
+**Apply this:** for every diff a human or AI ships, hand review ownership to `review-pr`. It
+selects the formal correctness and risk-matched security stages for these lenses.
 
 ## The Eval-First Loop
 
@@ -112,7 +111,7 @@ A loop that operationalizes principles 1 and 4.
    - Regression eval still passes? → ✓ no breakage
    - Either regressed? → ✗ stop and fix or revert
 6. If both green and capability fully passes → unit done.
-   Hand off to verification-loop → change-review → security → pr-describer.
+   Hand off to verification-loop → review-pr → pr-describer.
 ```
 
 ## Session Strategy
@@ -146,7 +145,7 @@ for each unit:
   ↓
 verification-loop (skill, may delegate phases to worker)
   ↓
-change-review (droid)  +  security (droid, if applicable)  [parallel]
+review-pr (skill, owns risk-matched review fan-out)
   ↓
 resolve findings; loop back to implementer (or worker) for fixes
   ↓
@@ -178,8 +177,7 @@ The `audit-and-apply-loop` skill (in the `meta` plugin) documents this loop in f
 | Repo triage / shape understanding | `quick-analysis` | investigation |
 | Deep system / architecture / agentic-config understanding | `deep-understanding` | investigation |
 | External research with sources and dates | `deep-research` | investigation |
-| Strict pre-merge correctness review | `change-review` | review |
-| Security review (STRIDE + OWASP + CVE) | `security` | review |
+| Pre-merge review, including risk-matched security review | `review-pr` | review |
 | PR body synthesis | `pr-describer` | synthesis |
 | Conventional Commits message | `commit-message-writer` | synthesis |
 | Audit a droid/skill prompt | `prompt-optimizer` | meta |
@@ -204,7 +202,7 @@ The `audit-and-apply-loop` skill (in the `meta` plugin) documents this loop in f
 - **No baseline before implementing.** You can't tell improvement from drift without it.
 - **Compacting mid-debug.** You'll lose the failure trail. Compact at milestone boundaries only.
 - **Continuing a polluted session into a new phase.** Stale context corrupts the new phase's reasoning. Start fresh between phases.
-- **Reviewing AI code by reading the diff line-by-line yourself.** Use the 5 lenses + delegate to `change-review`. Line-by-line review by the main agent burns context.
+- **Reviewing AI code by reading the diff line-by-line yourself.** Use the 5 lenses + hand review ownership to `review-pr`. Line-by-line review by the main agent burns context.
 - **Skipping the spec and going straight to "let the agent figure it out".** Without completion criteria, the agent can't tell done from drift either.
 - **Delegating to worker without a self-contained prompt.** Worker starts fresh. If your prompt assumes context the worker doesn't have, you get garbage.
 - **Inventing a droid name that doesn't exist.** Stay in the Delegation Map. If no droid fits, use `worker`.

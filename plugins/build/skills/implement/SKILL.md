@@ -1,6 +1,6 @@
 ---
 name: implement
-version: 1.3.0
+version: 1.3.1
 description: |
   Build approved work. Routes explicit change sets to the implementer, new behavior through
   test-first execution, and small mechanical changes inline; every path records deviations
@@ -35,11 +35,16 @@ milestones, the main agent remains the program manager:
    in the current native checkout. Serialize units that could touch shared files.
 4. Before each delegation, read that unit's source artifact and pass its exact scope,
    acceptance criteria, boundaries, and targeted validator.
-5. After each return, inspect the actual diff and run the unit's validator from the parent
-   session. Record the command, exit status, and changed paths before marking the unit done.
-6. Run milestone gates at declared boundaries and the repository's canonical gate after the
-   final unit.
-7. Invoke `review-pr` only after every unit has evidence. The review must cover the complete
+5. Each independently changed unit runs exactly one targeted validator. The executor records
+   reusable validation evidence in a ledger containing: scope/content identity, command, exit
+   status, and changed paths. After each return, the parent inspects the actual diff and checks
+   that evidence before marking the unit done; the parent must not repeat a full or canonical
+   validator per unit.
+6. After all units are integrated, run exactly one integration/master canonical gate at the
+   program head, not per unit. Reuse same-scope valid evidence and run only the remaining
+   program-head validation needed for the integration gate.
+7. Invoke `review-pr` only after every unit has evidence and the integration gate completes.
+   `review-pr` owns all review fan-out. The review must cover the complete
    program diff and every changed or untracked implementation file.
 
 Never hand a multi-unit program to one implementer task. A subagent's completion report is
@@ -55,5 +60,6 @@ In every path, carry the Deviations contract from the `discovering-unknowns` ski
 
 ## Verification
 
-Finish with the `verification-loop` skill (or the repo's master gate) and report
-deviations alongside the changes.
+After all units are integrated, finish with the single program-head integration/master gate
+through the `verification-loop` skill (or the repo's master gate), reusing same-scope valid
+validation evidence. Report deviations alongside the changes.
