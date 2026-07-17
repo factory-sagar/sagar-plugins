@@ -182,7 +182,7 @@ If regressions appeared, decide: is the regression a real bug exposed by the new
 git add <source-file>
 git commit -m "feat(<scope>): minimal implementation for <behavior>
 
-GREEN: <N> tests passing, no regressions
+GREEN: targeted test or validator passing
 - <one-line summary of what was implemented>"
 ```
 
@@ -238,7 +238,7 @@ Deliverables:
 git add <source-file>
 git commit -m "refactor(<scope>): <what changed>
 
-GREEN: all tests still passing
+GREEN: targeted test or validator passing
 - <smell 1 addressed>
 - <smell 2 addressed>"
 ```
@@ -305,7 +305,8 @@ completion, run the full suite or integration gate once; do not repeat it per un
 
 1. Did I delegate Steps 2, 4, and (if applicable) 6 to a fresh `worker` rather than write inline?
 2. Did I verify the RED state by running the suite myself, not just trusting the worker?
-3. Did I verify GREEN by running the suite myself, including no regressions?
+3. Did I verify GREEN with the selected targeted test or validator, reserving full-suite or
+   integration claims for program completion?
 4. Did I confirm the implementation is minimal (no speculative methods/parameters/abstractions)?
 5. Are the RED/GREEN/REFACTOR commits all labeled in their messages?
 6. Did I recommend the after-loop chain (`verification-loop` → `review-pr` → `pr-describer` → `commit-message-writer`)?

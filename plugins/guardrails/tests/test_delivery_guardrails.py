@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -458,6 +459,240 @@ class ReviewBudgetTests(unittest.TestCase):
                             ],
                             "deny",
                         )
+
+    def test_hook_requires_a_deep_worker_stage_tag(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            self.run_hook(
+                {
+                    "hook_event_name": "UserPromptSubmit",
+                    "session_id": "untagged-deep-worker",
+                    "prompt": "Review the broad change deeply.",
+                },
+                state_dir,
+            )
+            output = self.run_hook(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "session_id": "untagged-deep-worker",
+                    "tool_name": "Task",
+                    "tool_input": {
+                        "subagent_type": "review-worker",
+                        "description": "Continue the deep review.",
+                    },
+                },
+                state_dir,
+            )
+
+        self.assertNotEqual(
+            output,
+            "",
+            "An untagged review-worker Task must receive a deny response.",
+        )
+        response = json.loads(output)
+        self.assertEqual(
+            response["hookSpecificOutput"]["permissionDecision"],
+            "deny",
+        )
+        self.assertIn(
+            "stage tag",
+            response["hookSpecificOutput"]["permissionDecisionReason"],
+        )
+
+    def test_hook_reserves_discovery_once_for_deep_workers(self):
+        description = "[review:deep:discovery] Discover applicable conventions"
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            self.run_hook(
+                {
+                    "hook_event_name": "UserPromptSubmit",
+                    "session_id": "deep-discovery",
+                    "prompt": "Review the broad change deeply.",
+                },
+                state_dir,
+            )
+            first_output = self.run_hook(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "session_id": "deep-discovery",
+                    "tool_name": "Task",
+                    "tool_input": {
+                        "subagent_type": "review-worker",
+                        "description": description,
+                    },
+                },
+                state_dir,
+            )
+            duplicate_output = self.run_hook(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "session_id": "deep-discovery",
+                    "tool_name": "Task",
+                    "tool_input": {
+                        "subagent_type": "review-worker",
+                        "description": description,
+                    },
+                },
+                state_dir,
+            )
+
+        self.assertEqual(
+            first_output,
+            "",
+            "Discovery must reserve its one deep-worker lifecycle slot.",
+        )
+        self.assertNotEqual(
+            duplicate_output,
+            "",
+            "A duplicate discovery Task must receive a deny response.",
+        )
+        duplicate = json.loads(duplicate_output)
+        self.assertEqual(
+            duplicate["hookSpecificOutput"]["permissionDecision"],
+            "deny",
+        )
+        self.assertIn(
+            "already used",
+            duplicate["hookSpecificOutput"]["permissionDecisionReason"],
+        )
+
+    def test_hook_allows_resumes_only_after_primary_with_a_resume_target(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            self.run_hook(
+                {
+                    "hook_event_name": "UserPromptSubmit",
+                    "session_id": "deep-resume",
+                    "prompt": "Review the broad change deeply.",
+                },
+                state_dir,
+            )
+            missing_primary_output = self.run_hook(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "session_id": "deep-resume",
+                    "tool_name": "Task",
+                    "tool_input": {
+                        "subagent_type": "review-worker",
+                        "description": "[review:deep:resume] Continue the review",
+                        "resume": "primary-task-id",
+                    },
+                },
+                state_dir,
+            )
+            self.assertNotEqual(
+                missing_primary_output,
+                "",
+                "A resume before the deep primary stage must receive a deny response.",
+            )
+            self.assertIn(
+                "primary",
+                json.loads(missing_primary_output)["hookSpecificOutput"][
+                    "permissionDecisionReason"
+                ],
+            )
+
+            self.assertEqual(
+                self.run_hook(
+                    {
+                        "hook_event_name": "PreToolUse",
+                        "session_id": "deep-resume",
+                        "tool_name": "Task",
+                        "tool_input": {
+                            "subagent_type": "review-worker",
+                            "description": "[review:deep:primary] Initialize review",
+                        },
+                    },
+                    state_dir,
+                ),
+                "",
+            )
+            missing_resume_output = self.run_hook(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "session_id": "deep-resume",
+                    "tool_name": "Task",
+                    "tool_input": {
+                        "subagent_type": "review-worker",
+                        "description": "[review:deep:resume] Continue the review",
+                    },
+                },
+                state_dir,
+            )
+            resumed_output = self.run_hook(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "session_id": "deep-resume",
+                    "tool_name": "Task",
+                    "tool_input": {
+                        "subagent_type": "review-worker",
+                        "description": "[review:deep:resume] Continue the review",
+                        "resume": "primary-task-id",
+                    },
+                },
+                state_dir,
+            )
+
+        missing_resume = json.loads(missing_resume_output)
+        self.assertEqual(
+            missing_resume["hookSpecificOutput"]["permissionDecision"],
+            "deny",
+        )
+        self.assertIn(
+            "resume",
+            missing_resume["hookSpecificOutput"]["permissionDecisionReason"],
+        )
+        self.assertEqual(
+            resumed_output,
+            "",
+            "A resumed primary pass with a resume target must not consume a new slot.",
+        )
+
+    def test_hook_accepts_the_final_filter_as_a_resumed_primary_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            self.run_hook(
+                {
+                    "hook_event_name": "UserPromptSubmit",
+                    "session_id": "deep-final-filter",
+                    "prompt": "Review the broad change deeply.",
+                },
+                state_dir,
+            )
+            self.assertEqual(
+                self.run_hook(
+                    {
+                        "hook_event_name": "PreToolUse",
+                        "session_id": "deep-final-filter",
+                        "tool_name": "Task",
+                        "tool_input": {
+                            "subagent_type": "review-worker",
+                            "description": "[review:deep:primary] Initialize review",
+                        },
+                    },
+                    state_dir,
+                ),
+                "",
+            )
+            output = self.run_hook(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "session_id": "deep-final-filter",
+                    "tool_name": "Task",
+                    "tool_input": {
+                        "subagent_type": "review-worker",
+                        "description": "[review:deep:resume] Run the final filter",
+                        "resume": "primary-task-id",
+                    },
+                },
+                state_dir,
+            )
+            state = load_review_state(
+                review_state_path(state_dir, "deep-final-filter")
+            )
+
+        self.assertEqual(output, "")
+        self.assertEqual(state["review_slots"], ["[review:deep:primary]"])
 
     def test_standard_family_rejects_duplicates_and_other_review_families(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1576,6 +1811,44 @@ class WorkflowPolicyContractTests(unittest.TestCase):
                     f"deep review documents a tagged review-worker {stage_tag} Task",
                 )
 
+    def test_deep_review_documents_the_strict_worker_lifecycle(self):
+        policy = self.policy_text("plugins/review/skills/review-pr/deep-review.md")
+        stages = re.findall(
+            r'(?is)Task\(\s*subagent_type:\s*"review-worker",\s*'
+            r'description:\s*"\[review:deep:([^\]]+)\]',
+            policy,
+        )
+        self.assertEqual(
+            stages.count("discovery"),
+            1,
+            "Deep review must reserve exactly one discovery Task lifecycle stage.",
+        )
+        self.assertIn(
+            "resume",
+            stages,
+            "Resumed primary passes and the final filter must use the resume stage.",
+        )
+        for stage in stages:
+            with self.subTest(stage=stage):
+                self.assertIn(
+                    stage,
+                    {
+                        "discovery",
+                        "primary",
+                        "retry:primary",
+                        "challenge",
+                        "retry:challenge",
+                        "resume",
+                    },
+                    "Every review-worker Task must use a strict deep lifecycle stage.",
+                )
+        self.assert_policy_matches(
+            "plugins/review/skills/review-pr/deep-review.md",
+            r'(?is)Final filter.*?Task\(\s*subagent_type:\s*"review-worker",\s*'
+            r'description:\s*"\[review:deep:resume\].*?resume:\s*<REVIEW_TASK_ID>',
+            "the final filter resumes the primary Task with the deep resume stage",
+        )
+
     def test_implementer_hands_review_ownership_to_review_pr(self):
         self.assert_policy_matches(
             "plugins/build/droids/implementer.md",
@@ -1726,12 +1999,45 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             "a live approval head change after completed normal review requires a fresh user review request",
         )
 
+    def test_approval_head_change_stops_comment_and_deep_review_procedures(self):
+        for relative_path in (
+            "plugins/review/skills/review-pr/fix-comments.md",
+            "plugins/review/skills/review-pr/deep-review.md",
+        ):
+            with self.subTest(relative_path=relative_path):
+                self.assert_policy_matches(
+                    relative_path,
+                    r"(?is)approval.*head.*(?:changes|differs).*stop.*"
+                    r"fresh user review request.*(?:never|do not).*rerun.*"
+                    r"(?:review|existing request)",
+                    "an approval-head change stops the request and requires fresh review authority",
+                )
+
     def test_tdd_workflow_uses_selected_targeted_command_at_each_checkpoint(self):
         self.assert_policy_matches(
             "plugins/practices/skills/tdd-workflow/SKILL.md",
             r"(?is)RED/GREEN/refactor checkpoints.*selected targeted command.*"
             r"(?:not|rather than).*broad suite",
             "RED, GREEN, and refactor checkpoints use the selected targeted command rather than a broad suite",
+        )
+
+    def test_tdd_checkpoint_templates_claim_only_targeted_verification(self):
+        policy = self.policy_text("plugins/practices/skills/tdd-workflow/SKILL.md")
+        self.assertNotRegex(
+            policy,
+            r"(?is)GREEN:.*(?:no regressions|all tests still passing)",
+            "TDD checkpoints must not claim program-level regression coverage.",
+        )
+        self.assert_policy_matches(
+            "plugins/practices/skills/tdd-workflow/SKILL.md",
+            r"(?is)GREEN:.*targeted (?:test|validator|verification)",
+            "GREEN checkpoint templates record only targeted verification",
+        )
+        self.assert_policy_matches(
+            "plugins/practices/skills/tdd-workflow/SKILL.md",
+            r"(?is)Self-Check.*targeted (?:test|validator|verification).*"
+            r"program completion",
+            "the TDD self-check reserves full-suite claims for program completion",
         )
 
     def test_public_plugin_readmes_hand_review_ownership_to_review_pr(self):

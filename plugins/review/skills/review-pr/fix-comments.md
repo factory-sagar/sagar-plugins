@@ -394,16 +394,17 @@ Approval is a separate authority. Run `gh pr review --approve` only when the ori
 approval authority. Run the approval gate only after comments mode reaches merge-ready.
 
 If approval is authorized, after comments mode reaches merge-ready, fetch the final live
-`headRefOid` and compare it with the last `reviewedHeadSha`. If they differ, rerun the normal
-review against that exact final head and capture it as `reviewedHeadSha`. Approval requires a
-reviewed final head; a prior different-head review never substitutes for it. Verify there are no
-unresolved findings or review threads, required CI is green for the current head SHA, and the PR
-body is current and still describes the PR. Compare `author.login` with `gh api user --jq .login`;
-never infer self-authorship from bot status. If the logins match or any approval gate fails, report
-approval as blocked and do not approve. As the final API operation immediately before approval,
-re-fetch the live `headRefOid` with no intervening tool or API call and require equality with
-`reviewedHeadSha`. If it changed, block approval pending a normal review of that exact new head,
-capture its reviewed SHA, and restart the approval gate. Otherwise:
+`headRefOid` and compare it with the last `reviewedHeadSha`. If the approval head changes or
+differs, stop and require a fresh user review request. Never rerun the review within the existing
+request. Approval requires a reviewed final head; a prior different-head review never substitutes
+for it. Verify there are no unresolved findings or review threads, required CI is green for the
+current head SHA, and the PR body is current and still describes the PR. Compare `author.login`
+with `gh api user --jq .login`; never infer self-authorship from bot status. If the logins match
+or any approval gate fails, report approval as blocked and do not approve. As the final API
+operation immediately before approval, re-fetch the live `headRefOid` with no intervening tool
+or API call and require equality with `reviewedHeadSha`. If the approval head changes or differs,
+stop and require a fresh user review request. Never rerun the review within the existing request.
+Otherwise:
 
 ```bash
 gh pr review <url> --approve --body "Review complete, required checks are green, and the PR is merge-ready."
