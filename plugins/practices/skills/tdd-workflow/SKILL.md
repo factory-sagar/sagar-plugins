@@ -55,7 +55,7 @@ Aim for **many unit, fewer integration, fewest E2E**. E2E covers critical paths 
 
 ## Procedure
 
-The loop has 7 steps. Repeat steps 2 through 5 as vertical slices: one behavior test or tightly related behavior cluster goes RED, then the smallest implementation goes GREEN, then the next slice starts. Do not write every test for the whole feature before any implementation unless the whole feature is genuinely one behavior. Run one targeted test or validator per unit independently changed by the loop; defer the full suite or integration gate to program completion. Steps 2, 4, and 6 (writing tests, writing implementation, refactoring) **should be delegated to a `worker`** with the prompts described below. Steps 1, 3, 5, and 7 (planning, commits, verification) are inline.
+The loop has 7 steps. Repeat steps 2 through 5 as vertical slices: one behavior test or tightly related behavior cluster goes RED, then the smallest implementation goes GREEN, then the next slice starts. Do not write every test for the whole feature before any implementation unless the whole feature is genuinely one behavior. At RED/GREEN/refactor checkpoints, use the selected targeted command rather than a broad suite; reserve the full suite or integration gate for program completion. Run one targeted test or validator per unit independently changed by the loop. Steps 2, 4, and 6 (writing tests, writing implementation, refactoring) **should be delegated to a `worker`** with the prompts described below. Steps 1, 3, 5, and 7 (planning, commits, verification) are inline.
 
 ### Step 1 — Write the user journey or behavior statement (inline)
 

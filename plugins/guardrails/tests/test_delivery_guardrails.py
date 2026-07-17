@@ -204,7 +204,8 @@ class ReviewBudgetTests(unittest.TestCase):
                 "tool_input": {
                     "subagent_type": "security",
                     "description": (
-                        "[review:standard:security] Inspect changed security paths"
+                        "[review:standard:security] [security:selected] "
+                        "Inspect changed security paths"
                     ),
                 },
             }
@@ -278,7 +279,8 @@ class ReviewBudgetTests(unittest.TestCase):
                     ),
                     (
                         "security",
-                        "[review:deep:security] Review security paths",
+                        "[review:deep:security] [security:selected] "
+                        "Review security paths",
                         "allow",
                     ),
                     (
@@ -454,6 +456,111 @@ class ReviewBudgetTests(unittest.TestCase):
         for result in results[:5]:
             self.assertIsNone(result)
         self.assertIsNotNone(results[5])
+
+    def test_final_round_two_blocks_all_round_one_stages_but_preserves_round_two_completion(self):
+        round_two_started = {
+            "final_slots": [
+                "[review:final:1:primary]",
+                "[review:final:1:challenge]",
+                "[review:final:1:security]",
+                "[review:final:2:primary]",
+            ]
+        }
+        for tag in (
+            "[review:final:1:primary]",
+            "[review:final:1:challenge]",
+            "[review:final:1:security]",
+            "[review:final:1:retry:primary]",
+            "[review:final:1:retry:challenge]",
+            "[review:final:1:retry:security]",
+        ):
+            with self.subTest(tag=tag):
+                violation = review_task_violation(
+                    f"{tag} Attempt a late round-one review",
+                    state=round_two_started,
+                )
+                self.assertIsNotNone(violation)
+
+        self.assertIsNone(
+            review_task_violation(
+                "[review:final:2:challenge] Complete the round-two challenge",
+                state=round_two_started,
+            )
+        )
+        self.assertIsNone(
+            review_task_violation(
+                "[review:final:2:security] [security:selected] "
+                "Complete the selected round-two security review",
+                state=round_two_started,
+            )
+        )
+        self.assertIsNone(
+            review_task_violation(
+                "[review:final:2:security] [security:selected] "
+                "Close the terminal final round",
+                state={
+                    "final_slots": [
+                        "[review:final:1:primary]",
+                        "[review:final:1:challenge]",
+                        "[review:final:1:security]",
+                        "[review:final:2:primary]",
+                        "[review:final:2:challenge]",
+                    ]
+                },
+            )
+        )
+
+    def test_hook_requires_selected_marker_for_every_budgeted_security_stage(self):
+        descriptions = (
+            "[review:standard:security] Review security paths",
+            "[review:deep:security] Review security paths",
+            "[review:final:1:security] Review security paths",
+            "[review:final:2:security] Review security paths",
+            "[review:standard:retry:security] Complete security evidence",
+            "[review:deep:retry:security] Complete security evidence",
+            "[review:final:1:retry:security] Complete security evidence",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            for index, description in enumerate(descriptions):
+                with self.subTest(description=description):
+                    session_id = f"security-marker-{index}"
+                    self.run_hook(
+                        {
+                            "hook_event_name": "UserPromptSubmit",
+                            "session_id": session_id,
+                            "prompt": "Review and fix the change.",
+                        },
+                        state_dir,
+                    )
+                    output = self.run_hook(
+                        {
+                            "hook_event_name": "PreToolUse",
+                            "session_id": session_id,
+                            "tool_name": "Task",
+                            "tool_input": {
+                                "subagent_type": "security",
+                                "description": description,
+                            },
+                        },
+                        state_dir,
+                    )
+
+                    self.assertNotEqual(
+                        output,
+                        "",
+                        "A budgeted security Task without [security:selected] "
+                        "must receive a deny response.",
+                    )
+                    response = json.loads(output)
+                    self.assertEqual(
+                        response["hookSpecificOutput"]["permissionDecision"],
+                        "deny",
+                    )
+                    self.assertIn(
+                        "[security:selected]",
+                        response["hookSpecificOutput"]["permissionDecisionReason"],
+                    )
 
     def test_selected_security_passes_allow_one_evidence_completion_retry(self):
         selected_security_passes = (
@@ -1280,6 +1387,22 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             "Final round two is decision-only and must not permit a retry.",
         )
 
+    def test_review_pr_requires_selected_marker_for_every_budgeted_security_task(self):
+        self.assert_policy_matches(
+            "plugins/review/skills/review-pr/SKILL.md",
+            r"(?is)every budgeted security Task.*\[security:selected\].*"
+            r":security",
+            "every budgeted security Task pairs [security:selected] with its :security stage tag",
+        )
+
+    def test_documented_security_task_templates_include_selected_marker(self):
+        self.assert_policy_matches(
+            "plugins/review/skills/review-pr/deep-review.md",
+            r'(?is)Task\(\s*subagent_type:\s*"security",\s*'
+            r'description:\s*"\[review:standard:security\]\s+\[security:selected\]',
+            "documented security Task templates include [security:selected] after the stage tag",
+        )
+
     def test_deep_review_tags_light_tier_security_with_standard_security_stage(self):
         self.assert_policy_matches(
             "plugins/review/skills/review-pr/deep-review.md",
@@ -1355,6 +1478,31 @@ class WorkflowPolicyContractTests(unittest.TestCase):
                     ),
                 )
 
+    def test_debugger_and_prompt_optimizer_route_security_review_followups_through_review_pr(self):
+        for relative_path in (
+            "plugins/investigation/droids/debugger.md",
+            "plugins/meta/droids/prompt-optimizer.md",
+        ):
+            with self.subTest(relative_path=relative_path):
+                policy = self.policy_text(relative_path)
+                self.assertRegex(
+                    policy,
+                    r"(?is)security-shaped.*hand.*review ownership.*review-pr",
+                    msg=(
+                        f"{relative_path} must hand security review follow-up "
+                        "ownership to review-pr."
+                    ),
+                )
+                self.assertNotRegex(
+                    policy,
+                    r"(?im)^-\s+.*security-shaped.*(?:→|->)\s*"
+                    r"(?:flag|delegate|hand).*security\b",
+                    msg=(
+                        f"{relative_path} must not direct security-shaped review "
+                        "follow-up to security."
+                    ),
+                )
+
     def test_review_pr_blocks_round_two_findings_before_edits_or_more_review(self):
         self.assert_policy_matches(
             "plugins/review/skills/review-pr/SKILL.md",
@@ -1382,6 +1530,35 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             "plugins/review/droids/change-review.md",
             r"(?is)findings?.*cannot authorize.*(?:re-?spec|architecture expansion)",
             "findings cannot authorize a respec or architecture expansion",
+        )
+
+    def test_review_pr_reuses_current_head_validation_evidence(self):
+        self.assert_policy_matches(
+            "plugins/review/skills/review-pr/SKILL.md",
+            r"(?is)reuse.*valid current-head validation evidence",
+            "valid current-head validation evidence is reused",
+        )
+
+    def test_review_pr_runs_only_missing_ci_parity_validation_commands(self):
+        self.assert_policy_matches(
+            "plugins/review/skills/review-pr/SKILL.md",
+            r"(?is)run only.*missing.*CI-parity command",
+            "only CI-parity commands missing from reusable evidence are run",
+        )
+
+    def test_review_pr_requires_fresh_targeted_and_integration_validation_after_head_change(self):
+        self.assert_policy_matches(
+            "plugins/review/skills/review-pr/SKILL.md",
+            r"(?is)head-changing correction.*fresh targeted validation.*fresh integration",
+            "a head-changing correction receives fresh targeted and integration validation",
+        )
+
+    def test_tdd_workflow_uses_selected_targeted_command_at_each_checkpoint(self):
+        self.assert_policy_matches(
+            "plugins/practices/skills/tdd-workflow/SKILL.md",
+            r"(?is)RED/GREEN/refactor checkpoints.*selected targeted command.*"
+            r"(?:not|rather than).*broad suite",
+            "RED, GREEN, and refactor checkpoints use the selected targeted command rather than a broad suite",
         )
 
     def test_public_plugin_readmes_hand_review_ownership_to_review_pr(self):

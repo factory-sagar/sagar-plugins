@@ -116,7 +116,7 @@ Task(subagent_type: "change-review", description: "[review:standard] Review chan
   Every finding carries a [P<n>·<conf>] label and a path:line anchor. Read-only; do not edit.")
 
 # only if risk signals present:
-Task(subagent_type: "security", description: "[review:standard:security] Security review change scope",
+Task(subagent_type: "security", description: "[review:standard:security] [security:selected] Security review change scope",
   prompt: "Security-review <scope> through STRIDE/OWASP lenses. Return findings with severity,
   confidence, attack path, and path:line anchors. Read-only; do not edit.")
 ```

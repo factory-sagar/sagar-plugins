@@ -70,7 +70,7 @@ If any answer is no, fix it before returning.
 ## Cross-Droid Hand-off
 
 - Fix plan ready → `implementer`. Regression pin → `test-engineer`.
-- Root cause is security-shaped (injection, authz bypass, secret exposure) → flag for `security` immediately; finish only the reliability analysis.
+- A security-shaped root cause (injection, authz bypass, secret exposure) → hand review ownership to `review-pr`; finish only the reliability analysis.
 - Defect sits in a dependency → version + changelog/advisory research goes to `deep-research`.
 - Cause is architectural (the design guarantees the failure) → `deep-understanding` for the structural picture; your fix plan then covers the tactical stopgap only.
 
@@ -142,5 +142,5 @@ Use clean markdown.
 ## Hand-off
 - To `implementer`: <fix plan above / `none`>
 - To `test-engineer`: <pin-it test above / `none`>
-- To `security`: <items if vulnerability-shaped, else `none`>
+- To `review-pr`: <security review follow-up if vulnerability-shaped, else `none`>
 - To `deep-research` / `deep-understanding`: <items, else `none`>

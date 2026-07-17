@@ -202,6 +202,13 @@ def review_task_violation(
     tag = match.group(1)
     round_text = match.group(2)
     slots = review_slots(state)
+    if tag.startswith("[review:final:1:") and any(
+        slot.startswith("[review:final:2:") for slot in slots
+    ):
+        return (
+            "Final round 2 has already started; do not reserve any further "
+            "final round 1 review stages."
+        )
     selected_round_two_security = (
         tag == "[review:final:2:security]" and SELECTED_SECURITY.search(description)
     )
@@ -347,6 +354,16 @@ def main() -> int:
     if match is not None:
         tag = match.group(1)
         is_security_tag = tag.endswith(":security]")
+        if (
+            subagent_type == "security"
+            and is_security_tag
+            and SELECTED_SECURITY.search(description) is None
+        ):
+            deny(
+                "Every budgeted security Task description must include "
+                "`[security:selected]`."
+            )
+            return 0
         if subagent_type == "security" and not is_security_tag:
             deny("A security Task may use only `:security` review stage tags.")
             return 0

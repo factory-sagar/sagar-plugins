@@ -122,9 +122,9 @@ When an approved program exists, create a coverage ledger with one row per unit:
 
 Read governing `AGENTS.md`, README, manifest, or registry files for every changed directory.
 Build a CI-parity matrix from required workflow jobs and note which local command proves each
-job or why it is remote-only. Run every safe local command and record its exit status. A
-missing result or remote-only reason leaves the matrix incomplete and blocks a clean
-assessment.
+job or why it is remote-only. Reuse valid current-head validation evidence and run only the
+missing CI-parity commands, recording each exit status. A missing result or remote-only reason
+leaves the matrix incomplete and blocks a clean assessment.
 
 If implementation and stated intent disagree, treat intent as unresolved evidence, not as
 permission to rationalize the code.
@@ -141,8 +141,7 @@ its independent passes over the shared notes format, then reconcile them. For br
 high-consequence mutating reviews, final round 1 is the independent broad mutating review on the
 frozen head, without a preliminary deep pair for that same head.
 
-Every `change-review` Task description, and every budgeted `security` Task description, starts
-with exactly one stage tag:
+Every `change-review` Task description starts with exactly one stage tag. Every budgeted security Task includes `[security:selected]` and its `:security` stage tag:
 
 - `[review:standard]` for a single ordinary `change-review` pass;
 - `[review:standard:retry]` for its one evidence-completion retry;
@@ -265,13 +264,14 @@ there are no changes, use the existing committed current HEAD. Never create an e
    evidence coverage.
 4. Reconcile both final-head results into one finding set.
 
-If final round 1 reconciliation produces an in-scope fix, apply it, run targeted verification for
-the correction plus one fresh integration gate for the new head, and commit the fix. Freeze the
-new base and committed head SHAs, then run round 2 against the new head. A final-head gate passes
-only when all required independent final reviewers are complete, evidence-covered, reconciled,
-and no resulting fix changes the committed local head. Record that head as `finalReviewedHeadSha`
-and carry it through every push and ship handoff. `fix` mode stops with that final reviewed local
-commit. `comments`, `ship`, and `land` may push only after the gate passes.
+If final round 1 reconciliation produces an in-scope, head-changing correction, apply it, run
+fresh targeted validation for the correction plus one fresh integration gate for the new head,
+and commit the fix. Freeze the new base and committed head SHAs, then run round 2 against the new
+head. A final-head gate passes only when all required independent final reviewers are complete,
+evidence-covered, reconciled, and no resulting fix changes the committed local head. Record that
+head as `finalReviewedHeadSha` and carry it through every push and ship handoff. `fix` mode stops
+with that final reviewed local commit. `comments`, `ship`, and `land` may push only after the gate
+passes.
 
 **Correction budget:** execute the final-head gate at most twice per user request. The first
 execution may produce one head-changing correction and one repeated gate. Final round 2 is

@@ -96,7 +96,7 @@ If any answer is no, fix before returning.
 
 When a recommendation fits another droid, flag it under Hand-off and stop. In this marketplace `security` and `doc-generator` are shipped siblings; when auditing another marketplace, only name a droid if it actually exists (verify with `LS` if unsure).
 
-- The prompt has a security-shaped behavior gap (e.g., insecure tool policy that lets the agent leak secrets) → flag for `security`.
+- The prompt has a security-shaped behavior gap (e.g., insecure tool policy that lets the agent leak secrets) → hand review ownership to `review-pr`.
 - The audit raises **structural** questions (which droid owns this job? should this droid even exist? does this overlap another droid's role?) → flag for `deep-understanding`. Structural decisions are not your call.
 - The recommendations are too large for a minimal-edit pass → flag for `deep-understanding`.
 - The parent should apply the edits → suggest delegating to `doc-generator`, which has Edit / ApplyPatch tools, or applying manually.
@@ -156,7 +156,7 @@ If none: `No material issues found.`
 - Hand-off targets exist: <pass | issues>
 
 ## Hand-off
-- To `security`: <items if any, otherwise `none`>
+- To `review-pr`: <security review follow-up if any, otherwise `none`>
 - To `deep-understanding`: <items if any, otherwise `none`>
 - Apply via `doc-generator`: <yes / no — if yes, which findings>
 
