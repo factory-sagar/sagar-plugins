@@ -16,9 +16,11 @@ from typing import Iterator
 
 STATE_VERSION = 1
 REVIEW_TAG = re.compile(
-    r"^(\[review:(?:standard(?::(?:retry|security))?|deep:(?:primary|challenge|security)|"
-    r"final:(\d+):(primary|challenge|security))\])(?:\s|$)"
+    r"^(\[review:(?:standard(?::(?:retry(?::security)?|security))?|"
+    r"deep:(?:primary|challenge|security|retry:security)|"
+    r"final:(\d+):(?:primary|challenge|security|retry:security))\])(?:\s|$)"
 )
+SELECTED_SECURITY = re.compile(r"\[security:selected\]")
 FINAL_HEAD_HINT = re.compile(
     r"\b(?:final|frozen|current)\b.{0,48}\b(?:head|branch|diff)\b",
     re.IGNORECASE,
@@ -35,11 +37,18 @@ STANDARD_SLOTS = {
     "[review:standard]",
     "[review:standard:retry]",
     "[review:standard:security]",
+    "[review:standard:retry:security]",
 }
 DEEP_SLOTS = {
     "[review:deep:primary]",
     "[review:deep:challenge]",
     "[review:deep:security]",
+    "[review:deep:retry:security]",
+}
+SECURITY_RETRY_PREREQUISITES = {
+    "[review:standard:retry:security]": "[review:standard:security]",
+    "[review:deep:retry:security]": "[review:deep:security]",
+    "[review:final:1:retry:security]": "[review:final:1:security]",
 }
 
 
@@ -177,15 +186,18 @@ def review_task_violation(
     if match is None:
         return (
             "Every change-review Task description must start with a review stage tag: "
-            "`[review:standard]`, `[review:standard:retry|security]`, "
-            "`[review:deep:primary|challenge|security]`, or "
-            "`[review:final:<1|2>:primary|challenge|security]`."
+            "`[review:standard]`, `[review:standard:retry|security|retry:security]`, "
+            "`[review:deep:primary|challenge|security|retry:security]`, or "
+            "`[review:final:<1|2>:primary|challenge|security|retry:security]`."
         )
 
     tag = match.group(1)
     round_text = match.group(2)
     slots = review_slots(state)
-    if ROUND_TWO_TERMINAL_SLOTS.issubset(slots):
+    selected_round_two_security = (
+        tag == "[review:final:2:security]" and SELECTED_SECURITY.search(description)
+    )
+    if ROUND_TWO_TERMINAL_SLOTS.issubset(slots) and not selected_round_two_security:
         return (
             "The final-head gate may run at most two rounds per user request. "
             "Stop as blocked and request a new user decision."
@@ -213,6 +225,12 @@ def review_task_violation(
                 "Complete the standard review before using the "
                 "`[review:standard:retry]` slot."
             )
+        prerequisite = SECURITY_RETRY_PREREQUISITES.get(tag)
+        if prerequisite is not None and prerequisite not in slots:
+            return (
+                f"Complete the selected security review {prerequisite} before using "
+                f"the {tag} evidence-completion retry slot."
+            )
         return None
 
     round_number = int(round_text)
@@ -221,9 +239,17 @@ def review_task_violation(
             "The final-head gate may run at most two rounds per user request. "
             "Stop as blocked and request a new user decision."
         )
+    if round_number == 2 and tag == "[review:final:2:retry:security]":
+        return "Final round 2 is decision-only and does not allow security evidence retries."
 
     if round_number == 2 and not ROUND_ONE_SLOTS.issubset(slots):
         return "Complete round 1 primary and challenge reviews before starting round 2."
+    prerequisite = SECURITY_RETRY_PREREQUISITES.get(tag)
+    if prerequisite is not None and prerequisite not in slots:
+        return (
+            f"Complete the selected security review {prerequisite} before using "
+            f"the {tag} evidence-completion retry slot."
+        )
     return None
 
 
@@ -303,10 +329,21 @@ def main() -> int:
     tool_input = hook_input.get("tool_input") or {}
     subagent_type = tool_input.get("subagent_type")
     description = str(tool_input.get("description") or "")
-    if subagent_type != "change-review" and (
-        subagent_type != "security" or REVIEW_TAG.match(description) is None
-    ):
+    match = REVIEW_TAG.match(description)
+    if subagent_type not in {"change-review", "security"}:
         return 0
+    if subagent_type == "security" and match is None:
+        deny("Every security Task must start with a `:security` review stage tag.")
+        return 0
+    if match is not None:
+        tag = match.group(1)
+        is_security_tag = tag.endswith(":security]")
+        if subagent_type == "security" and not is_security_tag:
+            deny("A security Task may use only `:security` review stage tags.")
+            return 0
+        if subagent_type == "change-review" and is_security_tag:
+            deny("A change-review Task may not use `:security` review stage tags.")
+            return 0
     violation = reserve_review_call(
         state_dir=state_directory(),
         session_id=session_id,

@@ -189,7 +189,7 @@ class ReviewBudgetTests(unittest.TestCase):
         for result in results[4:]:
             self.assertIn("already reserved for the standard family", result)
 
-    def test_hook_reserves_tagged_standard_security_but_allows_untagged_security(self):
+    def test_hook_reserves_tagged_standard_security_and_rejects_untagged_security(self):
         with tempfile.TemporaryDirectory() as directory:
             state_dir = Path(directory)
             user_prompt = {
@@ -241,7 +241,94 @@ class ReviewBudgetTests(unittest.TestCase):
                 "already used",
                 duplicate["hookSpecificOutput"]["permissionDecisionReason"],
             )
-            self.assertEqual(self.run_hook(untagged_security, state_dir), "")
+            untagged_output = self.run_hook(untagged_security, state_dir)
+            self.assertNotEqual(
+                untagged_output,
+                "",
+                "An untagged security Task must receive a deny response.",
+            )
+            untagged = json.loads(untagged_output)
+            self.assertEqual(
+                untagged["hookSpecificOutput"]["permissionDecision"],
+                "deny",
+            )
+            self.assertIn(
+                "security",
+                untagged["hookSpecificOutput"]["permissionDecisionReason"],
+            )
+
+    def test_hook_binds_review_stage_tags_to_reviewer_types(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            for index, (
+                subagent_type,
+                description,
+                expected_decision,
+            ) in enumerate(
+                (
+                    (
+                        "security",
+                        "[review:standard] Review changed files",
+                        "deny",
+                    ),
+                    (
+                        "change-review",
+                        "[review:standard:security] Review security paths",
+                        "deny",
+                    ),
+                    (
+                        "security",
+                        "[review:deep:security] Review security paths",
+                        "allow",
+                    ),
+                    (
+                        "change-review",
+                        "[review:deep:challenge] Challenge broad changes",
+                        "allow",
+                    ),
+                )
+            ):
+                with self.subTest(
+                    subagent_type=subagent_type,
+                    description=description,
+                ):
+                    session_id = f"session-{index}"
+                    self.run_hook(
+                        {
+                            "hook_event_name": "UserPromptSubmit",
+                            "session_id": session_id,
+                            "prompt": "Review and fix the change.",
+                        },
+                        state_dir,
+                    )
+                    output = self.run_hook(
+                        {
+                            "hook_event_name": "PreToolUse",
+                            "session_id": session_id,
+                            "tool_name": "Task",
+                            "tool_input": {
+                                "subagent_type": subagent_type,
+                                "description": description,
+                            },
+                        },
+                        state_dir,
+                    )
+
+                    if expected_decision == "allow":
+                        self.assertEqual(output, "")
+                    else:
+                        self.assertNotEqual(output, "")
+                        response = json.loads(output)
+                        self.assertEqual(
+                            response["hookSpecificOutput"]["permissionDecision"],
+                            "deny",
+                        )
+                        self.assertIn(
+                            subagent_type,
+                            response["hookSpecificOutput"][
+                                "permissionDecisionReason"
+                            ],
+                        )
 
     def test_standard_family_rejects_duplicates_and_other_review_families(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -346,6 +433,84 @@ class ReviewBudgetTests(unittest.TestCase):
             self.assertIsNotNone(result)
             if result is not None:
                 self.assertIn("at most two", result)
+
+    def test_final_round_two_reserves_selected_security_after_primary_and_challenge(self):
+        with tempfile.TemporaryDirectory() as directory:
+            results = self.reserve_review_calls(
+                Path(directory),
+                (
+                    "[review:final:1:primary] Review frozen head",
+                    "[review:final:1:challenge] Challenge frozen head",
+                    "[review:final:2:primary] Review corrected head",
+                    "[review:final:2:challenge] Challenge corrected head",
+                    (
+                        "[review:final:2:security] [security:selected] "
+                        "Review corrected security paths"
+                    ),
+                    "[review:standard] Start an unrelated review",
+                ),
+            )
+
+        for result in results[:5]:
+            self.assertIsNone(result)
+        self.assertIsNotNone(results[5])
+
+    def test_selected_security_passes_allow_one_evidence_completion_retry(self):
+        selected_security_passes = (
+            (
+                "[review:standard:security] Review security paths",
+                "[review:standard:retry:security] Complete missing evidence",
+            ),
+            (
+                "[review:deep:security] Review security-sensitive paths",
+                "[review:deep:retry:security] Complete missing evidence",
+            ),
+            (
+                "[review:final:1:primary] Review frozen head",
+                "[review:final:1:challenge] Challenge frozen head",
+                "[review:final:1:security] Review security paths",
+                (
+                    "[review:final:1:retry:security] "
+                    "Complete missing security evidence"
+                ),
+            ),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            for index, descriptions in enumerate(selected_security_passes):
+                with self.subTest(descriptions=descriptions):
+                    test_state_dir = state_dir / str(index)
+                    test_state_dir.mkdir()
+                    results = self.reserve_review_calls(test_state_dir, descriptions)
+
+                    for result in results:
+                        self.assertIsNone(result)
+                    self.assertIn(
+                        "already used",
+                        reserve_review_call(
+                            state_dir=test_state_dir,
+                            session_id="session-1",
+                            description=descriptions[-1],
+                        ),
+                    )
+
+    def test_final_round_two_rejects_security_evidence_retries_as_decision_only(self):
+        violation = review_task_violation(
+            (
+                "[review:final:2:retry:security] "
+                "Complete missing final security evidence"
+            ),
+            state={
+                "final_slots": [
+                    "[review:final:1:primary]",
+                    "[review:final:1:challenge]",
+                ]
+            },
+        )
+
+        self.assertIsNotNone(violation)
+        if violation is not None:
+            self.assertIn("decision-only", violation)
 
     def test_duplicate_prompt_delivery_preserves_budget_state(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -955,6 +1120,20 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             "the canonical gate runs once at the program head rather than per unit",
         )
 
+    def test_tdd_workflow_requires_one_targeted_test_per_unit(self):
+        self.assert_policy_matches(
+            "plugins/practices/skills/tdd-workflow/SKILL.md",
+            r"(?is)one targeted test.*per unit",
+            "each unit receives one targeted test before implementation",
+        )
+
+    def test_tdd_workflow_defers_full_suite_to_program_completion(self):
+        self.assert_policy_matches(
+            "plugins/practices/skills/tdd-workflow/SKILL.md",
+            r"(?is)full suite.*program completion",
+            "the full suite or integration gate is reserved for program completion",
+        )
+
     def test_verification_loop_reuses_valid_validation_evidence(self):
         self.assert_policy_matches(
             "plugins/practices/skills/verification-loop/SKILL.md",
@@ -1018,6 +1197,33 @@ class WorkflowPolicyContractTests(unittest.TestCase):
                         "review orchestration cannot drift from guardrail policy."
                     ),
                 )
+
+    def test_review_pr_documents_bounded_security_evidence_retries(self):
+        policy = self.policy_text("plugins/review/skills/review-pr/SKILL.md")
+        self.assertIn(
+            "[security:selected]",
+            policy,
+            "review-pr must mark selected final-round security before reserving it.",
+        )
+        for stage_tag in (
+            "[review:standard:retry:security]",
+            "[review:deep:retry:security]",
+            "[review:final:1:retry:security]",
+        ):
+            with self.subTest(stage_tag=stage_tag):
+                self.assertIn(
+                    stage_tag,
+                    policy,
+                    msg=(
+                        "review-pr must document the one evidence-completion retry "
+                        "for each selected security pass."
+                    ),
+                )
+        self.assertNotIn(
+            "[review:final:2:retry:security]",
+            policy,
+            "Final round two is decision-only and must not permit a retry.",
+        )
 
     def test_deep_review_tags_light_tier_security_with_standard_security_stage(self):
         self.assert_policy_matches(
@@ -1090,6 +1296,30 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             r"(?is)findings?.*cannot authorize.*(?:re-?spec|architecture expansion)",
             "findings cannot authorize a respec or architecture expansion",
         )
+
+    def test_public_plugin_readmes_hand_review_ownership_to_review_pr(self):
+        for relative_path in (
+            "plugins/build/README.md",
+            "plugins/investigation/README.md",
+            "plugins/practices/README.md",
+            "plugins/review/README.md",
+            "plugins/synthesis/README.md",
+        ):
+            with self.subTest(relative_path=relative_path):
+                self.assert_policy_matches(
+                    relative_path,
+                    r"(?is)hand.*review ownership.*review-pr",
+                    "review ownership is handed to review-pr",
+                )
+                self.assertNotRegex(
+                    self.policy_text(relative_path),
+                    r"(?im)(?:hand|delegate|run|invoke|recommend)[^\n]{0,100}"
+                    r"(?:change-review|security)",
+                    msg=(
+                        f"{relative_path} must not hand review work directly to "
+                        "change-review or security."
+                    ),
+                )
 
 
 if __name__ == "__main__":

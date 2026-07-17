@@ -146,12 +146,16 @@ with exactly one stage tag:
 
 - `[review:standard]` for a single ordinary `change-review` pass;
 - `[review:standard:retry]` for its one evidence-completion retry;
-- `[review:standard:security]` for the risk-selected security pass;
+- `[review:standard:security]` for the `[security:selected]` risk-selected security pass, plus
+  `[review:standard:retry:security]` for its one evidence-completion retry;
 - `[review:deep:primary]` and `[review:deep:challenge]` for independent non-final deep
-  `change-review` passes, plus `[review:deep:security]` for deep security;
+  `change-review` passes, plus `[review:deep:security]` for `[security:selected]` deep security
+  and `[review:deep:retry:security]` for its one evidence-completion retry;
 - `[review:final:<round>:primary]` and `[review:final:<round>:challenge]` for the two frozen-head
-  reviewers, plus `[review:final:<round>:security]` when security is selected, where `<round>` is
-  `1` or `2`.
+  reviewers, plus `[review:final:<round>:security]` when `[security:selected]` security is
+  selected. Final round 1 permits `[review:final:1:retry:security]` for that pass's one
+  evidence-completion retry; final round 2 is decision-only and permits no security retry. In all
+  cases, `<round>` is `1` or `2`.
 
 The guardrails plugin enforces these tags when installed. Never disguise a frozen/current/final
 head review as `standard` or `deep`, and never reuse a final-head slot.
@@ -175,8 +179,10 @@ Transport success is not review success. Apply semantic acceptance by reviewer t
   completed review outcome when those requirements are met; reconcile its blocking findings.
 
 Retry once only for a refusal, inability to complete the pass, missing required native fields, or
-incomplete evidence. If the retry remains incomplete, stop the workflow and report it blocked; do
-not ship or land. The `review-worker` contract does not apply to `change-review` or `security`.
+incomplete evidence. A `[security:selected]` standard, deep, or final-round-one security pass
+uses its stage-specific security retry tag above; final round two remains decision-only and never
+retries. If the retry remains incomplete, stop the workflow and report it blocked; do not ship or
+land. The `review-worker` contract does not apply to `change-review` or `security`.
 
 Every reviewer prompt must include the tracked diff scope and the explicit absolute path list
 for program-created untracked files. Require each untracked file to be read and entered in the
@@ -247,9 +253,9 @@ there are no changes, use the existing committed current HEAD. Never create an e
    `[review:final:2:challenge]`. Do not use `review-worker` for this gate. The primary performs
    the full selected-lens final review. The challenge focuses on ownership, transitions, rule
    interaction, completeness, tests, metadata, and CI parity without seeing the first result.
-   When security is selected, spawn one fresh, independent `[review:final:<round>:security]`
-   context in the same round. Give every final-round reviewer the complete changed-file list and
-   applicable untracked-file accounting.
+   When security is selected, spawn one fresh, independent
+   `[review:final:<round>:security] [security:selected]` context in the same round. Give every
+   final-round reviewer the complete changed-file list and applicable untracked-file accounting.
 3. Require both `change-review` contexts, plus stage-matched security when selected, to inspect
    the frozen final head and satisfy their respective semantic acceptance and selected-lens
    evidence coverage.

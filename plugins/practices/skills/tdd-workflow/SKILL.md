@@ -55,7 +55,7 @@ Aim for **many unit, fewer integration, fewest E2E**. E2E covers critical paths 
 
 ## Procedure
 
-The loop has 7 steps. Repeat steps 2 through 5 as vertical slices: one behavior test or tightly related behavior cluster goes RED, then the smallest implementation goes GREEN, then the next slice starts. Do not write every test for the whole feature before any implementation unless the whole feature is genuinely one behavior. Steps 2, 4, and 6 (writing tests, writing implementation, refactoring) **should be delegated to a `worker`** with the prompts described below. Steps 1, 3, 5, and 7 (planning, commits, verification) are inline.
+The loop has 7 steps. Repeat steps 2 through 5 as vertical slices: one behavior test or tightly related behavior cluster goes RED, then the smallest implementation goes GREEN, then the next slice starts. Do not write every test for the whole feature before any implementation unless the whole feature is genuinely one behavior. Run one targeted test or validator per unit independently changed by the loop; defer the full suite or integration gate to program completion. Steps 2, 4, and 6 (writing tests, writing implementation, refactoring) **should be delegated to a `worker`** with the prompts described below. Steps 1, 3, 5, and 7 (planning, commits, verification) are inline.
 
 ### Step 1 — Write the user journey or behavior statement (inline)
 
@@ -159,19 +159,18 @@ Requirements:
 - Make ALL the failing tests pass.
 - Do NOT modify the tests.
 - Do NOT add functionality the tests don't require (no speculative generality, no extra error handling for cases not asserted).
-- Run the suite after your implementation and confirm all new tests are GREEN AND no existing tests regressed.
+- Run the targeted test or validator after your implementation and confirm all new tests are GREEN.
 - Deviations contract: if the code contradicts a detail of this plan but the goal stands, take the conservative option and log it under a "Deviations" heading (plan / territory evidence / chose / impact). If the contradiction breaks the plan's premise, STOP and report instead of improvising. Never deviate silently.
 
 Deliverables:
 - The implementation file content.
-- Confirmation that the full test suite is GREEN.
+- Confirmation that the targeted test or validator is GREEN.
 - Deviations log (or "Deviations: none").
 - Note any places where you were tempted to over-engineer but resisted.
 ```
 
-After the worker returns, **run the full suite yourself** to verify:
+After the worker returns, **run the targeted test or validator yourself** to verify:
 - All new tests are GREEN.
-- No existing tests regressed.
 - The implementation is genuinely minimal (no speculative methods, parameters, or abstractions).
 - The Deviations log is present; carry it forward — it feeds `pr-describer` and the GREEN commit body.
 
@@ -220,7 +219,8 @@ Smells to address:
 - <specific smell 2>
 
 Constraints:
-- Behavior cannot change. Run the suite after each change; if it goes RED, revert that change.
+- Behavior cannot change. Run the targeted test or validator after each change; if it goes RED,
+  revert that change.
 - No new abstractions unless the refactor explicitly requires it.
 - Apply the project's coding-standards (KISS, DRY only when same-reason-to-change, immutability defaults, descriptive naming).
 
@@ -245,7 +245,8 @@ GREEN: all tests still passing
 
 ## After the Loop
 
-Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready**. Hand off:
+Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready**. At program
+completion, run the full suite or integration gate once; do not repeat it per unit. Then hand off:
 
 1. **Run `verification-loop`** (skill, inline): build / type-check / lint / full suite with coverage. Address any gaps.
 2. **Hand review ownership to `review-pr`**. It selects correctness and risk-matched security review stages for the diff.

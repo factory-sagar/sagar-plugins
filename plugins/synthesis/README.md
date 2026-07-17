@@ -29,7 +29,7 @@ droid plugin install synthesis@sagar-plugins
 
 ## Related plugins
 
-- **[`review`](../review/)**: run `change-review` (and optionally `security`) on the diff before invoking `pr-describer`; the PR body notes any reviewer hand-offs.
+- **[`review`](../review/)**: hand review ownership to `review-pr` before invoking `pr-describer`; the PR body notes any reviewer hand-offs.
 - **[`investigation`](../investigation/)**: `pr-describer` flags architectural questions for `deep-understanding`.
 
 Cross-plugin hand-offs are naming suggestions. If you haven't installed the companion plugin, the hand-off is a no-op recommendation, not an error.
