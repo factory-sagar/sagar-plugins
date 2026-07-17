@@ -321,12 +321,13 @@ one.
 
 ### Approval gate
 
-Run this gate only when the original request uses explicit approval authority. Capture the
-`reviewedHeadSha` from the PR's `headRefOid` after the normal review completes. For explicit
-approval combined with `comments`, `ship`, or `land`, wait until that mode is merge-ready, fetch
-the final live `headRefOid`, and compare it with the last `reviewedHeadSha`. If they differ,
-rerun the normal review against that exact final head and capture it as `reviewedHeadSha`.
-Approval requires a reviewed final head; a prior different-head review never substitutes for it.
+Run this gate only when the original request uses explicit approval authority. After the completed normal review,
+capture `reviewedHeadSha` from the PR's `headRefOid`. For explicit approval
+combined with `comments`, `ship`, or `land`, wait until that mode is merge-ready, fetch the final
+live head (`headRefOid`), and compare it with the last `reviewedHeadSha`. If it differs, stop
+approval and require a fresh user review request. Do not launch a new review stage or reuse an
+existing review slot. Approval requires a reviewed final head; a prior different-head review never
+substitutes for it.
 
 Before the final live-head comparison, verify against the live PR:
 
@@ -338,8 +339,8 @@ Before the final live-head comparison, verify against the live PR:
 
 If any of these gates fails, report approval as blocked and do not approve. As the final API
 operation immediately before approval, re-fetch the live `headRefOid` and require it to equal
-`reviewedHeadSha`, with no intervening tool or API call. If it changed, block approval pending a
-normal review of that exact new head; capture its reviewed SHA and restart the approval gate.
+`reviewedHeadSha`, with no intervening tool or API call. If it changed, stop approval and require
+a fresh user review request; do not launch a new review stage or reuse an existing review slot.
 Otherwise, the next operation is:
 
 ```bash

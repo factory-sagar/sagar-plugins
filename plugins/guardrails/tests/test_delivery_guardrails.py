@@ -286,7 +286,7 @@ class ReviewBudgetTests(unittest.TestCase):
                     (
                         "change-review",
                         "[review:deep:challenge] Challenge broad changes",
-                        "allow",
+                        "deny",
                     ),
                 )
             ):
@@ -330,6 +330,133 @@ class ReviewBudgetTests(unittest.TestCase):
                             response["hookSpecificOutput"][
                                 "permissionDecisionReason"
                             ],
+                        )
+
+    def test_hook_reserves_deep_worker_primary_challenge_and_prerequisite_retries(self):
+        descriptions = (
+            "[review:deep:primary] Run the deep primary pass",
+            "[review:deep:retry:primary] Complete primary evidence",
+            "[review:deep:challenge] Run the independent challenge pass",
+            "[review:deep:retry:challenge] Complete challenge evidence",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            self.run_hook(
+                {
+                    "hook_event_name": "UserPromptSubmit",
+                    "session_id": "deep-worker",
+                    "prompt": "Review the broad change deeply.",
+                },
+                state_dir,
+            )
+
+            for description in descriptions:
+                with self.subTest(description=description):
+                    self.assertEqual(
+                        self.run_hook(
+                            {
+                                "hook_event_name": "PreToolUse",
+                                "session_id": "deep-worker",
+                                "tool_name": "Task",
+                                "tool_input": {
+                                    "subagent_type": "review-worker",
+                                    "description": description,
+                                },
+                            },
+                            state_dir,
+                        ),
+                        "",
+                        "A declared deep review-worker stage must consume its "
+                        "review budget slot.",
+                    )
+
+            state = load_review_state(review_state_path(state_dir, "deep-worker"))
+            self.assertEqual(
+                state["review_slots"],
+                [
+                    "[review:deep:primary]",
+                    "[review:deep:retry:primary]",
+                    "[review:deep:challenge]",
+                    "[review:deep:retry:challenge]",
+                ],
+            )
+
+    def test_hook_restricts_deep_worker_and_preserves_other_reviewer_roles(self):
+        cases = (
+            (
+                "review-worker",
+                "[review:standard] Attempt a standard review",
+                "deny",
+            ),
+            (
+                "review-worker",
+                "[review:deep:security] [security:selected] Attempt security review",
+                "deny",
+            ),
+            (
+                "change-review",
+                "[review:deep:primary] Attempt a deep primary review",
+                "deny",
+            ),
+            (
+                "change-review",
+                "[review:standard] Run a standard review",
+                "allow",
+            ),
+            (
+                "change-review",
+                "[review:final:1:primary] Run a final primary review",
+                "allow",
+            ),
+            (
+                "security",
+                "[review:deep:security] [security:selected] Run a deep security review",
+                "allow",
+            ),
+            (
+                "security",
+                "[review:deep:challenge] Attempt a deep challenge review",
+                "deny",
+            ),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            state_dir = Path(directory)
+            for index, (subagent_type, description, expected) in enumerate(cases):
+                with self.subTest(
+                    subagent_type=subagent_type,
+                    description=description,
+                ):
+                    session_id = f"role-scope-{index}"
+                    self.run_hook(
+                        {
+                            "hook_event_name": "UserPromptSubmit",
+                            "session_id": session_id,
+                            "prompt": "Review and fix the change.",
+                        },
+                        state_dir,
+                    )
+                    output = self.run_hook(
+                        {
+                            "hook_event_name": "PreToolUse",
+                            "session_id": session_id,
+                            "tool_name": "Task",
+                            "tool_input": {
+                                "subagent_type": subagent_type,
+                                "description": description,
+                            },
+                        },
+                        state_dir,
+                    )
+
+                    if expected == "allow":
+                        self.assertEqual(output, "")
+                    else:
+                        self.assertNotEqual(output, "")
+                        self.assertEqual(
+                            json.loads(output)["hookSpecificOutput"][
+                                "permissionDecision"
+                            ],
+                            "deny",
                         )
 
     def test_standard_family_rejects_duplicates_and_other_review_families(self):
@@ -1411,6 +1538,44 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             "light-tier security launches with the standard security stage tag",
         )
 
+    def test_deep_review_security_task_uses_selected_deep_security_stage(self):
+        self.assert_policy_matches(
+            "plugins/review/skills/review-pr/deep-review.md",
+            r'(?is)Task\(\s*subagent_type:\s*"security",\s*'
+            r'description:\s*"\[review:deep:security\]\s+\[security:selected\]',
+            "the deep security Task uses the selected deep security stage tag",
+        )
+
+    def test_deep_review_documents_tagged_worker_primary_and_challenge_tasks(self):
+        for stage_tag, pattern in (
+            (
+                "[review:deep:primary]",
+                r'(?is)Task\(\s*subagent_type:\s*"review-worker",\s*'
+                r'description:\s*"\[review:deep:primary\]',
+            ),
+            (
+                "[review:deep:retry:primary]",
+                r'(?is)Task\(\s*subagent_type:\s*"review-worker",\s*'
+                r'description:\s*"\[review:deep:retry:primary\]',
+            ),
+            (
+                "[review:deep:challenge]",
+                r'(?is)Task\(\s*subagent_type:\s*"review-worker",\s*'
+                r'description:\s*"\[review:deep:challenge\]',
+            ),
+            (
+                "[review:deep:retry:challenge]",
+                r'(?is)Task\(\s*subagent_type:\s*"review-worker",\s*'
+                r'description:\s*"\[review:deep:retry:challenge\]',
+            ),
+        ):
+            with self.subTest(stage_tag=stage_tag):
+                self.assert_policy_matches(
+                    "plugins/review/skills/review-pr/deep-review.md",
+                    pattern,
+                    f"deep review documents a tagged review-worker {stage_tag} Task",
+                )
+
     def test_implementer_hands_review_ownership_to_review_pr(self):
         self.assert_policy_matches(
             "plugins/build/droids/implementer.md",
@@ -1551,6 +1716,14 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             "plugins/review/skills/review-pr/SKILL.md",
             r"(?is)head-changing correction.*fresh targeted validation.*fresh integration",
             "a head-changing correction receives fresh targeted and integration validation",
+        )
+
+    def test_review_pr_requires_fresh_user_request_when_approval_head_changes(self):
+        self.assert_policy_matches(
+            "plugins/review/skills/review-pr/SKILL.md",
+            r"(?is)completed normal review.*live.*head.*(?:changes|differs).*"
+            r"fresh user review request",
+            "a live approval head change after completed normal review requires a fresh user review request",
         )
 
     def test_tdd_workflow_uses_selected_targeted_command_at_each_checkpoint(self):

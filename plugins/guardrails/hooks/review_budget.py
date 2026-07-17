@@ -47,6 +47,16 @@ DEEP_SLOTS = {
     "[review:deep:retry:challenge]",
     "[review:deep:retry:security]",
 }
+DEEP_WORKER_SLOTS = {
+    "[review:deep:primary]",
+    "[review:deep:challenge]",
+    "[review:deep:retry:primary]",
+    "[review:deep:retry:challenge]",
+}
+CHANGE_REVIEW_STANDARD_SLOTS = {
+    "[review:standard]",
+    "[review:standard:retry]",
+}
 RETRY_PREREQUISITES = {
     "[review:deep:retry:primary]": "[review:deep:primary]",
     "[review:deep:retry:challenge]": "[review:deep:challenge]",
@@ -346,8 +356,17 @@ def main() -> int:
     subagent_type = tool_input.get("subagent_type")
     description = str(tool_input.get("description") or "")
     match = REVIEW_TAG.match(description)
-    if subagent_type not in {"change-review", "security"}:
+    if subagent_type not in {"change-review", "review-worker", "security"}:
         return 0
+    if subagent_type == "review-worker":
+        if match is None:
+            return 0
+        if match.group(1) not in DEEP_WORKER_SLOTS:
+            deny(
+                "A review-worker Task may use only deep primary, challenge, or "
+                "their prerequisite retry review stage tags."
+            )
+            return 0
     if subagent_type == "security" and match is None:
         deny("Every security Task must start with a `:security` review stage tag.")
         return 0
@@ -369,6 +388,15 @@ def main() -> int:
             return 0
         if subagent_type == "change-review" and is_security_tag:
             deny("A change-review Task may not use `:security` review stage tags.")
+            return 0
+        if subagent_type == "change-review" and (
+            tag not in CHANGE_REVIEW_STANDARD_SLOTS
+            and not tag.startswith("[review:final:")
+        ):
+            deny(
+                "A change-review Task may use only standard or final primary and "
+                "challenge review stage tags."
+            )
             return 0
     violation = reserve_review_call(
         state_dir=state_directory(),

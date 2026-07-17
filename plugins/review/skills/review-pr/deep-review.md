@@ -153,6 +153,37 @@ Filter Status coverage. A transport-success return with a blocked, refusal, inco
 missing-evidence, or absent contract is a failed pass. Retry once with the exact missing contract
 items; if the retry remains incomplete, stop as blocked and do not ship or land.
 
+Use these stage-tagged Task descriptions only for the fresh primary and independent challenge
+lifecycles and their one evidence-completion retries:
+
+```text
+Task(
+  subagent_type: "review-worker",
+  description: "[review:deep:primary] Initialize deep primary review",
+  prompt: "Use the Initial Review prompt from <WORKER_DOC> for <scope>; write <CONTEXT_PATH>."
+)
+Task(
+  subagent_type: "review-worker",
+  description: "[review:deep:retry:primary] Complete missing primary evidence",
+  resume: <PRIMARY_TASK_ID>,
+  prompt: "Complete only the missing contract items: <items>."
+)
+Task(
+  subagent_type: "review-worker",
+  description: "[review:deep:challenge] Run independent deep challenge review",
+  prompt: "Review <scope> independently; do not read primary notes or findings."
+)
+Task(
+  subagent_type: "review-worker",
+  description: "[review:deep:retry:challenge] Complete missing challenge evidence",
+  resume: <CHALLENGE_TASK_ID>,
+  prompt: "Complete only the missing contract items: <items>."
+)
+```
+
+Do not add deep stage tags to ordinary resumed primary passes or the final filter; preserve the
+resumed-pass architecture below.
+
 - **`Discovery` subagent** (Step 3b-i only): a single `review-worker` `Task` call that follows
   `<DISCOVERY_DOC>` to crawl convention sources and append every applicable pattern-check to the
   notes doc. It returns the final pattern-check count, source docs, `Status`, `Blockers`, and
@@ -283,8 +314,17 @@ For each pass, in order:
    For convention passes, filter the pattern-checks to the pass's category and compute the unique
    `source_doc` set; the prompt tells the Review to Read those docs first (if not already read).
    When the filtered list is empty, instruct it to Read the matching default doc and walk every
-   H3 subsection. For the Security pass, instead spawn the `security` droid with the
-   `[review:deep:security]` stage tag on the scope and fold its findings into the notes doc.
+   H3 subsection. For the Security pass, instead spawn:
+
+   ```text
+   Task(
+     subagent_type: "security",
+     description: "[review:deep:security] [security:selected] Security review deep scope",
+     prompt: "Security-review <scope>; fold findings into <NOTES_PATH>. Read-only; do not edit."
+   )
+   ```
+
+   Fold its findings into the notes doc.
 4. **Check semantic acceptance and audit the notes doc.** For a `review-worker` pass, require
    `Status`, `Blockers`, and `Evidence Coverage`; `Status: blocked` is incomplete and triggers
    the retry-or-block path. Model-driven passes must evidence assigned lenses and substantial
