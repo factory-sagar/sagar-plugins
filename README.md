@@ -96,7 +96,8 @@ Each droid pins a model and reasoning effort suited to its job.
 | --- | --- | --- |
 | `gpt-5.6-sol` (xhigh) | Planning, repository investigation, root cause, and correctness review | `planner`, `deep-understanding`, `debugger`, `change-review`, `review-worker` |
 | `gpt-5.6-terra` (high) | Implementation, testing, and precise config edits | `implementer`, `test-engineer`, `doc-generator` |
-| `gpt-5.6-luna` (high/medium) | Triage and format-mechanical work | `quick-analysis`, `commit-message-writer` |
+| `gpt-5.6-luna` (high) | Triage | `quick-analysis` |
+| `glm-5.2` (high) | Format-mechanical commit prose | `commit-message-writer` |
 | `claude-opus-4-8` (xhigh/high) | Security, external research, prompt critique, and PR prose | `security`, `deep-research`, `prompt-optimizer`, `pr-describer` |
 
 

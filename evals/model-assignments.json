@@ -74,10 +74,10 @@
       "evidence": []
     },
     "commit-message-writer": {
-      "model": "gpt-5.6-luna",
-      "reasoningEffort": "medium",
+      "model": "glm-5.2",
+      "reasoningEffort": "high",
       "status": "provisional",
-      "evidence": ["2026-07-11-role-routing"]
+      "evidence": ["2026-07-18-commit-message-writer-repin"]
     },
     "prompt-optimizer": {
       "model": "claude-opus-4-8",

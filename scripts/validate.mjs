@@ -171,11 +171,13 @@ for (const dir of pluginDirs) {
 }
 
 // ---------- 2. droid frontmatter ----------
+const droidMeta = new Map();
 for (const file of droidFiles) {
   const fm = parseFrontmatter(file, read(file));
   if (!fm) { fail(file, 'missing or unterminated YAML frontmatter'); continue; }
   const { data, body } = fm;
   const base = path.basename(file, '.md');
+  droidMeta.set(base, { model: data.model, effort: data.reasoningEffort });
   if (data.name !== base) fail(file, `name "${data.name}" != filename "${base}"`);
   if (!data.description) fail(file, 'missing description');
   else if (data.description.length > 500) fail(file, `description is ${data.description.length} chars (max 500)`);
@@ -311,7 +313,55 @@ for (const file of [...walkMd(pluginsDir)]) {
   }
 }
 
-// ---------- 8. version bumps vs a base ref ----------
+// ---------- 8. model pins: registry and README table match frontmatter ----------
+// Droid frontmatter is the executable source of truth for model pins. The eval
+// registry and the README "Models" table must match it exactly so neither surface
+// can drift silently (commit-message-writer drifted once before this check).
+const assignmentsFile = path.join(ROOT, 'evals', 'model-assignments.json');
+if (!existsSync(assignmentsFile)) {
+  fail(assignmentsFile, 'missing — every droid model pin must be registered');
+} else {
+  const registry = readJson(assignmentsFile);
+  const assignments = registry?.assignments ?? {};
+  for (const [name, meta] of droidMeta) {
+    const entry = assignments[name];
+    if (!entry) { fail(assignmentsFile, `droid "${name}" has no assignment entry`); continue; }
+    if (entry.model !== meta.model) {
+      fail(assignmentsFile, `"${name}" registers model "${entry.model}" but frontmatter pins "${meta.model}"`);
+    }
+    if (entry.reasoningEffort !== meta.effort) {
+      fail(assignmentsFile, `"${name}" registers reasoningEffort "${entry.reasoningEffort}" but frontmatter pins "${meta.effort}"`);
+    }
+  }
+  for (const name of Object.keys(assignments)) {
+    if (!droidMeta.has(name)) fail(assignmentsFile, `assignment "${name}" has no droid file on disk`);
+  }
+}
+const modelRows = [...readme.matchAll(/^\| `([\w.-]+)` \(([\w/]+)\) \|[^|]+\| (.+) \|$/gm)];
+if (modelRows.length === 0) fail(readmeFile, 'no parseable rows in the "## Models" table');
+const listedDroids = new Map();
+for (const [, model, efforts, used] of modelRows) {
+  const effortSet = new Set(efforts.split('/'));
+  for (const [, droid] of used.matchAll(/`([\w-]+)`/g)) {
+    if (listedDroids.has(droid)) fail(readmeFile, `droid "${droid}" appears in multiple Models table rows`);
+    listedDroids.set(droid, { model, effortSet });
+  }
+}
+for (const [name, meta] of droidMeta) {
+  const row = listedDroids.get(name);
+  if (!row) { fail(readmeFile, `droid "${name}" is missing from the Models table`); continue; }
+  if (row.model !== meta.model) {
+    fail(readmeFile, `Models table lists "${name}" under ${row.model} but frontmatter pins ${meta.model}`);
+  }
+  if (meta.effort && !row.effortSet.has(meta.effort)) {
+    fail(readmeFile, `Models table row for ${row.model} lists efforts (${[...row.effortSet].join('/')}) but "${name}" pins ${meta.effort}`);
+  }
+}
+for (const name of listedDroids.keys()) {
+  if (!droidMeta.has(name)) fail(readmeFile, `Models table lists "${name}" but no droid file exists`);
+}
+
+// ---------- 9. version bumps vs a base ref ----------
 const bumpIdx = process.argv.indexOf('--require-bumps');
 if (bumpIdx !== -1) {
   const baseRef = process.argv[bumpIdx + 1];
