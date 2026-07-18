@@ -16,9 +16,11 @@ from typing import Iterator
 
 STATE_VERSION = 1
 REVIEW_TAG = re.compile(
-    r"^(\[review:(?:standard|deep:(?:primary|challenge)|"
-    r"final:(\d+):(primary|challenge))\])(?:\s|$)"
+    r"^(\[review:(?:standard(?::(?:retry(?::security)?|security))?|"
+    r"deep:(?:discovery|primary|challenge|resume|security|retry:(?:primary|challenge|security))|"
+    r"final:(\d+):(?:primary|challenge|security|retry:(?:primary|challenge|security)))\])(?:\s|$)"
 )
+SELECTED_SECURITY = re.compile(r"\[security:selected\]")
 FINAL_HEAD_HINT = re.compile(
     r"\b(?:final|frozen|current)\b.{0,48}\b(?:head|branch|diff)\b",
     re.IGNORECASE,
@@ -26,6 +28,49 @@ FINAL_HEAD_HINT = re.compile(
 ROUND_ONE_SLOTS = {
     "[review:final:1:primary]",
     "[review:final:1:challenge]",
+}
+ROUND_TWO_TERMINAL_SLOTS = {
+    "[review:final:2:primary]",
+    "[review:final:2:challenge]",
+}
+STANDARD_SLOTS = {
+    "[review:standard]",
+    "[review:standard:retry]",
+    "[review:standard:security]",
+    "[review:standard:retry:security]",
+}
+DEEP_SLOTS = {
+    "[review:deep:discovery]",
+    "[review:deep:primary]",
+    "[review:deep:challenge]",
+    "[review:deep:resume]",
+    "[review:deep:security]",
+    "[review:deep:retry:primary]",
+    "[review:deep:retry:challenge]",
+    "[review:deep:retry:security]",
+}
+DEEP_WORKER_SLOTS = {
+    "[review:deep:discovery]",
+    "[review:deep:primary]",
+    "[review:deep:challenge]",
+    "[review:deep:resume]",
+    "[review:deep:retry:primary]",
+    "[review:deep:retry:challenge]",
+}
+CHANGE_REVIEW_STANDARD_SLOTS = {
+    "[review:standard]",
+    "[review:standard:retry]",
+}
+RETRY_PREREQUISITES = {
+    "[review:deep:retry:primary]": "[review:deep:primary]",
+    "[review:deep:retry:challenge]": "[review:deep:challenge]",
+    "[review:final:1:retry:primary]": "[review:final:1:primary]",
+    "[review:final:1:retry:challenge]": "[review:final:1:challenge]",
+}
+SECURITY_RETRY_PREREQUISITES = {
+    "[review:standard:retry:security]": "[review:standard:security]",
+    "[review:deep:retry:security]": "[review:deep:security]",
+    "[review:final:1:retry:security]": "[review:final:1:security]",
 }
 
 
@@ -116,9 +161,41 @@ def begin_request(
                 "session_id": session_id,
                 "request_token": token,
                 "final_slots": [],
+                "review_family": None,
+                "review_slots": [],
             },
         )
     return path
+
+
+def review_family(tag: str) -> str:
+    if tag in STANDARD_SLOTS:
+        return "standard"
+    if tag in DEEP_SLOTS:
+        return "deep"
+    return "final"
+
+
+def review_slots(state: dict[str, object]) -> set[str]:
+    raw_slots = state.get("review_slots")
+    if isinstance(raw_slots, list):
+        return {slot for slot in raw_slots if isinstance(slot, str)}
+    raw_final_slots = state.get("final_slots")
+    if isinstance(raw_final_slots, list):
+        return {slot for slot in raw_final_slots if isinstance(slot, str)}
+    return set()
+
+
+def reserved_family(state: dict[str, object], slots: set[str]) -> str | None:
+    family = state.get("review_family")
+    if isinstance(family, str):
+        return family
+    for slot in slots:
+        if slot in STANDARD_SLOTS or slot in DEEP_SLOTS or slot.startswith(
+            "[review:final:"
+        ):
+            return review_family(slot)
+    return None
 
 
 def review_task_violation(
@@ -126,23 +203,77 @@ def review_task_violation(
     *,
     state: dict[str, object],
     prompt: str = "",
+    resume: object = None,
 ) -> str | None:
     match = REVIEW_TAG.match(description)
     if match is None:
         return (
             "Every change-review Task description must start with a review stage tag: "
-            "`[review:standard]`, `[review:deep:primary|challenge]`, or "
-            "`[review:final:<1|2>:primary|challenge]`."
+            "`[review:standard]`, `[review:standard:retry|security|retry:security]`, "
+            "`[review:deep:discovery|primary|challenge|resume|security|retry:security]`, or "
+            "`[review:final:<1|2>:primary|challenge|security|retry:security]`."
         )
 
     tag = match.group(1)
     round_text = match.group(2)
+    slots = review_slots(state)
+    if tag.startswith("[review:final:1:") and any(
+        slot.startswith("[review:final:2:") for slot in slots
+    ):
+        return (
+            "Final round 2 has already started; do not reserve any further "
+            "final round 1 review stages."
+        )
+    selected_round_two_security = (
+        tag == "[review:final:2:security]" and SELECTED_SECURITY.search(description)
+    )
+    if ROUND_TWO_TERMINAL_SLOTS.issubset(slots) and not selected_round_two_security:
+        return (
+            "The final-head gate may run at most two rounds per user request. "
+            "Stop as blocked and request a new user decision."
+        )
+
+    family = review_family(tag)
+    existing_family = reserved_family(state, slots)
+    if existing_family is not None and existing_family != family:
+        return (
+            f"Review budget is already reserved for the {existing_family} family; "
+            f"do not start a {family} review in the same user request."
+        )
+    if tag == "[review:deep:resume]":
+        if "[review:deep:primary]" not in slots:
+            return (
+                "Reserve the deep primary review stage before resuming the "
+                "review-worker Task."
+            )
+        if not isinstance(resume, str) or not resume.strip():
+            return (
+                "A deep review-worker resume Task must provide a nonempty "
+                "`tool_input.resume` target."
+            )
+        return None
+    if tag in slots:
+        return f"Review budget slot {tag} was already used for this user request."
+
     if round_text is None:
         if FINAL_HEAD_HINT.search(f"{description}\n{prompt}"):
             return (
                 "A frozen/current/final head, branch, or diff review must use a "
                 "final-head tag so the "
                 "two-round correction budget can be enforced."
+            )
+        if tag == "[review:standard:retry]" and "[review:standard]" not in slots:
+            return (
+                "Complete the standard review before using the "
+                "`[review:standard:retry]` slot."
+            )
+        prerequisite = RETRY_PREREQUISITES.get(tag) or SECURITY_RETRY_PREREQUISITES.get(
+            tag
+        )
+        if prerequisite is not None and prerequisite not in slots:
+            return (
+                f"Complete the review {prerequisite} before using the {tag} "
+                "evidence-completion retry slot."
             )
         return None
 
@@ -152,13 +283,16 @@ def review_task_violation(
             "The final-head gate may run at most two rounds per user request. "
             "Stop as blocked and request a new user decision."
         )
-
-    raw_slots = state.get("final_slots")
-    slots = set(raw_slots) if isinstance(raw_slots, list) else set()
-    if tag in slots:
-        return f"Review budget slot {tag} was already used for this user request."
     if round_number == 2 and not ROUND_ONE_SLOTS.issubset(slots):
         return "Complete round 1 primary and challenge reviews before starting round 2."
+    if round_number == 2 and tag.startswith("[review:final:2:retry:"):
+        return "Final round 2 is decision-only and does not allow evidence retries."
+    prerequisite = RETRY_PREREQUISITES.get(tag) or SECURITY_RETRY_PREREQUISITES.get(tag)
+    if prerequisite is not None and prerequisite not in slots:
+        return (
+            f"Complete the review {prerequisite} before using the {tag} "
+            "evidence-completion retry slot."
+        )
     return None
 
 
@@ -168,6 +302,7 @@ def reserve_review_call(
     session_id: str,
     description: str,
     prompt: str = "",
+    resume: object = None,
 ) -> str | None:
     path = review_state_path(state_dir, session_id)
     with locked_state(path):
@@ -177,15 +312,32 @@ def reserve_review_call(
                 "Review budget state is unavailable for this user request. "
                 "Stop and ask the user to resubmit the review request."
             )
-        violation = review_task_violation(description, state=state, prompt=prompt)
+        violation = review_task_violation(
+            description,
+            state=state,
+            prompt=prompt,
+            resume=resume,
+        )
         if violation is not None:
             return violation
         match = REVIEW_TAG.match(description)
+        if match is not None:
+            tag = match.group(1)
+            raw_slots = state.get("review_slots")
+            if not isinstance(raw_slots, list):
+                raw_final_slots = state.get("final_slots")
+                raw_slots = list(raw_final_slots) if isinstance(raw_final_slots, list) else []
+            if tag != "[review:deep:resume]":
+                raw_slots.append(tag)
+                state["review_slots"] = raw_slots
+                state["review_family"] = review_family(tag)
+
         if match is not None and match.group(2) is not None:
             raw_slots = state.get("final_slots")
             slots = list(raw_slots) if isinstance(raw_slots, list) else []
             slots.append(match.group(1))
             state["final_slots"] = slots
+        if match is not None:
             write_review_state(path, state)
     return None
 
@@ -225,13 +377,58 @@ def main() -> int:
     if event != "PreToolUse" or hook_input.get("tool_name") != "Task":
         return 0
     tool_input = hook_input.get("tool_input") or {}
-    if tool_input.get("subagent_type") != "change-review":
+    subagent_type = tool_input.get("subagent_type")
+    description = str(tool_input.get("description") or "")
+    match = REVIEW_TAG.match(description)
+    if subagent_type not in {"change-review", "review-worker", "security"}:
         return 0
+    if subagent_type == "review-worker":
+        if match is None:
+            deny("Every review-worker Task must start with a deep review stage tag.")
+            return 0
+        if match.group(1) not in DEEP_WORKER_SLOTS:
+            deny(
+                "A review-worker Task may use only deep discovery, primary, challenge, "
+                "resume, or their prerequisite retry review stage tags."
+            )
+            return 0
+    if subagent_type == "security" and match is None:
+        deny("Every security Task must start with a `:security` review stage tag.")
+        return 0
+    if match is not None:
+        tag = match.group(1)
+        is_security_tag = tag.endswith(":security]")
+        if (
+            subagent_type == "security"
+            and is_security_tag
+            and SELECTED_SECURITY.search(description) is None
+        ):
+            deny(
+                "Every budgeted security Task description must include "
+                "`[security:selected]`."
+            )
+            return 0
+        if subagent_type == "security" and not is_security_tag:
+            deny("A security Task may use only `:security` review stage tags.")
+            return 0
+        if subagent_type == "change-review" and is_security_tag:
+            deny("A change-review Task may not use `:security` review stage tags.")
+            return 0
+        if subagent_type == "change-review" and (
+            tag not in CHANGE_REVIEW_STANDARD_SLOTS
+            and not tag.startswith("[review:final:")
+        ):
+            deny(
+                "A change-review Task may use only standard or final primary and "
+                "challenge review stage tags."
+            )
+            return 0
     violation = reserve_review_call(
         state_dir=state_directory(),
         session_id=session_id,
-        description=str(tool_input.get("description") or ""),
+        description=description,
         prompt=str(tool_input.get("prompt") or ""),
+        resume=tool_input.get("resume"),
     )
     if violation is not None:
         deny(violation)

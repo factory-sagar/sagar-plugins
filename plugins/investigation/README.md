@@ -28,7 +28,7 @@ droid plugin install investigation@sagar-plugins
 
 ## Related plugins
 
-- **[`review`](../review/)**: `quick-analysis` and `deep-understanding` recommend handing diffs and PRs to `change-review`, and security-shaped findings to `security`.
+- **[`review`](../review/)**: `quick-analysis` and `deep-understanding` hand review ownership for diffs and PRs to `review-pr`.
 - **[`meta`](../meta/)**: `deep-understanding` agentic-config audits hand prompt-quality issues to `prompt-optimizer` and the fixes to `doc-generator`.
 - **[`build`](../build/)**: `debugger` hands its fix plan to `implementer` and its pin-it test to `test-engineer`.
 

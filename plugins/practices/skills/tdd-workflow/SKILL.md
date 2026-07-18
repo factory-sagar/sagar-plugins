@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-version: 1.4.1
+version: 1.4.2
 description: |
   Test-first execution policy for new or changed behavior: prove RED through the real seam,
   implement the smallest GREEN change, refactor only under the regression net, and preserve
@@ -55,7 +55,7 @@ Aim for **many unit, fewer integration, fewest E2E**. E2E covers critical paths 
 
 ## Procedure
 
-The loop has 7 steps. Repeat steps 2 through 5 as vertical slices: one behavior test or tightly related behavior cluster goes RED, then the smallest implementation goes GREEN, then the next slice starts. Do not write every test for the whole feature before any implementation unless the whole feature is genuinely one behavior. Steps 2, 4, and 6 (writing tests, writing implementation, refactoring) **should be delegated to a `worker`** with the prompts described below. Steps 1, 3, 5, and 7 (planning, commits, verification) are inline.
+The loop has 7 steps. Repeat steps 2 through 5 as vertical slices: one behavior test or tightly related behavior cluster goes RED, then the smallest implementation goes GREEN, then the next slice starts. Do not write every test for the whole feature before any implementation unless the whole feature is genuinely one behavior. At RED/GREEN/refactor checkpoints, use the selected targeted command rather than a broad suite; reserve the full suite or integration gate for program completion. Run one targeted test or validator per unit independently changed by the loop. Steps 2, 4, and 6 (writing tests, writing implementation, refactoring) **should be delegated to a `worker`** with the prompts described below. Steps 1, 3, 5, and 7 (planning, commits, verification) are inline.
 
 ### Step 1 — Write the user journey or behavior statement (inline)
 
@@ -159,19 +159,18 @@ Requirements:
 - Make ALL the failing tests pass.
 - Do NOT modify the tests.
 - Do NOT add functionality the tests don't require (no speculative generality, no extra error handling for cases not asserted).
-- Run the suite after your implementation and confirm all new tests are GREEN AND no existing tests regressed.
+- Run the targeted test or validator after your implementation and confirm all new tests are GREEN.
 - Deviations contract: if the code contradicts a detail of this plan but the goal stands, take the conservative option and log it under a "Deviations" heading (plan / territory evidence / chose / impact). If the contradiction breaks the plan's premise, STOP and report instead of improvising. Never deviate silently.
 
 Deliverables:
 - The implementation file content.
-- Confirmation that the full test suite is GREEN.
+- Confirmation that the targeted test or validator is GREEN.
 - Deviations log (or "Deviations: none").
 - Note any places where you were tempted to over-engineer but resisted.
 ```
 
-After the worker returns, **run the full suite yourself** to verify:
+After the worker returns, **run the targeted test or validator yourself** to verify:
 - All new tests are GREEN.
-- No existing tests regressed.
 - The implementation is genuinely minimal (no speculative methods, parameters, or abstractions).
 - The Deviations log is present; carry it forward — it feeds `pr-describer` and the GREEN commit body.
 
@@ -183,7 +182,7 @@ If regressions appeared, decide: is the regression a real bug exposed by the new
 git add <source-file>
 git commit -m "feat(<scope>): minimal implementation for <behavior>
 
-GREEN: <N> tests passing, no regressions
+GREEN: targeted test or validator passing
 - <one-line summary of what was implemented>"
 ```
 
@@ -220,7 +219,8 @@ Smells to address:
 - <specific smell 2>
 
 Constraints:
-- Behavior cannot change. Run the suite after each change; if it goes RED, revert that change.
+- Behavior cannot change. Run the targeted test or validator after each change; if it goes RED,
+  revert that change.
 - No new abstractions unless the refactor explicitly requires it.
 - Apply the project's coding-standards (KISS, DRY only when same-reason-to-change, immutability defaults, descriptive naming).
 
@@ -238,21 +238,20 @@ Deliverables:
 git add <source-file>
 git commit -m "refactor(<scope>): <what changed>
 
-GREEN: all tests still passing
+GREEN: targeted test or validator passing
 - <smell 1 addressed>
 - <smell 2 addressed>"
 ```
 
 ## After the Loop
 
-Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready**. Hand off:
+Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready**. At program
+completion, run the full suite or integration gate once; do not repeat it per unit. Then hand off:
 
 1. **Run `verification-loop`** (skill, inline): build / type-check / lint / full suite with coverage. Address any gaps.
-2. **Delegate to `change-review`** (droid) with a Task description prefixed by
-   `[review:standard]`: strict pre-merge correctness review of the diff. Catches what tests miss.
-3. **Delegate to `security`** (droid) in parallel with change-review if the change touches auth, secrets, consent, untrusted input, or sensitive data.
-4. **Delegate to `pr-describer`** (droid): synthesize the PR body from the same diff.
-5. **Delegate to `commit-message-writer`** (droid) if the final squash-commit message needs polish.
+2. **Hand review ownership to `review-pr`**. It selects correctness and risk-matched security review stages for the diff.
+3. **Delegate to `pr-describer`** (droid) after `review-pr` completes: synthesize the PR body from the same diff.
+4. **Delegate to `commit-message-writer`** (droid) if the final squash-commit message needs polish.
 
 ## Git Checkpoint Rules
 
@@ -274,8 +273,7 @@ Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready*
 | 6. Refactor (if needed) | `implementer`, else `worker` | Scope-bound code work with explicit smell list |
 | 7. REFACTOR commit | `<self>` | Mechanical |
 | After loop: verification | `<self>` guided by `verification-loop` skill | Mechanical command runs |
-| After loop: code review | `change-review` (droid) | Specialized model for review |
-| After loop: security review | `security` (droid) | Specialized for security |
+| After loop: review routing | `review-pr` | Sole owner of correctness and risk-matched review fan-out |
 | After loop: PR body | `pr-describer` (droid) | Synthesis specialist |
 | After loop: commit message | `commit-message-writer` (droid) | Format-mechanical |
 
@@ -307,9 +305,10 @@ Once GREEN and clean, the unit is **implementation-complete**, not **ship-ready*
 
 1. Did I delegate Steps 2, 4, and (if applicable) 6 to a fresh `worker` rather than write inline?
 2. Did I verify the RED state by running the suite myself, not just trusting the worker?
-3. Did I verify GREEN by running the suite myself, including no regressions?
+3. Did I verify GREEN with the selected targeted test or validator, reserving full-suite or
+   integration claims for program completion?
 4. Did I confirm the implementation is minimal (no speculative methods/parameters/abstractions)?
 5. Are the RED/GREEN/REFACTOR commits all labeled in their messages?
-6. Did I recommend the after-loop chain (`verification-loop` → `change-review` + `security` → `pr-describer` → `commit-message-writer`)?
+6. Did I recommend the after-loop chain (`verification-loop` → `review-pr` → `pr-describer` → `commit-message-writer`)?
 
 If any answer is no, complete it before declaring the unit done.

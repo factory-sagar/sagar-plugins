@@ -1,6 +1,6 @@
 ---
 name: spec
-version: 1.4.0
+version: 1.4.1
 description: |
   Plan non-trivial features, refactors, and migrations. Converts short or detailed requests
   into evidence-backed decisions, testable acceptance criteria, and executable units; adds
@@ -59,7 +59,7 @@ The user chooses the outcome. The toolchain chooses the required method.
 - Task is purely understanding an existing system → **delegate to `deep-understanding`** (in the `investigation` plugin) instead.
 - Task is deciding refactor candidates, ownership boundaries, or "where should this code live?" across existing code → **delegate to `architecture-scan`** first.
 - Task is a question with an external answer (library docs, CVE, best practice) → **delegate to `deep-research`**.
-- Task is reviewing a diff already in flight → **delegate to `change-review`**.
+- Task is reviewing a diff already in flight → **delegate to `review-pr`**.
 - Task is fixing an obvious single-file bug with the cause already identified. Just write the fix.
 
 ## Procedure
@@ -181,7 +181,7 @@ Goal: tell the user what runs first, what can run in parallel, and what to watch
 
 - **Highest-risk unit:** <#> — <why this could go wrong>
 - **Rollback plan:** <how to undo if a unit fails mid-flight>
-- **Verification gate:** after unit <#>, recommend running `verification-loop` and handing diff to `change-review` before continuing.
+- **Verification gate:** after unit <#>, recommend running `verification-loop` and handing review ownership to `review-pr` before continuing.
 
 ## Hand-off after spec
 
@@ -207,8 +207,7 @@ For each unit shape, use exact names from this marketplace and the Factory built
 | Implement open-ended feature work in code | `worker` | Factory built-in | General-purpose; main agent provides full context |
 | Implement a feature using TDD discipline | `worker` + the `tdd-workflow` skill auto-loads | Factory built-in + practices plugin | Worker writes test first, then implementation |
 | Run quality gates (build, type-check, lint, tests) | inline, guided by `verification-loop` skill | practices | Mechanical; the main agent can run commands directly |
-| Strict pre-merge correctness review of a diff | `change-review` | review | Catches what tests miss |
-| Security review (auth, consent, secrets, CVE-shaped) | `security` | review | STRIDE + OWASP lenses, CVE verification |
+| Pre-merge review of a diff, including risk-matched security review | `review-pr` | review | Sole owner of review fan-out and stage selection |
 | Write a PR description for a diff | `pr-describer` | synthesis | Structured body with hand-off pointers |
 | Write a Conventional Commits message | `commit-message-writer` | synthesis | Format-mechanical, fast |
 | Audit a droid or skill prompt | `prompt-optimizer` | meta | Prompt-local quality, observed-output adherence |
@@ -281,10 +280,9 @@ User request: "I need to add rate limiting to our API."
 | 4 | Wire `checkRateLimit` into the existing API middleware after auth, returning 429 with Retry-After when not allowed | Integration test: 61 requests in 60s yields 1×200 + 60×429 with Retry-After header | `worker` | One-file integration |
 | 5 | Add exemption for `/api/v1/health` | Test asserts /health responds 200 even past quota | `worker` | Trivial wire-up |
 | 6 | Run quality gates (build, type-check, lint, all tests with coverage) | All four phases green | `<self>` guided by `verification-loop` skill | Mechanical; main agent runs commands |
-| 7 | Strict pre-merge review of the full diff | Reviewer assessment: `correct` or `needs changes` resolved | `change-review` | Catches what tests miss |
-| 8 | Security pass: confirm rate-limit bypass paths, key-leakage in 429 responses, Redis-side DoS resistance | Reviewer assessment: `no blockers` | `security` | Auth-adjacent change |
-| 9 | Write PR description with what / why / testing / breaking changes / follow-ups | PR body ready to paste | `pr-describer` | Structured prose synthesis |
-| 10 | Write Conventional Commits message for final squash | Message ready | `commit-message-writer` | Format-mechanical |
+| 7 | Run the pre-merge review workflow for the full diff | Review findings and risk-matched security stages are resolved | `review-pr` | Sole owner of review fan-out and stage selection |
+| 8 | Write PR description with what / why / testing / breaking changes / follow-ups | PR body ready to paste | `pr-describer` | Structured prose synthesis |
+| 9 | Write Conventional Commits message for final squash | Message ready | `commit-message-writer` | Format-mechanical |
 
 ## Sequence
 
@@ -294,20 +292,20 @@ User request: "I need to add rate limiting to our API."
 4. Unit 4 (middleware wire-up) — depends on 3.
 5. Unit 5 (health exemption) — depends on 4.
 6. Unit 6 (verification) — depends on 5.
-7. Units 7 + 8 (change-review + security) — both depend on 6; can run in parallel.
-8. Unit 9 (PR description) — depends on 7+8 (so the body can include their findings).
-9. Unit 10 (commit message) — depends on 9.
+7. Unit 7 (`review-pr`) — depends on 6 and owns the review stages required for this auth-adjacent change.
+8. Unit 8 (PR description) — depends on 7 so the body can include the review outcome.
+9. Unit 9 (commit message) — depends on 8.
 
 ## Parallelization opportunities
 
 - Units 1 and 2 run in parallel (5 min saved).
-- Units 7 and 8 run in parallel (saves the full duration of whichever is slower).
+- No review-stage parallelization is planned here; `review-pr` owns any safe fan-out.
 
 ## Risk
 
 - **Highest-risk unit:** 4 — wiring rate limiting into the auth middleware chain is the spot most likely to break existing endpoints if middleware order is wrong.
 - **Rollback plan:** units 3–5 are additive (new files + one middleware addition); revert with a single revert commit. Env vars (unit 2) are non-breaking.
-- **Verification gate:** unit 6 (`verification-loop`) must pass before units 7+8 fire.
+- **Verification gate:** unit 6 (`verification-loop`) must pass before unit 7 (`review-pr`) starts.
 
 ## Hand-off after spec
 
@@ -325,7 +323,7 @@ Approve this spec and I'll start by **delegating unit 1 to `deep-research`** and
 - **Speculative optionality.** Don't list "maybe also do X" in scope. Optional is out of scope until requested.
 - **Front-loading research that isn't on the critical path.** If Phase 2 anchor delegation would block the spec writing AND the spec doesn't actually need that information, skip it.
 - **Decomposing past usefulness.** A 1-line unit ("rename X") is too small — merge it with the next unit.
-- **Forgetting verification and review.** Every spec for code changes ends with `verification-loop` then `change-review` (and `security` if relevant) before PR-shaping. Don't omit these.
+- **Forgetting verification and review.** Every spec for code changes ends with `verification-loop` then `review-pr` before PR-shaping. Don't bypass review-pr's risk-matched review routing.
 
 ## Edge Cases
 
@@ -347,7 +345,7 @@ Approve this spec and I'll start by **delegating unit 1 to `deep-research`** and
 3. Are Constraints distinguishable from preferences?
 4. Is every Open Question one the user can answer in <5 minutes?
 5. Does every decomposition unit have a delegate from the Delegation Map?
-6. Does the decomposition end with `verification-loop` → `change-review` (+ `security` if relevant) → `pr-describer` → `commit-message-writer` for any code-shipping spec?
+6. Does the decomposition end with `verification-loop` → `review-pr` → `pr-describer` → `commit-message-writer` for any code-shipping spec?
 7. Is the "Hand-off after spec" line concrete (names which units, names which delegates)?
 
 If any answer is no, fix before returning.

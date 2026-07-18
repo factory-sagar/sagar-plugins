@@ -34,7 +34,7 @@ The `spec` skill registers `/spec <task>` as the guaranteed entry for "spec this
 | `agentic-engineering` | "AI-assisted work", "model routing", "session strategy", "AI code review checklist" | Operating principles: define completion criteria, decompose into agent-sized units, route models by complexity, measure with evals. |
 | `tdd-workflow` | "TDD", "write tests first", "test-driven", "RED-GREEN-REFACTOR", "fix bug", "add feature" | Test-first discipline: RED checkpoint, GREEN checkpoint, optional REFACTOR. Loads the standards topics that govern tests, seams, async behavior, and observability. |
 | `coding-standards` | "coding standards", "code quality", "boundary parsing", "type contracts", "code review checklist" | Standards router that loads topic docs for modules, boundaries, errors, async workflows, testing, observability, and type contracts. |
-| `verification-loop` | "verify", "quality gates", "pre-merge checks", "is this ready", "check before commit" | Four-phase quality gate: build, type-check, lint, tests with coverage. Loads the standards topics that set the verification bar, then hands off to `change-review` and `security`. |
+| `verification-loop` | "verify", "quality gates", "pre-merge checks", "is this ready", "check before commit" | Four-phase quality gate: build, type-check, lint, tests with coverage. Loads the standards topics that set the verification bar, then hands review ownership to `review-pr`. |
 
 ## Usage
 
@@ -48,10 +48,9 @@ The skills chain into the full procedure loop:
 4. tdd-workflow +             → implementation (per unit)
    coding-standards
 5. verification-loop          → build / type-check / lint / tests pass locally
-6. change-review              → strict pre-merge correctness review (review plugin)
-7. security                   → security gate if relevant (review plugin)
-8. pr-describer               → PR body from the diff (synthesis plugin)
-9. commit-message-writer      → final commit message (synthesis plugin)
+6. review-pr                  → owns correctness and risk-matched security review (review plugin)
+7. pr-describer               → PR body from the diff (synthesis plugin)
+8. commit-message-writer      → final commit message (synthesis plugin)
 ```
 
 `spec` remains the broadest entry point. Reach for `tech-spec` when an approved plan still needs typed contracts and call stacks, and `architecture-scan` when the real question is which refactor or ownership direction to pursue.
@@ -59,7 +58,7 @@ The skills chain into the full procedure loop:
 ## Related plugins
 
 - **[`investigation`](../investigation/)**: `spec`, `architecture-scan`, and `tech-spec` recommend `quick-analysis`, `deep-understanding`, and `deep-research` for investigation-shaped work.
-- **[`review`](../review/)**: `verification-loop` and `tdd-workflow` hand the diff to `change-review` and `security`. `change-review` now loads `coding-standards` topics when they are present.
+- **[`review`](../review/)**: `verification-loop` and `tdd-workflow` hand review ownership to `review-pr`.
 - **[`synthesis`](../synthesis/)**: once review passes, `pr-describer` and `commit-message-writer` complete the cycle.
 - **[`meta`](../meta/)**: `agentic-engineering` recommends `prompt-optimizer` and `doc-generator` for evolving the prompts of the agents you delegate to.
 - **[`build`](../build/)**: `tdd-workflow` delegates RED to `test-engineer` and GREEN or REFACTOR to `implementer`.

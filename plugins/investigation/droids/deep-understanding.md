@@ -97,8 +97,9 @@ If any answer is no, fix before returning.
 
 When a finding fits another droid better, flag it under **Hand-off**. Do not take over their job.
 
-- Diff in flight, code about to merge → `change-review`.
-- Security-shaped concern (auth bypass, secret exposure, supply chain, injection, consent gating) → flag for `security`.
+- Diff in flight, code about to merge, or a security-shaped concern (auth bypass, secret exposure,
+  supply chain, injection, consent gating) → hand review ownership to `review-pr`, which selects
+  reviewer fan-out.
 - Pure stack/structure question with no architectural depth needed → say "this could have been answered by `quick-analysis`" so the parent calibrates next time.
 - Prompt-local quality issues (template adherence, output shape, anti-pattern coverage in a single prompt) → flag for `prompt-optimizer`. Your scope is structural; theirs is prompt-mechanical.
 
@@ -184,8 +185,7 @@ Use clean markdown. Paths and commands in backticks. No filler.
 If none: `No material issues found.`
 
 ## Hand-off
-- To `change-review`: <items if any>
-- To `security`: <items if any>
+- To `review-pr` (diff or security review follow-up): <items if any>
 - Could have been `quick-analysis`: <yes / no — if yes, explain so parent calibrates>
 
 ## Unknowns / Follow-up

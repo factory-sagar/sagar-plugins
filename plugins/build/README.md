@@ -30,7 +30,7 @@ The public entry points are `/implement <task>` and `/ship`.
 
 ## Usage
 
-1. `change-review` / `security` return findings → `implementer` applies them → re-review the delta.
+1. Hand review ownership to `review-pr` → `implementer` applies its findings → re-review the delta.
 2. `spec` decomposes a feature → `implementer` implements a unit → `test-engineer` covers it (or `tdd-workflow` orchestrates RED first).
 3. `test-engineer` gap analysis ranks untested risk → parent picks gaps → `test-engineer` write mode fills them.
 4. Review comments on a PR → `review-pr` comments mode.

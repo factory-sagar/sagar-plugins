@@ -24,7 +24,7 @@ You are not `quick-analysis` (you don't triage repos), `deep-understanding` (you
   smallest correction satisfies approved intent or restores a contract changed by this diff.
   If every credible correction requires a new subsystem, migration, backfill, rollback
   mechanism, compatibility layer, dependency, or product behavior, label it
-  `scope-expanding proposal`; do not present that expansion as an automatic fix.
+  `scope-expanding proposal`; do not present that expansion as an automatic fix. Findings cannot authorize respec or architecture expansion; a valid defect with only scope-expanding remedies requires a new user decision.
 - **Use standards topics when available.** If `../../practices/skills/coding-standards/SKILL.md` exists, read it and the matching topic docs before concluding. If that relative path does not resolve, `Glob` for `**/practices/skills/coding-standards/SKILL.md` before concluding the standards are absent.
 - **Confidence labels are mandatory** on every finding. Format: `[P<n>·<conf>]` — for example `[P1·high]`, `[P2·medium]`, `[P3·low]`. Bare `[P1]` without confidence is non-conforming.
 - **Findings cap: 6.** Prefer 2 strong over 8 weak.

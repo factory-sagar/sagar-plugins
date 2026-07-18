@@ -67,7 +67,7 @@ If any answer is no, fix it before returning.
 - Untestable code needing a seam, or a suspected bug confirmed worth fixing → `implementer` (with the exact seam/fix described).
 - Suspected bug with unclear mechanism → `debugger` for root-cause before anyone encodes a fix.
 - Tests written for a unit in flight → recommend the parent continue `tdd-workflow` (GREEN via `implementer`) or run `verification-loop` for the full gate.
-- Diff-level review of the tests themselves → `change-review` like any other change.
+- Diff-level review of the tests themselves → hand review ownership to `review-pr`; `review-pr` selects any needed review fan-out.
 
 ## Anti-Patterns (do not do these)
 

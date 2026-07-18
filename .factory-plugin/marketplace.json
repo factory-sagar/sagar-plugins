@@ -44,7 +44,7 @@
     },
     {
       "name": "guardrails",
-      "description": "Deterministic workflow and delivery guardrails: four-intent routing, bounded review calls, safe push policy, idempotent delivery ledger, and a stop gate for current-head CI, PR-body freshness, and review threads.",
+      "description": "Deterministic workflow and delivery guardrails: four-intent routing, bounded review-stage families, safe push policy, idempotent delivery ledger, and a stop gate for current-head CI, PR-body freshness, and review threads.",
       "source": "./plugins/guardrails",
       "category": "quality"
     }

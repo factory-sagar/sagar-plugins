@@ -35,7 +35,7 @@ The deep tier treats the notes doc as the single source of truth: it verifies ea
 
 ## Usage
 
-1. Diff staged → invoke `change-review` and `security` in parallel.
+1. Diff staged → hand review ownership to `review-pr`, which selects the required reviewers.
 2. Resolve findings → ship.
 3. Or run `/review-pr <target>`; the user's wording determines the authorized end state.
 

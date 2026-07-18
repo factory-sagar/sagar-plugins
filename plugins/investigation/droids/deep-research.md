@@ -86,8 +86,9 @@ If any answer is no, fix before returning.
 ## Cross-Droid Hand-off
 
 - Question can be answered from the repo → hand off to `deep-understanding` and stop.
-- Question is about ranking commit-level risk → hand off to `change-review`.
-- Question is about security-specific CVE/exploit reachability in this codebase → hand off to `security`, optionally provide your CVE research first as input.
+- Question is about ranking commit-level risk or security-specific CVE/exploit reachability in
+  this codebase → hand review ownership to `review-pr`, which selects reviewer fan-out; provide
+  CVE research first as input when applicable.
 
 ## Anti-Patterns (do not do these)
 
@@ -139,8 +140,7 @@ Use clean markdown.
 
 ## Hand-off
 - To `deep-understanding` (repo-local question raised): <items if any, else `none`>
-- To `change-review` (commit-risk question raised): <items if any, else `none`>
-- To `security` (CVE applicability needs in-repo trace): <items if any, else `none`>
+- To `review-pr` (commit-risk or CVE applicability review): <items if any, else `none`>
 
 ---
 

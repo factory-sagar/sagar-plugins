@@ -116,7 +116,7 @@ Task(subagent_type: "change-review", description: "[review:standard] Review chan
   Every finding carries a [P<n>·<conf>] label and a path:line anchor. Read-only; do not edit.")
 
 # only if risk signals present:
-Task(subagent_type: "security", description: "Security review change scope",
+Task(subagent_type: "security", description: "[review:standard:security] [security:selected] Security review change scope",
   prompt: "Security-review <scope> through STRIDE/OWASP lenses. Return findings with severity,
   confidence, attack path, and path:line anchors. Read-only; do not edit.")
 ```
@@ -153,6 +153,37 @@ Filter Status coverage. A transport-success return with a blocked, refusal, inco
 missing-evidence, or absent contract is a failed pass. Retry once with the exact missing contract
 items; if the retry remains incomplete, stop as blocked and do not ship or land.
 
+Use these stage-tagged Task descriptions only for the fresh primary and independent challenge
+lifecycles and their one evidence-completion retries:
+
+```text
+Task(
+  subagent_type: "review-worker",
+  description: "[review:deep:primary] Initialize deep primary review",
+  prompt: "Use the Initial Review prompt from <WORKER_DOC> for <scope>; write <CONTEXT_PATH>."
+)
+Task(
+  subagent_type: "review-worker",
+  description: "[review:deep:retry:primary] Complete missing primary evidence",
+  resume: <PRIMARY_TASK_ID>,
+  prompt: "Complete only the missing contract items: <items>."
+)
+Task(
+  subagent_type: "review-worker",
+  description: "[review:deep:challenge] Run independent deep challenge review",
+  prompt: "Review <scope> independently; do not read primary notes or findings."
+)
+Task(
+  subagent_type: "review-worker",
+  description: "[review:deep:retry:challenge] Complete missing challenge evidence",
+  resume: <CHALLENGE_TASK_ID>,
+  prompt: "Complete only the missing contract items: <items>."
+)
+```
+
+Use `[review:deep:resume]` for every ordinary resumed primary pass and the final filter;
+preserve the resumed-pass architecture below.
+
 - **`Discovery` subagent** (Step 3b-i only): a single `review-worker` `Task` call that follows
   `<DISCOVERY_DOC>` to crawl convention sources and append every applicable pattern-check to the
   notes doc. It returns the final pattern-check count, source docs, `Status`, `Blockers`, and
@@ -167,8 +198,9 @@ items; if the retry remains incomplete, stop as blocked and do not ship or land.
   serial handoff, resumed Review passes and the final filter write `NOTES_PATH`. Both subagents
   are **read-only on the repo**.
 
-Capture the `task_id` from the initial Review call and reuse it as `resume` everywhere after.
-Each resume adds ONLY what is new for that pass; do not re-send context it already has.
+Capture the `task_id` from the initial Review call as `<REVIEW_TASK_ID>` and reuse it as `resume`
+everywhere after. Each resume adds ONLY what is new for that pass; do not re-send context it
+already has.
 
 #### Resume reliability — verify the notes doc, and fall back if resume is not writing
 
@@ -227,6 +259,15 @@ partial or timed-out zero-count return is incomplete and follows the retry-or-bl
 Read-only on the repo; only the notes doc is writable.
 ```
 
+Launch Discovery with this lifecycle tag:
+```text
+Task(
+  subagent_type: "review-worker",
+  description: "[review:deep:discovery] Discover deep-review conventions",
+  prompt: "<Discovery prompt above>"
+)
+```
+
 **Discovery has a hard 5-minute budget.** Capture its `task_id` and poll with
 `TaskOutput(task_id, block: false)` while you wait. If it is still running 5 minutes after
 launch, call `TaskStop(task_id)` and retry Discovery once with the same exact contract. If the
@@ -235,7 +276,7 @@ proceed with partial or unsupported zero-count Discovery evidence, and do not tr
 passes as a substitute for Discovery.
 
 Initial Review prompt: use the `Initial Review prompt` section of `<WORKER_DOC>`, substituting
-`<scope>`, `<CONTEXT_PATH>`, and `<FORMAT_DOC>`. Capture its `task_id`.
+`<scope>`, `<CONTEXT_PATH>`, and `<FORMAT_DOC>`. Capture its `task_id` as `<REVIEW_TASK_ID>`.
 
 Wait for both to return, including a successful Discovery retry when applicable, before
 proceeding. Require Discovery `Status: complete` and `Blockers: none`; when its count is zero,
@@ -278,13 +319,30 @@ For each pass, in order:
      fully wired, tested, documented, and represented in repository metadata and CI).
    - **Passes 5+ (pattern-check-driven)**: every pattern-check in the pass's category must get a
      finding OR a detailed explanation of why it does not apply.
-3. **Execute the pass** with a `Task` call `resume: <Review task_id>` using the matching template
-   from `<WORKER_DOC>` (`Model-driven pass prompt` for 1-4, `Convention pass prompt` for 5+).
+3. **Execute the pass** with this `Task` call using the matching template from `<WORKER_DOC>`
+   (`Model-driven pass prompt` for 1-4, `Convention pass prompt` for 5+):
+   ```text
+   Task(
+     subagent_type: "review-worker",
+     description: "[review:deep:resume] Run resumed deep primary pass",
+     resume: <REVIEW_TASK_ID>,
+     prompt: "<matching pass prompt>"
+   )
+   ```
    For convention passes, filter the pattern-checks to the pass's category and compute the unique
    `source_doc` set; the prompt tells the Review to Read those docs first (if not already read).
    When the filtered list is empty, instruct it to Read the matching default doc and walk every
-   H3 subsection. For the Security pass, instead spawn the `security` droid on the scope and fold
-   its findings into the notes doc.
+   H3 subsection. For the Security pass, instead spawn:
+
+   ```text
+   Task(
+     subagent_type: "security",
+     description: "[review:deep:security] [security:selected] Security review deep scope",
+     prompt: "Security-review <scope>; fold findings into <NOTES_PATH>. Read-only; do not edit."
+   )
+   ```
+
+   Fold its findings into the notes doc.
 4. **Check semantic acceptance and audit the notes doc.** For a `review-worker` pass, require
    `Status`, `Blockers`, and `Evidence Coverage`; `Status: blocked` is incomplete and triggers
    the retry-or-block path. Model-driven passes must evidence assigned lenses and substantial
@@ -314,10 +372,18 @@ For each pass, in order:
 1. **Manager pre-flight (no subagent call):** every pass `completed`; every pattern-check has a
    verdict (not `pending`); `verified-clean` verdicts cite concrete `file:line`, not generic
    compliance language; count distinct finding blocks (call it `N`).
-2. **Review final filter:** one `Task` call `resume: <Review task_id>` using the `Final filter
-   prompt` in `<WORKER_DOC>`. It marks invalid findings filtered using the closed-list reasons;
-   it does not rewrite finding bodies. It appends a completion entry under `## Filter Status`,
-   even when zero findings are filtered.
+2. **Review final filter:** one `Task` call using the `Final filter prompt` in `<WORKER_DOC>`:
+   ```text
+   Task(
+     subagent_type: "review-worker",
+     description: "[review:deep:resume] Run final deep-review filter",
+     resume: <REVIEW_TASK_ID>,
+     prompt: "<Final filter prompt>"
+   )
+   ```
+   It marks invalid findings filtered using the closed-list reasons; it does not rewrite finding
+   bodies. It appends a completion entry under `## Filter Status`, even when zero findings are
+   filtered.
 3. **Manager reads the notes doc**, audits the new persisted `## Filter Status` completion entry
    for filtered and kept counts plus `Status`, `Blockers`, and Filter Status Evidence Coverage,
    then takes every unfiltered finding into Step 4.
@@ -497,12 +563,13 @@ have passed against the final reviewed local commit before push, and that commit
 `finalReviewedHeadSha`.
 
 When explicit approval is authorized, after these checks establish merge-ready, fetch the final
-live head and compare it with the last reviewed head. If it differs, rerun the normal review
-against that exact head before running the approval gate in `SKILL.md`. The approval gate verifies
-findings and threads, CI, body, and self-authorship before its final immediate live-head
-comparison. If the final head changed, it blocks pending re-review. If that gate fails, report the
-PR blocked and do not merge. If branch protection requires approval but explicit approval was not
-authorized, report the PR blocked rather than self-approving.
+live head and compare it with the last reviewed head. If the approval head changes or differs,
+stop and require a fresh user review request. Never rerun the review within the existing request.
+The approval gate verifies findings and threads, CI, body, and self-authorship before its final
+immediate live-head comparison. If the approval head changes or differs at that comparison, stop
+and require a fresh user review request. Never rerun the review within the existing request. If
+that gate fails, report the PR blocked and do not merge. If branch protection requires approval
+but explicit approval was not authorized, report the PR blocked rather than self-approving.
 
 In land mode, whether approval authority exists or not, after every other merge gate has passed,
 the final API operation immediately before merge must re-fetch the live `headRefOid` and require
