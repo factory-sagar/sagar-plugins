@@ -355,6 +355,11 @@ Otherwise, the next operation is:
 gh pr review <url> --approve --body "Review complete, required checks are green, and the PR is merge-ready."
 ```
 
+When GitHub is unavailable or the request is describe-only, do not execute that operation. After
+all gates pass, report `Result: would be submitted via gh pr review --approve, but was not
+executed — <reason>` rather than `approved`; reserve `approved` for a successfully executed
+command.
+
 For `approve` mode, stop after this command. Approval remains additive permission and never
 implies push or merge authority.
 
@@ -390,13 +395,13 @@ implies push or merge authority.
 - CI at head SHA:
 - PR body at head SHA:
 
-### Approval gate (when approval is authorized)
+### Approval gate
 - Findings/threads: <no unresolved findings; zero unresolved threads / blocked>
 - CI: <green for current head SHA / blocked>
 - PR body: <current for current head SHA / blocked>
 - Self-authorship comparison: <PR author.login> vs <authenticated user.login> — <pass / blocked>
 - Final live-head equality: <reviewedHeadSha> = <live headRefOid> — <pass / blocked>
-- Result: <approved via `gh pr review --approve` / blocked — reason>
+- Result: <approved via `gh pr review --approve` / would be submitted via `gh pr review --approve`, but was not executed — reason / blocked — reason>
 
 ### Deviations
 <entries or `none`>
