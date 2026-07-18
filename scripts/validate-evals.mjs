@@ -150,6 +150,14 @@ for (const [, link] of tasksReadmeText.matchAll(/\]\(\.\/(\d{2}-[^)]+\.md)\)/g))
     fail(tasksReadme, `README links ./${link} but the task file does not exist`);
   }
 }
+// Coverage floor: warn (not fail) on droids no golden task exercises, so expensive-failure
+// droids cannot silently drop out of the regression net.
+const coveredTargets = new Set(taskTargets.values());
+for (const name of [...droidNames].sort()) {
+  if (!coveredTargets.has(name)) {
+    warn(tasksDir, `droid "${name}" has no golden task exercising it`);
+  }
+}
 
 // ---------- 2. judge contract ----------
 const judgeFile = path.join(tasksDir, 'JUDGE.md');
