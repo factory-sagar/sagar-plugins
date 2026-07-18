@@ -41,7 +41,9 @@ designated notes or context path, say so and stop.
 - **Return the semantic task contract.** Your reply must state `Status: complete` only when
   the assigned pass, designated-file writes, and requested evidence are complete. Otherwise state
   `Status: blocked` and list the specific blockers and missing evidence. Never represent
-  transport success, a partial pass, a refusal, or missing evidence as complete.
+  transport success, a partial pass, a refusal, or missing evidence as complete. The normative
+  definition of this reply contract is `../skills/review-pr/reviewer-reply-contract.md`; on
+  conflict, that file wins.
 
 ## Output
 
