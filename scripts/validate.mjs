@@ -272,14 +272,23 @@ requireText(
 );
 
 // ---------- 6. README counts ----------
+// The README's "At a glance" line is the human-facing fleet inventory. It must state the
+// plugin, droid, skill, and public-workflow counts exactly as the filesystem has them.
 const readme = read(readmeFile);
-const totals = readme.match(/Total: (\d+) droids, (\d+) skills, (\d+) commands?/);
-if (!totals) fail(readmeFile, 'no "Total: X droids, Y skills, Z commands" line found');
-else {
-  const [, d, s, c] = totals.map(Number);
+const glance = readme.match(
+  /\*\*At a glance:\*\* (\d+) plugins, (\d+) droids, (\d+) skills, (\d+) public workflows/,
+);
+if (!glance) {
+  fail(readmeFile, 'no "**At a glance:** X plugins, Y droids, Z skills, W public workflows" line found');
+} else {
+  const [, p, d, s, w] = glance.map(Number);
+  if (p !== pluginDirs.length) fail(readmeFile, `README says ${p} plugins, filesystem has ${pluginDirs.length}`);
   if (d !== droidFiles.length) fail(readmeFile, `README says ${d} droids, filesystem has ${droidFiles.length}`);
   if (s !== skillFiles.length) fail(readmeFile, `README says ${s} skills, filesystem has ${skillFiles.length}`);
-  if (c !== commandFiles.length) fail(readmeFile, `README says ${c} commands, filesystem has ${commandFiles.length}`);
+  if (w !== expectedPublicSkills.size) fail(readmeFile, `README says ${w} public workflows, expected ${expectedPublicSkills.size}`);
+}
+if (commandFiles.length > 0) {
+  fail(readmeFile, `${commandFiles.length} command(s) exist but the "At a glance" line does not count commands — extend the line and this check together`);
 }
 
 // ---------- 7. relative .md cross-references resolve ----------
