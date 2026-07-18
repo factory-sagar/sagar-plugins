@@ -1,6 +1,6 @@
 ---
 name: review-pr
-version: 1.7.0
+version: 1.7.1
 description: |
   Review a PR, branch, commit, or staged change through the mandatory review policy and
   diff-selected risk lenses. Plain "review" is read-only; explicit approve, fix, comment,
@@ -194,10 +194,14 @@ content.
 
 A change is broad or high-consequence when any of these hold: more than 10 changed files,
 more than 3 approved units, externally controlled state, multi-phase transitions, migrations,
-authorization, concurrency, or 3 or more selected risk lenses. Deep review is mandatory in
-those cases for report and approve modes. In mutating modes, the final-head gate's frozen-head
-round-1 primary/challenge pair, plus stage-matched security when selected, supplies that
-independent broad review instead; do not also run a preliminary deep pair for the same head.
+new or materially rewritten authorization decisions, concurrency, or 3 or more materially
+distinct changed risk responsibilities. A small, well-tested edit to existing risk-sensitive
+logic remains light unless a size/unit threshold or new/rewritten boundary applies; overlapping
+selector signals from one small existing behavior are not distinct risk responsibilities. Deep
+review is mandatory in those cases for report and approve modes. In mutating modes, the final-head
+gate's frozen-head round-1 primary/challenge pair, plus stage-matched security when selected,
+supplies that independent broad review instead; do not also run a preliminary deep pair for the
+same head.
 
 Deep review requires at least two independent reviewer contexts:
 
@@ -357,6 +361,7 @@ implies push or merge authority.
 
 **Mode:** <report | approve | fix | comments | ship | land>
 **Target:** <base SHA>...<head SHA>
+**Tier:** <light | deep> — <one-sentence reason from the tier heuristic>
 **Assessment:** <correct | needs changes | blocked | merge-ready | merged>
 
 ### Selected lenses
@@ -377,13 +382,23 @@ implies push or merge authority.
 - CI-parity matrix:
 - Validators:
 - Existing comments: <found / replied / resolved / remaining>
-- Reviewer returns: <complete / blocked; type-aware acceptance and coverage>
+- Reviewer returns: <complete / blocked; type-aware acceptance and coverage; blocked/incomplete returns name each missing native field exactly, including `Status`, `Blockers`, and `Evidence Coverage` when required>
 - CI at head SHA:
 - PR body at head SHA:
+
+### Approval gate (when approval is authorized)
+- Findings/threads: <no unresolved findings; zero unresolved threads / blocked>
+- CI: <green for current head SHA / blocked>
+- PR body: <current for current head SHA / blocked>
+- Self-authorship comparison: <PR author.login> vs <authenticated user.login> — <pass / blocked>
+- Final live-head equality: <reviewedHeadSha> = <live headRefOid> — <pass / blocked>
 
 ### Deviations
 <entries or `none`>
 ```
 
 An empty findings section says `No material issues found.` It never invents a nit to prove
-that review happened.
+that review happened. A blocked assessment still emits the full template and every Coverage row;
+use `n/a — <reason>` rather than omitting an inapplicable row. When the user's request supplies
+hypothetical or counterfactual approval-gate states, explicitly state the block or proceed outcome
+for each supplied state.

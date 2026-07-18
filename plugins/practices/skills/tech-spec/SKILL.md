@@ -1,6 +1,6 @@
 ---
 name: tech-spec
-version: 1.2.0
+version: 1.2.1
 description: |
   Convert scoped design work into typed contracts, seams, adapters, call stacks, failure
   flows, file ownership, and vertical test slices. Invoke automatically when a plan carries
@@ -41,6 +41,8 @@ Read:
 - `../coding-standards/TESTING_AND_VERIFICATION.md`
 - `../coding-standards/TYPE_CONTRACTS.md`
 - `../tdd-workflow/SKILL.md`
+
+These sibling packages remain available and applicable even when the target repository has no source or docs.
 
 Load additional standards when relevant:
 
@@ -232,6 +234,8 @@ Use this shape unless the task is tiny enough to compress without losing contrac
 
 ## Design Constraints
 
+Standards applied: <only the topic docs or workflow that shaped this design>
+
 ## Alternatives Considered
 
 ### Option N: <name>
@@ -289,3 +293,4 @@ Omit sections that truly do not apply, but do not omit typed contracts, seams, c
 5. Did I map every contract and call-stack step to files/modules or an open question?
 6. Did the RGR plan use vertical behavior slices through real seams?
 7. Did I avoid implementation and avoid asking to implement by default?
+8. Did I name the standards topics or workflow that shaped the design in `Design Constraints`?

@@ -1,6 +1,6 @@
 {
   "name": "practices",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "The public spec workflow plus model-invoked planning and engineering policy: unknown discovery, architecture scan, grilling, typed tech specs, coding standards, TDD, verification, and agentic-engineering guidance.",
   "author": {
     "name": "Sagar",
