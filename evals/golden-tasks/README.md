@@ -18,6 +18,9 @@ droids still run in-session via the Task tool.
 - No output may violate a must-not-do rule.
 - Overall score must be at least 85%.
 
+Coverage floor: every public workflow has at least one task, and every droid whose failure
+is expensive has one. `scripts/validate-evals.mjs` warns on droids with zero tasks.
+
 ## Tasks
 
 | Task | Target | Critical |
@@ -40,6 +43,14 @@ droids still run in-session via the Task tool.
 | [`16-review-pr-approve-vs-merge-authority.md`](./16-review-pr-approve-vs-merge-authority.md) | `review-pr` | yes |
 | [`17-review-pr-explicit-approval.md`](./17-review-pr-explicit-approval.md) | `review-pr` | yes |
 | [`18-review-pr-merge-live-head-continuity.md`](./18-review-pr-merge-live-head-continuity.md) | `review-pr` | yes |
+| [`19-ship-delivery-sequence.md`](./19-ship-delivery-sequence.md) | `ship` | yes |
+| [`20-commit-message-writer.md`](./20-commit-message-writer.md) | `commit-message-writer` | no |
+| [`21-pr-describer-self-contained.md`](./21-pr-describer-self-contained.md) | `pr-describer` | no |
+| [`22-planner-decomposition.md`](./22-planner-decomposition.md) | `planner` | yes |
+| [`23-debugger-rca-no-patch.md`](./23-debugger-rca-no-patch.md) | `debugger` | yes |
+| [`24-quick-analysis-triage.md`](./24-quick-analysis-triage.md) | `quick-analysis` | no |
+| [`25-doc-generator-minimal-edit.md`](./25-doc-generator-minimal-edit.md) | `doc-generator` | no |
+| [`26-prompt-optimizer-audit.md`](./26-prompt-optimizer-audit.md) | `prompt-optimizer` | no |
 
 ## Scoring
 
