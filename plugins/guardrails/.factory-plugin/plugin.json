@@ -1,6 +1,6 @@
 {
   "name": "guardrails",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Deterministic workflow and delivery guardrails: four-intent routing, bounded review-stage families, safe push policy, idempotent delivery ledger, and a stop gate for current-head CI, PR-body freshness, and review threads.",
   "author": {
     "name": "Sagar"

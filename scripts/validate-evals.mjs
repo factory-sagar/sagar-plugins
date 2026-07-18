@@ -201,6 +201,9 @@ if (casesDoc) {
       }
     }
     if ('critical' in c && typeof c.critical !== 'boolean') fail(casesFile, `case "${id}" critical must be boolean`);
+    if (!['hook', 'model'].includes(c.layer)) {
+      fail(casesFile, `case "${id}" layer "${c.layer}" must be "hook" (CI parity test) or "model" (live eval only)`);
+    }
   }
 }
 
