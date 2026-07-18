@@ -602,7 +602,12 @@ bias the filter's closed-list reasons exist to prevent.
   not absence of threads.
 - Do not run the deep tier on a small routine diff. Default light; escalate only on the heuristic.
 - Do not escalate to deep on a small, well-tested touch to a risk-sensitive path alone. Escalate
-  only when the diff is also large or the risk-sensitive logic is new/rewritten.
+  only when the diff is also large, the risk-sensitive logic is new/rewritten, or an
+  independently high-consequence responsibility applies.
+- A small, well-tested edit to existing risk-sensitive logic remains light only when no
+  independently high-consequence responsibility applies.
+- Migrations, concurrency, externally controlled state, multi-phase transitions, and new or
+  materially rewritten authorization decisions remain deep even when small.
 - Do not ask the user to select light versus deep; select from evidence and report why.
 - Do not accept a resume solely because its reply looks complete. Check its semantic task
   contract and confirm new entries actually landed in the notes doc; if a resume wrote nothing,

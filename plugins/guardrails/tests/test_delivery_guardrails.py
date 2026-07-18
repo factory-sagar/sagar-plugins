@@ -1695,6 +1695,52 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             "final round 1 is the independent broad mutating review without a preliminary deep pair",
         )
 
+    def test_supporting_review_tier_guidance_keeps_independent_high_consequence_work_deep(self):
+        for relative_path in (
+            "plugins/review/skills/review-pr/deep-review.md",
+            "plugins/review/README.md",
+        ):
+            with self.subTest(relative_path=relative_path):
+                self.assert_policy_matches(
+                    relative_path,
+                    r"(?m)^(?:-\s+)?A\s+small,\s+well-tested\s+edit\s+to\s+existing\s+"
+                    r"risk-sensitive\s+logic\s+remains\s+light\s+only\s+when\s+no\s+"
+                    r"independently\s+high-consequence\s+responsibility\s+applies\.$",
+                    "small, well-tested edits to existing risk-sensitive logic remain "
+                    "light only without an independently high-consequence responsibility",
+                )
+                self.assert_policy_matches(
+                    relative_path,
+                    r"(?m)^(?:-\s+)?Migrations,\s+concurrency,\s+externally\s+controlled\s+"
+                    r"state,\s+multi-phase\s+transitions,\s+and\s+new\s+or\s+materially\s+"
+                    r"rewritten\s+authorization\s+decisions\s+remain\s+deep\s+even\s+"
+                    r"when\s+small\.$",
+                    "migrations, concurrency, externally controlled state, "
+                    "multi-phase transitions, and new or materially rewritten "
+                    "authorization decisions remain deep even when small",
+                )
+                policy = self.policy_text(relative_path)
+                self.assertNotRegex(
+                    policy,
+                    r"(?s)Do not escalate to deep on a small, well-tested touch to a "
+                    r"risk-sensitive path alone\.\s+Escalate\s+only when the diff is also "
+                    r"large or the risk-sensitive logic is new/rewritten\.",
+                    msg=(
+                        f"{relative_path} must not restore the former conflicting "
+                        "deep-review light-tier carve-out."
+                    ),
+                )
+                self.assertNotRegex(
+                    policy,
+                    r"(?s)The escalation heuristic leans light:\s+a small, well-tested "
+                    r"touch to a risk-sensitive path stays light;\s+deep is reserved for "
+                    r"large diffs or new/rewritten risk-sensitive logic\.",
+                    msg=(
+                        f"{relative_path} must not restore the former conflicting README "
+                        "light-tier guidance."
+                    ),
+                )
+
     def test_review_pr_documents_every_allowed_review_budget_stage_tag(self):
         policy = self.policy_text("plugins/review/skills/review-pr/SKILL.md")
         for stage_tag in (
