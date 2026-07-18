@@ -2,14 +2,17 @@ import io
 import json
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 HOOKS = Path(__file__).resolve().parents[1] / "hooks"
 sys.path.insert(0, str(HOOKS))
 
+import stop_delivery_gate  # noqa: E402
 from delivery_ledger import (  # noqa: E402
     clear_push_state,
     is_push_command,
@@ -17,6 +20,7 @@ from delivery_ledger import (  # noqa: E402
     parse_push_command,
     record_push,
     record_session_baseline,
+    state_path,
 )
 from intent_router import route_intent  # noqa: E402
 from pre_push_policy import push_policy_violation  # noqa: E402
@@ -1462,19 +1466,31 @@ class StopGateTests(unittest.TestCase):
             "baseline_untracked": ["plans/README.md"],
         }
 
+    def make_snapshot(self, **overrides):
+        fields = {
+            "local_head": "abc123",
+            "remote_head": "abc123",
+            "dirty_tracked": False,
+            "unexpected_untracked": (),
+            "pr_state": "ok",
+            "pr_head": "abc123",
+            "checks_complete": True,
+            "checks_green": True,
+            "unresolved_threads": 0,
+            "body_fresh": True,
+        }
+        fields.update(overrides)
+        return DeliverySnapshot(**fields)
+
     def test_green_current_pr_is_complete(self):
-        snapshot = DeliverySnapshot(
-            local_head="abc123",
-            remote_head="abc123",
-            pr_head="abc123",
-            dirty_tracked=False,
-            unexpected_untracked=(),
-            checks_complete=True,
-            checks_green=True,
-            unresolved_threads=0,
-            body_fresh=True,
+        self.assertEqual(
+            pending_obligations(
+                self.state,
+                self.make_snapshot(),
+                thread_authority=True,
+            ),
+            [],
         )
-        self.assertEqual(pending_obligations(self.state, snapshot), [])
 
     def test_preexisting_untracked_files_do_not_block_delivery(self):
         dirty_tracked, unexpected = classify_worktree(
@@ -1501,10 +1517,8 @@ class StopGateTests(unittest.TestCase):
         )
 
     def test_reports_every_unfinished_delivery_obligation(self):
-        snapshot = DeliverySnapshot(
+        snapshot = self.make_snapshot(
             local_head="def456",
-            remote_head="abc123",
-            pr_head="abc123",
             dirty_tracked=True,
             unexpected_untracked=("src/new.ts",),
             checks_complete=False,
@@ -1512,7 +1526,11 @@ class StopGateTests(unittest.TestCase):
             unresolved_threads=2,
             body_fresh=False,
         )
-        obligations = pending_obligations(self.state, snapshot)
+        obligations = pending_obligations(
+            self.state,
+            snapshot,
+            thread_authority=True,
+        )
 
         self.assertEqual(len(obligations), 7)
         self.assertTrue(any("worktree" in item for item in obligations))
@@ -1521,40 +1539,138 @@ class StopGateTests(unittest.TestCase):
         self.assertTrue(any("threads" in item for item in obligations))
         self.assertTrue(any("body" in item for item in obligations))
 
-    def test_unknown_live_state_blocks_instead_of_claiming_green(self):
-        snapshot = DeliverySnapshot(
-            local_head="abc123",
-            remote_head=None,
+    def test_threads_do_not_block_without_merge_or_approve_authority(self):
+        snapshot = self.make_snapshot(unresolved_threads=3, body_fresh=None)
+
+        self.assertEqual(
+            pending_obligations(self.state, snapshot, thread_authority=False),
+            [],
+        )
+        self.assertIsNone(
+            delivery_gate_output(
+                self.state,
+                snapshot,
+                stop_hook_active=False,
+                thread_authority=False,
+            )
+        )
+
+    def test_threads_block_when_the_request_granted_merge_or_approve(self):
+        snapshot = self.make_snapshot(unresolved_threads=3)
+        obligations = pending_obligations(
+            self.state,
+            snapshot,
+            thread_authority=True,
+        )
+
+        self.assertEqual(obligations, ["3 unresolved review threads remain."])
+        output = delivery_gate_output(
+            self.state,
+            snapshot,
+            stop_hook_active=False,
+            thread_authority=True,
+        )
+        self.assertEqual(output["decision"], "block")
+        self.assertIn("review thread", output["reason"])
+
+    def test_unmanaged_pr_body_is_not_blocked_but_stale_marker_is(self):
+        unmanaged = pending_obligations(
+            self.state,
+            self.make_snapshot(body_fresh=None),
+            thread_authority=True,
+        )
+        self.assertEqual(unmanaged, [])
+
+        stale = pending_obligations(
+            self.state,
+            self.make_snapshot(body_fresh=False),
+            thread_authority=True,
+        )
+        self.assertEqual(stale, ["PR body is not stamped for the current PR head."])
+
+    def test_branch_without_a_pr_enforces_only_push_integrity(self):
+        snapshot = self.make_snapshot(
+            pr_state="none",
             pr_head=None,
-            dirty_tracked=None,
-            unexpected_untracked=None,
             checks_complete=None,
             checks_green=None,
             unresolved_threads=None,
             body_fresh=None,
         )
-        obligations = pending_obligations(self.state, snapshot)
+
+        self.assertEqual(
+            pending_obligations(self.state, snapshot, thread_authority=True),
+            [],
+        )
+        dirty = self.make_snapshot(
+            pr_state="none",
+            pr_head=None,
+            checks_complete=None,
+            checks_green=None,
+            unresolved_threads=None,
+            body_fresh=None,
+            dirty_tracked=True,
+        )
+        self.assertEqual(
+            pending_obligations(self.state, dirty, thread_authority=True),
+            ["The worktree contains uncommitted tracked changes."],
+        )
+
+    def test_gh_unavailable_consolidates_into_one_failed_closed_obligation(self):
+        snapshot = self.make_snapshot(
+            pr_state="unavailable",
+            pr_head=None,
+            checks_complete=None,
+            checks_green=None,
+            unresolved_threads=None,
+            body_fresh=None,
+        )
+        obligations = pending_obligations(
+            self.state,
+            snapshot,
+            thread_authority=True,
+        )
+
+        self.assertEqual(len(obligations), 1)
+        self.assertIn("could not verify PR, CI, or review-thread state", obligations[0])
+        output = delivery_gate_output(
+            self.state,
+            snapshot,
+            stop_hook_active=False,
+            thread_authority=True,
+        )
+        self.assertEqual(output["decision"], "block")
+        self.assertIn("gh auth status", output["reason"])
+
+    def test_unknown_local_state_blocks_instead_of_claiming_green(self):
+        snapshot = self.make_snapshot(
+            remote_head=None,
+            dirty_tracked=None,
+            unexpected_untracked=None,
+            pr_state="unavailable",
+            pr_head=None,
+            checks_complete=None,
+            checks_green=None,
+            unresolved_threads=None,
+            body_fresh=None,
+        )
+        obligations = pending_obligations(
+            self.state,
+            snapshot,
+            thread_authority=True,
+        )
 
         self.assertGreaterEqual(len(obligations), 4)
         self.assertTrue(any("could not verify" in item for item in obligations))
 
     def test_pending_ci_block_requires_one_foreground_watch(self):
-        snapshot = DeliverySnapshot(
-            local_head="abc123",
-            remote_head="abc123",
-            pr_head="abc123",
-            dirty_tracked=False,
-            unexpected_untracked=(),
-            checks_complete=False,
-            checks_green=False,
-            unresolved_threads=0,
-            body_fresh=True,
-        )
+        snapshot = self.make_snapshot(checks_complete=False, checks_green=False)
 
         output = delivery_gate_output(
             self.state,
             snapshot,
             stop_hook_active=False,
+            thread_authority=True,
         )
 
         self.assertEqual(output["decision"], "block")
@@ -1562,48 +1678,386 @@ class StopGateTests(unittest.TestCase):
         self.assertIn("gh pr checks 42 --watch --interval 10", output["reason"])
 
     def test_pending_ci_reentry_stops_without_another_continuation(self):
-        snapshot = DeliverySnapshot(
-            local_head="abc123",
-            remote_head="abc123",
-            pr_head="abc123",
-            dirty_tracked=False,
-            unexpected_untracked=(),
-            checks_complete=False,
-            checks_green=False,
-            unresolved_threads=0,
-            body_fresh=True,
-        )
+        snapshot = self.make_snapshot(checks_complete=False, checks_green=False)
 
         output = delivery_gate_output(
             self.state,
             snapshot,
             stop_hook_active=True,
+            thread_authority=True,
         )
 
         self.assertFalse(output["continue"])
         self.assertIn("not accepted as complete", output["stopReason"])
 
     def test_actionable_reentry_still_blocks(self):
-        snapshot = DeliverySnapshot(
+        snapshot = self.make_snapshot(dirty_tracked=True)
+
+        output = delivery_gate_output(
+            self.state,
+            snapshot,
+            stop_hook_active=True,
+            thread_authority=True,
+        )
+
+        self.assertEqual(output["decision"], "block")
+        self.assertIn("uncommitted tracked changes", output["reason"])
+
+    def test_unchanged_obligations_on_reentry_stop_instead_of_looping(self):
+        snapshot = self.make_snapshot(dirty_tracked=True)
+        state = {
+            **self.state,
+            "last_block_obligations": [
+                "The worktree contains uncommitted tracked changes."
+            ],
+        }
+
+        output = delivery_gate_output(
+            state,
+            snapshot,
+            stop_hook_active=True,
+            thread_authority=True,
+        )
+
+        self.assertFalse(output["continue"])
+        self.assertIn("unchanged obligations", output["stopReason"])
+
+    def test_changed_obligations_on_reentry_block_again(self):
+        snapshot = self.make_snapshot(dirty_tracked=True, checks_green=False)
+        state = {
+            **self.state,
+            "last_block_obligations": [
+                "The worktree contains uncommitted tracked changes."
+            ],
+        }
+
+        output = delivery_gate_output(
+            state,
+            snapshot,
+            stop_hook_active=True,
+            thread_authority=True,
+        )
+
+        self.assertEqual(output["decision"], "block")
+
+    def test_block_reason_is_two_lines_with_a_next_step(self):
+        cases = (
+            self.make_snapshot(checks_complete=True, checks_green=False),
+            self.make_snapshot(unresolved_threads=2),
+            self.make_snapshot(body_fresh=False),
+            self.make_snapshot(dirty_tracked=True),
+        )
+        for snapshot in cases:
+            with self.subTest(snapshot=snapshot):
+                output = delivery_gate_output(
+                    self.state,
+                    snapshot,
+                    stop_hook_active=False,
+                    thread_authority=True,
+                )
+                self.assertEqual(output["decision"], "block")
+                lines = output["reason"].split("\n")
+                self.assertEqual(len(lines), 2)
+                self.assertTrue(lines[0].startswith("Delivery remains incomplete: "))
+                self.assertIn("`", lines[1], "next step must name a command")
+
+
+class StopGateFetchPrTests(unittest.TestCase):
+    def fake_result(self, returncode, stdout="", stderr=""):
+        return subprocess.CompletedProcess(
+            args=["gh"],
+            returncode=returncode,
+            stdout=stdout,
+            stderr=stderr,
+        )
+
+    def test_missing_pr_is_classified_as_none(self):
+        for stderr in (
+            'no pull requests found for branch "feature"',
+            "GraphQL: Could not resolve to a PullRequest with the number of 999.",
+        ):
+            with self.subTest(stderr=stderr):
+                with mock.patch.object(
+                    stop_delivery_gate.subprocess,
+                    "run",
+                    return_value=self.fake_result(1, stderr=stderr),
+                ):
+                    pr, pr_state = stop_delivery_gate.fetch_pr("/repo", None)
+                self.assertIsNone(pr)
+                self.assertEqual(pr_state, "none")
+
+    def test_auth_network_timeout_and_parse_failures_are_unavailable(self):
+        failures = (
+            self.fake_result(1, stderr="HTTP 401: Bad credentials"),
+            self.fake_result(1, stderr="dial tcp: lookup api.github.com: no such host"),
+            self.fake_result(0, stdout="not json"),
+        )
+        for result in failures:
+            with self.subTest(result=result):
+                with mock.patch.object(
+                    stop_delivery_gate.subprocess,
+                    "run",
+                    return_value=result,
+                ):
+                    pr, pr_state = stop_delivery_gate.fetch_pr("/repo", 42)
+                self.assertIsNone(pr)
+                self.assertEqual(pr_state, "unavailable")
+        with mock.patch.object(
+            stop_delivery_gate.subprocess,
+            "run",
+            side_effect=OSError("gh not installed"),
+        ):
+            pr, pr_state = stop_delivery_gate.fetch_pr("/repo", 42)
+        self.assertIsNone(pr)
+        self.assertEqual(pr_state, "unavailable")
+
+    def test_valid_pr_json_is_classified_as_ok(self):
+        payload = json.dumps({"number": 42, "headRefOid": "abc123", "body": ""})
+        with mock.patch.object(
+            stop_delivery_gate.subprocess,
+            "run",
+            return_value=self.fake_result(0, stdout=payload),
+        ):
+            pr, pr_state = stop_delivery_gate.fetch_pr("/repo", 42)
+        self.assertEqual(pr_state, "ok")
+        self.assertEqual(pr["number"], 42)
+
+
+class StopGateSnapshotTests(unittest.TestCase):
+    def test_fetch_checks_classifies_pending_green_and_failed(self):
+        cases = (
+            ([{"state": "SUCCESS"}, {"state": "SUCCESS"}], (True, True)),
+            ([{"state": "SUCCESS"}, {"state": "IN_PROGRESS"}], (False, False)),
+            ([{"state": "SUCCESS"}, {"state": "FAILURE"}], (True, False)),
+            ("not a list", (None, None)),
+        )
+        for value, expected in cases:
+            with self.subTest(value=value):
+                with mock.patch.object(
+                    stop_delivery_gate, "run_json", return_value=value
+                ):
+                    self.assertEqual(
+                        stop_delivery_gate.fetch_checks("/repo", 42),
+                        expected,
+                    )
+
+    def test_fetch_unresolved_threads_counts_and_fails_closed(self):
+        identity = {"nameWithOwner": "owner/repo"}
+        page = {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "reviewThreads": {
+                            "nodes": [
+                                {"isResolved": True},
+                                {"isResolved": False},
+                                {"isResolved": False},
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+        with mock.patch.object(
+            stop_delivery_gate, "run_json", side_effect=[identity, [page]]
+        ):
+            self.assertEqual(
+                stop_delivery_gate.fetch_unresolved_threads("/repo", 42), 2
+            )
+        with mock.patch.object(
+            stop_delivery_gate, "run_json", side_effect=[identity, [{"data": {}}]]
+        ):
+            self.assertIsNone(
+                stop_delivery_gate.fetch_unresolved_threads("/repo", 42)
+            )
+        with mock.patch.object(
+            stop_delivery_gate, "run_json", side_effect=["not a dict"]
+        ):
+            self.assertIsNone(
+                stop_delivery_gate.fetch_unresolved_threads("/repo", 42)
+            )
+
+    def test_snapshot_skips_thread_fetch_without_authority_and_detects_stamps(self):
+        state = {
+            "repo_root": "/repo",
+            "branch": "feature",
+            "pr_number": 42,
+            "baseline_untracked": [],
+        }
+        pr = {
+            "number": 42,
+            "headRefOid": "abc123",
+            "body": "Body\n<!-- pr-body-head=old -->",
+        }
+        with (
+            mock.patch.object(stop_delivery_gate, "run_text", return_value="abc123"),
+            mock.patch.object(
+                stop_delivery_gate, "fetch_pr", return_value=(pr, "ok")
+            ),
+            mock.patch.object(
+                stop_delivery_gate, "fetch_checks", return_value=(True, True)
+            ),
+            mock.patch.object(
+                stop_delivery_gate, "fetch_unresolved_threads"
+            ) as threads,
+        ):
+            snapshot, pr_number = stop_delivery_gate.snapshot_delivery(
+                state, thread_authority=False
+            )
+        threads.assert_not_called()
+        self.assertEqual(pr_number, 42)
+        self.assertIsNone(snapshot.unresolved_threads)
+        self.assertFalse(snapshot.body_fresh)
+
+        unmanaged = {**pr, "body": "Body with no marker"}
+        with (
+            mock.patch.object(stop_delivery_gate, "run_text", return_value="abc123"),
+            mock.patch.object(
+                stop_delivery_gate, "fetch_pr", return_value=(unmanaged, "ok")
+            ),
+            mock.patch.object(
+                stop_delivery_gate, "fetch_checks", return_value=(True, True)
+            ),
+            mock.patch.object(
+                stop_delivery_gate, "fetch_unresolved_threads", return_value=1
+            ),
+        ):
+            snapshot, _ = stop_delivery_gate.snapshot_delivery(
+                state, thread_authority=True
+            )
+        self.assertIsNone(snapshot.body_fresh)
+        self.assertEqual(snapshot.unresolved_threads, 1)
+
+
+class StopGateMainTests(unittest.TestCase):
+    def setUp(self):
+        self.scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(self.scratch.cleanup)
+        root = Path(self.scratch.name)
+        env = {
+            "DROID_DELIVERY_LEDGER_DIR": str(root / "ledger"),
+            "DROID_INTENT_STATE_DIR": str(root / "intent"),
+            "DROID_GUARDRAILS_LOG_DIR": str(root / "log"),
+        }
+        patcher = mock.patch.dict(os.environ, env)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        repo = tempfile.mkdtemp(dir=self.scratch.name)
+        subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        self.repo_root = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+
+    def run_main(self, payload):
+        stdout = io.StringIO()
+        original = (sys.stdin, sys.stdout)
+        try:
+            sys.stdin = io.StringIO(json.dumps(payload))
+            sys.stdout = stdout
+            code = stop_delivery_gate.main()
+        finally:
+            sys.stdin, sys.stdout = original
+        return code, stdout.getvalue()
+
+    def dirty_snapshot(self):
+        return DeliverySnapshot(
             local_head="abc123",
             remote_head="abc123",
-            pr_head="abc123",
             dirty_tracked=True,
             unexpected_untracked=(),
+            pr_state="ok",
+            pr_head="abc123",
             checks_complete=True,
             checks_green=True,
             unresolved_threads=0,
             body_fresh=True,
         )
 
-        output = delivery_gate_output(
-            self.state,
-            snapshot,
-            stop_hook_active=True,
+    def test_main_blocks_persists_obligations_then_stops_on_identical_reentry(self):
+        record_push(
+            state_dir=Path(os.environ["DROID_DELIVERY_LEDGER_DIR"]),
+            session_id="gate-main",
+            repo_root=self.repo_root,
+            branch="feature",
+            pushed_head="abc123",
+            pr_number=42,
         )
 
-        self.assertEqual(output["decision"], "block")
-        self.assertIn("uncommitted tracked changes", output["reason"])
+        with mock.patch.object(
+            stop_delivery_gate,
+            "snapshot_delivery",
+            return_value=(self.dirty_snapshot(), 42),
+        ):
+            code, out = self.run_main(
+                {"session_id": "gate-main", "cwd": self.repo_root}
+            )
+            self.assertEqual(code, 0)
+            first = json.loads(out)
+            self.assertEqual(first["decision"], "block")
+
+            state_file = state_path(
+                Path(os.environ["DROID_DELIVERY_LEDGER_DIR"]),
+                "gate-main",
+                self.repo_root,
+            )
+            persisted = load_state(state_file)
+            self.assertEqual(
+                persisted["last_block_obligations"],
+                ["The worktree contains uncommitted tracked changes."],
+            )
+
+            code, out = self.run_main(
+                {
+                    "session_id": "gate-main",
+                    "cwd": self.repo_root,
+                    "stop_hook_active": True,
+                }
+            )
+            self.assertEqual(code, 0)
+            second = json.loads(out)
+            self.assertFalse(second["continue"])
+            self.assertIn("unchanged obligations", second["stopReason"])
+
+    def test_main_clears_push_state_when_delivery_is_complete(self):
+        record_push(
+            state_dir=Path(os.environ["DROID_DELIVERY_LEDGER_DIR"]),
+            session_id="gate-clean",
+            repo_root=self.repo_root,
+            branch="feature",
+            pushed_head="abc123",
+            pr_number=42,
+        )
+        clean = DeliverySnapshot(
+            local_head="abc123",
+            remote_head="abc123",
+            dirty_tracked=False,
+            unexpected_untracked=(),
+            pr_state="ok",
+            pr_head="abc123",
+            checks_complete=True,
+            checks_green=True,
+            unresolved_threads=0,
+            body_fresh=True,
+        )
+        with mock.patch.object(
+            stop_delivery_gate,
+            "snapshot_delivery",
+            return_value=(clean, 42),
+        ):
+            code, out = self.run_main(
+                {"session_id": "gate-clean", "cwd": self.repo_root}
+            )
+        self.assertEqual((code, out), (0, ""))
+        state_file = state_path(
+            Path(os.environ["DROID_DELIVERY_LEDGER_DIR"]),
+            "gate-clean",
+            self.repo_root,
+        )
+        self.assertIsNone(load_state(state_file)["pushed_head"])
 
 
 class WorkflowPolicyContractTests(unittest.TestCase):

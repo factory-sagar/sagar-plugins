@@ -20,6 +20,7 @@ Desktop.ini
 tmp/
 __pycache__/
 *.pyc
+.coverage
 
 # Prompt evaluation harness: definitions are versioned; generated run output is not.
 /evals/runs/

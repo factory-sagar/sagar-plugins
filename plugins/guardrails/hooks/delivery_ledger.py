@@ -262,7 +262,6 @@ def main() -> int:
             repo_root=repo_root,
             baseline_untracked=raw_untracked.splitlines() if raw_untracked else [],
         )
-        print(json.dumps({"suppressOutput": True}))
         return 0
 
     if hook_input.get("tool_name") != "Execute":
@@ -289,7 +288,6 @@ def main() -> int:
         pr_number=pr_number,
         baseline_untracked=baseline_untracked,
     )
-    print(json.dumps({"suppressOutput": True}))
     return 0
 
 

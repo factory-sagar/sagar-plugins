@@ -14,6 +14,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
+from guardrails_log import log_decision
+
 STATE_VERSION = 1
 REVIEW_TAG = re.compile(
     r"^(\[review:(?:standard(?::(?:retry(?::security)?|security))?|"
@@ -342,7 +344,14 @@ def reserve_review_call(
     return None
 
 
-def deny(reason: str) -> None:
+def deny(reason: str, session_id: str) -> None:
+    log_decision(
+        hook="review_budget",
+        event="PreToolUse",
+        decision="deny",
+        session_id=session_id,
+        detail=reason,
+    )
     print(
         json.dumps(
             {
@@ -371,7 +380,6 @@ def main() -> int:
             prompt=str(hook_input.get("prompt") or ""),
             transcript_path=str(hook_input.get("transcript_path") or ""),
         )
-        print(json.dumps({"suppressOutput": True}))
         return 0
 
     if event != "PreToolUse" or hook_input.get("tool_name") != "Task":
@@ -384,16 +392,17 @@ def main() -> int:
         return 0
     if subagent_type == "review-worker":
         if match is None:
-            deny("Every review-worker Task must start with a deep review stage tag.")
+            deny("Every review-worker Task must start with a deep review stage tag.", session_id)
             return 0
         if match.group(1) not in DEEP_WORKER_SLOTS:
             deny(
                 "A review-worker Task may use only deep discovery, primary, challenge, "
-                "resume, or their prerequisite retry review stage tags."
+                "resume, or their prerequisite retry review stage tags.",
+                session_id,
             )
             return 0
     if subagent_type == "security" and match is None:
-        deny("Every security Task must start with a `:security` review stage tag.")
+        deny("Every security Task must start with a `:security` review stage tag.", session_id)
         return 0
     if match is not None:
         tag = match.group(1)
@@ -405,14 +414,15 @@ def main() -> int:
         ):
             deny(
                 "Every budgeted security Task description must include "
-                "`[security:selected]`."
+                "`[security:selected]`.",
+                session_id,
             )
             return 0
         if subagent_type == "security" and not is_security_tag:
-            deny("A security Task may use only `:security` review stage tags.")
+            deny("A security Task may use only `:security` review stage tags.", session_id)
             return 0
         if subagent_type == "change-review" and is_security_tag:
-            deny("A change-review Task may not use `:security` review stage tags.")
+            deny("A change-review Task may not use `:security` review stage tags.", session_id)
             return 0
         if subagent_type == "change-review" and (
             tag not in CHANGE_REVIEW_STANDARD_SLOTS
@@ -420,7 +430,8 @@ def main() -> int:
         ):
             deny(
                 "A change-review Task may use only standard or final primary and "
-                "challenge review stage tags."
+                "challenge review stage tags.",
+                session_id,
             )
             return 0
     violation = reserve_review_call(
@@ -431,7 +442,7 @@ def main() -> int:
         resume=tool_input.get("resume"),
     )
     if violation is not None:
-        deny(violation)
+        deny(violation, session_id)
     return 0
 
 
