@@ -31,6 +31,12 @@ jobs:
           python3 -m unittest discover -s plugins/guardrails/tests -v
           python3 -m py_compile plugins/guardrails/hooks/*.py
 
+      - name: Hook coverage floor
+        run: |
+          python3 -m pip install --quiet coverage || python3 -m pip install --user --quiet coverage --break-system-packages
+          python3 -m coverage run --source=plugins/guardrails/hooks -m unittest discover -s plugins/guardrails/tests
+          python3 -m coverage report --fail-under=87
+
       - name: Version bumps (PRs only)
         if: github.event_name == 'pull_request'
         run: node scripts/validate.mjs --require-bumps "origin/${{ github.base_ref }}"

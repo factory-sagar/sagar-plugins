@@ -11,6 +11,7 @@ import subprocess
 import sys
 
 from delivery_ledger import parse_push_command
+from guardrails_log import log_decision
 
 PIPEFAIL_PREFIX = re.compile(r"^\s*set\s+-o\s+pipefail\s*(?:;|&&)")
 
@@ -109,6 +110,13 @@ def main() -> int:
         default_branch=default_branch(push_cwd),
     )
     if violation:
+        log_decision(
+            hook="pre_push_policy",
+            event="PreToolUse",
+            decision="deny",
+            session_id=str(hook_input.get("session_id") or "session"),
+            detail=violation,
+        )
         print(violation, file=sys.stderr)
         return 2
     return 0
