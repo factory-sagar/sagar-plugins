@@ -167,6 +167,9 @@ head review as `standard` or `deep`, and never reuse a final-head slot.
 
 Transport success is not review success. Apply semantic acceptance by reviewer type:
 
+- Semantic completion also requires every canonical Coverage row: blocked or incomplete reviewer
+  outcomes must name each missing native field exactly; omitting a row is incomplete, not a valid
+  abbreviated report.
 - `review-worker` must return `Status`, `Blockers`, and `Evidence Coverage`. It is complete only
   when Status is `complete` and Blockers are `none`. Initial Review must evidence that `Review
   Context` was written. Model-driven and convention passes must evidence their assigned
@@ -196,8 +199,9 @@ A change is broad or high-consequence when any of these hold: more than 10 chang
 more than 3 approved units, externally controlled state, multi-phase transitions, migrations,
 new or materially rewritten authorization decisions, concurrency, or 3 or more materially
 distinct changed risk responsibilities. A small, well-tested edit to existing risk-sensitive
-logic remains light unless a size/unit threshold or new/rewritten boundary applies; overlapping
-selector signals from one small existing behavior are not distinct risk responsibilities. Deep
+logic remains light only when no size/unit threshold or independently high-consequence
+responsibility applies; overlapping selector signals from one small existing behavior are not
+distinct risk responsibilities. Deep
 review is mandatory in those cases for report and approve modes. In mutating modes, the final-head
 gate's frozen-head round-1 primary/challenge pair, plus stage-matched security when selected,
 supplies that independent broad review instead; do not also run a preliminary deep pair for the
@@ -392,6 +396,7 @@ implies push or merge authority.
 - PR body: <current for current head SHA / blocked>
 - Self-authorship comparison: <PR author.login> vs <authenticated user.login> — <pass / blocked>
 - Final live-head equality: <reviewedHeadSha> = <live headRefOid> — <pass / blocked>
+- Result: <approved via `gh pr review --approve` / blocked — reason>
 
 ### Deviations
 <entries or `none`>
