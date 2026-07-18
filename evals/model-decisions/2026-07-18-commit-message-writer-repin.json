@@ -1,0 +1,23 @@
+{
+  "id": "2026-07-18-commit-message-writer-repin",
+  "date": "2026-07-18",
+  "status": "provisional",
+  "scope": ["commit-message-writer"],
+  "protocol": {
+    "method": "Registry reconciliation against the executable pin, not a new A/B run.",
+    "history": "2026-07-11-role-routing assigned gpt-5.6-luna:medium for mechanical work; commit ba68621 (chore(synthesis): repin commit message writer model) deliberately repinned the droid to glm-5.2:high afterward, and the registry was never updated.",
+    "artifactPolicy": "No transcripts; the evidence is repository history."
+  },
+  "decision": {
+    "model": "glm-5.2",
+    "reasoningEffort": "high",
+    "rationale": "Droid frontmatter is the source of truth because it is what executes. The registry and README are synchronized to it, and scripts/validate.mjs section 8 now fails CI on any future divergence."
+  },
+  "supersedes": {
+    "2026-07-11-role-routing": "for the commit-message-writer assignment only"
+  },
+  "limitations": [
+    "The repin commit recorded no comparative measurements; the assignment stays provisional.",
+    "Promotion to validated requires golden-task 20 (commit-message-writer) baseline runs comparing glm-5.2:high against gpt-5.6-luna:medium under evals/policy.json repetition rules."
+  ]
+}
