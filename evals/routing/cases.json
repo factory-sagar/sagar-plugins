@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "review-short-pr",
+      "critical": true,
+      "prompt": "Review PR 123.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-staged",
+      "critical": true,
+      "prompt": "Review the staged change and report anything that should block merge.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-local-fix",
+      "critical": true,
+      "prompt": "Review and fix this branch, verify it, and stop before pushing.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-comments",
+      "critical": true,
+      "prompt": "Address every review comment on PR 42 and close the loop.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-fix-every-comment",
+      "critical": true,
+      "prompt": "Fix every review comment on PR 42.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-approve",
+      "critical": true,
+      "prompt": "Approve PR 42 after the normal review and required checks.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-approve-this-pr",
+      "critical": true,
+      "prompt": "Approve this PR.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-approve-this-pull-request",
+      "critical": true,
+      "prompt": "Approve this pull request.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-approve-imperative-question",
+      "critical": true,
+      "prompt": "Can you approve PR 42?",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-heavy",
+      "critical": true,
+      "prompt": "Review this risky auth and migration PR exhaustively. Trace tenant boundaries, state mutation, rollback, async ordering, tests, and operational impact.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "review-language-neutral",
+      "critical": true,
+      "prompt": "Review this Elixir change for correctness, state ownership, concurrency, contracts, tests, and security.",
+      "expectedPrimary": "review-pr"
+    },
+    {
+      "id": "plan-short",
+      "critical": true,
+      "prompt": "Plan adding audit-log exports.",
+      "expectedPrimary": "spec"
+    },
+    {
+      "id": "plan-scope",
+      "critical": true,
+      "prompt": "Scope this migration into independently verifiable units before writing code.",
+      "expectedPrimary": "spec"
+    },
+    {
+      "id": "plan-heavy-architecture",
+      "critical": true,
+      "prompt": "Design this properly. Compare ownership boundaries, typed contracts, call stacks, failure behavior, rollback, and test seams before recommending an architecture.",
+      "expectedPrimary": "spec"
+    },
+    {
+      "id": "plan-unknowns",
+      "critical": false,
+      "prompt": "I am unfamiliar with this area. Find my blind spots and then plan the work.",
+      "expectedPrimary": "spec"
+    },
+    {
+      "id": "implement-approved-unit",
+      "critical": true,
+      "prompt": "Implement unit U3 from the approved plan and verify it.",
+      "expectedPrimary": "implement"
+    },
+    {
+      "id": "implement-explicit-fix-list",
+      "critical": true,
+      "prompt": "Apply these three approved fixes exactly, run the relevant checks, and report deviations.",
+      "expectedPrimary": "implement"
+    },
+    {
+      "id": "implement-new-behavior",
+      "critical": true,
+      "prompt": "Implement this new endpoint from the accepted criteria using tests first.",
+      "expectedPrimary": "implement"
+    },
+    {
+      "id": "implement-and-ship",
+      "critical": true,
+      "prompt": "Implement the approved unit, verify it, then push and make the PR merge-ready.",
+      "expectedPrimary": "implement",
+      "expectedSequence": ["implement", "ship"]
+    },
+    {
+      "id": "implement-program-then-review",
+      "critical": true,
+      "prompt": "Implement the approved program in its dependency order, validate every unit, then run review-pr. Do not push or merge.",
+      "expectedPrimary": "implement",
+      "expectedSequence": ["implement", "review-pr"]
+    },
+    {
+      "id": "ship-short",
+      "critical": true,
+      "prompt": "Ship it.",
+      "expectedPrimary": "ship"
+    },
+    {
+      "id": "ship-explicit",
+      "critical": true,
+      "prompt": "Push everything, refresh the PR body, watch CI, resolve threads, and report merge-ready.",
+      "expectedPrimary": "ship"
+    },
+    {
+      "id": "ship-merge",
+      "critical": true,
+      "prompt": "Merge this PR when current-head CI is green and every review thread is resolved.",
+      "expectedPrimary": "ship"
+    },
+    {
+      "id": "review-and-merge",
+      "critical": true,
+      "prompt": "Review PR 123, fix every valid blocker, then merge it when current-head CI is green and all threads are resolved.",
+      "expectedPrimary": "review-pr",
+      "expectedSequence": ["review-pr", "ship"]
+    },
+    {
+      "id": "push-then-approve",
+      "critical": true,
+      "prompt": "Push it, then approve PR 42.",
+      "expectedPrimary": "review-pr",
+      "expectedSequence": ["review-pr", "ship"]
+    },
+    {
+      "id": "approve-and-merge",
+      "critical": true,
+      "prompt": "Approve and merge PR 42.",
+      "expectedPrimary": "review-pr",
+      "expectedSequence": ["review-pr", "ship"]
+    },
+    {
+      "id": "approve-and-land",
+      "critical": true,
+      "prompt": "Approve and land this PR.",
+      "expectedPrimary": "review-pr",
+      "expectedSequence": ["review-pr", "ship"]
+    },
+    {
+      "id": "negative-explain-file",
+      "critical": true,
+      "prompt": "Explain what src/cache.ts does.",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-git-question",
+      "critical": true,
+      "prompt": "What does git status show?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-current-state",
+      "critical": true,
+      "prompt": "List the files in this directory.",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-research-only",
+      "critical": false,
+      "prompt": "What is the latest stable Node.js release?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-approval-advice",
+      "critical": true,
+      "prompt": "Should I approve PR 42?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-approval-advice-we",
+      "critical": true,
+      "prompt": "Should we approve pull request 42?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-approval-nonimperative",
+      "critical": true,
+      "prompt": "Would you approve PR 42?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-approval-and-merge-advice",
+      "critical": true,
+      "prompt": "Should we approve and merge PR 42?",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-approve-plan",
+      "critical": true,
+      "prompt": "Approve the plan for PR 42.",
+      "expectedPrimary": "spec"
+    },
+    {
+      "id": "negative-approve-and-merge-plan",
+      "critical": true,
+      "prompt": "Approve and merge the plan for PR 42.",
+      "expectedPrimary": "spec"
+    },
+    {
+      "id": "negative-approve-change",
+      "critical": true,
+      "prompt": "Approve this change on PR 42.",
+      "expectedPrimary": null
+    },
+    {
+      "id": "negative-review-noun",
+      "critical": true,
+      "prompt": "Fix every review note in the proposal.",
+      "expectedPrimary": null
+    }
+  ]
+}

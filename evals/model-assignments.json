@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "assignments": {
+    "planner": {
+      "model": "gpt-5.6-sol",
+      "reasoningEffort": "xhigh",
+      "status": "provisional",
+      "evidence": ["2026-07-11-role-routing"]
+    },
+    "implementer": {
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "status": "provisional",
+      "evidence": ["2026-07-11-role-routing"]
+    },
+    "test-engineer": {
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "status": "provisional",
+      "evidence": ["2026-07-11-role-routing"]
+    },
+    "quick-analysis": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "status": "provisional",
+      "evidence": ["2026-07-11-role-routing"]
+    },
+    "deep-understanding": {
+      "model": "gpt-5.6-sol",
+      "reasoningEffort": "xhigh",
+      "status": "provisional",
+      "evidence": ["2026-07-11-role-routing"]
+    },
+    "deep-research": {
+      "model": "claude-opus-4-8",
+      "reasoningEffort": "xhigh",
+      "status": "provisional",
+      "evidence": []
+    },
+    "debugger": {
+      "model": "gpt-5.6-sol",
+      "reasoningEffort": "xhigh",
+      "status": "provisional",
+      "evidence": ["2026-07-11-role-routing"]
+    },
+    "change-review": {
+      "model": "gpt-5.6-sol",
+      "reasoningEffort": "xhigh",
+      "status": "provisional",
+      "evidence": [
+        "2026-07-11-role-routing",
+        "2026-07-11-real-world-review"
+      ]
+    },
+    "security": {
+      "model": "claude-opus-4-8",
+      "reasoningEffort": "xhigh",
+      "status": "provisional",
+      "evidence": ["2026-07-11-role-routing"]
+    },
+    "review-worker": {
+      "model": "gpt-5.6-sol",
+      "reasoningEffort": "xhigh",
+      "status": "provisional",
+      "evidence": [
+        "2026-07-11-role-routing",
+        "2026-07-11-real-world-review"
+      ]
+    },
+    "pr-describer": {
+      "model": "claude-opus-4-8",
+      "reasoningEffort": "high",
+      "status": "provisional",
+      "evidence": []
+    },
+    "commit-message-writer": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "medium",
+      "status": "provisional",
+      "evidence": ["2026-07-11-role-routing"]
+    },
+    "prompt-optimizer": {
+      "model": "claude-opus-4-8",
+      "reasoningEffort": "xhigh",
+      "status": "provisional",
+      "evidence": ["2026-07-11-role-routing"]
+    },
+    "doc-generator": {
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "status": "provisional",
+      "evidence": ["2026-07-11-role-routing"]
+    }
+  }
+}

@@ -21,8 +21,6 @@ tmp/
 __pycache__/
 *.pyc
 
-# Local prompt evaluation harness
-/evals/
-/scripts/eval-routing.mjs
-/scripts/eval-routing.test.mjs
-/scripts/run-golden-task.sh
+# Prompt evaluation harness: definitions are versioned; generated run output is not.
+/evals/runs/
+/evals/results/
