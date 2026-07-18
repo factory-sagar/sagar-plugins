@@ -1,5 +1,7 @@
 # Golden Task 10: Review-PR Tier Selection and Push Gate
 
+Version: 1
+
 ## Target
 
 `review-pr`.

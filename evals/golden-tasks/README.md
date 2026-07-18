@@ -2,7 +2,9 @@
 
 This pack gives prompt changes a repeatable regression check before they ship. Run each task against the relevant skill or droid, then score the output against the rubric in the task file.
 
-Run a task headlessly with `scripts/run-golden-task.sh <task-file> [--judge]`: it extracts the task's optional ` ```bash ` Setup block into a scratch git repo, runs the ` ```text ` Prompt via `droid exec`, saves the transcript under `evals/runs/`, and with `--judge` scores the transcript plus post-run repository evidence against [`JUDGE.md`](./JUDGE.md). Accepted transcripts live in [`../baselines/`](../baselines/) and are diffed on later runs.
+Run a task headlessly with `scripts/run-golden-task.sh <task-file> [--judge] [--runs N]`: it extracts the task's optional ` ```bash ` Setup block into a scratch git repo, runs the ` ```text ` Prompt via `droid exec`, saves the transcript under `evals/runs/`, and with `--judge` scores the transcript plus post-run repository evidence against [`JUDGE.md`](./JUDGE.md), writing a version-stamped `verdict.json` per run. Accepted verdict baselines live in [`../baselines/`](../baselines/); see [`../README.md`](../README.md) for the baseline and comparability rules.
+
+Every task file carries a `Version: N` line. Bump it on any rubric change (CI enforces this on PRs); verdicts are only comparable at a pinned task version.
 
 The runner detects skill and droid targets and supplies the installed source prompt as the
 governing contract. Droid-targeted tasks run inline because `droid exec` has no Task tool; the
@@ -51,9 +53,13 @@ For an overall score, count `pass` as 1, `partial` as 0.5, and `fail` as 0. Crit
 
 ## Regression workflow
 
-1. Save the current output for each task as the baseline (`evals/baselines/<task>.md`).
+1. Accept a verdict baseline for each task (`scripts/accept-baseline.sh <task-file>`,
+   N judged runs) and commit `evals/baselines/<task>.json` plus its transcripts.
 2. Apply one prompt change set.
 3. Re-run every task whose target the change touches (the complete registered pack for
-   fleet-wide changes).
-4. Compare against the baseline diff and score with the rubric (or `--judge`).
-5. Keep the change only if all critical tasks pass and the total score is at least 85%.
+   fleet-wide changes): `scripts/run-golden-task.sh <task-file> --judge --runs N`.
+4. Gate with `node scripts/compare-baseline.mjs <task> <verdict.json>...` — a pass-rate
+   drop or a new `fail` is a regression; a version or contract mismatch means
+   re-baseline, not compare.
+5. Keep the change only if all critical tasks pass and the total score is at least 85%;
+   re-accept baselines for intentional behavior changes in the same PR.

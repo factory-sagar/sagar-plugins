@@ -1,34 +1,38 @@
 #!/usr/bin/env bash
 # Run one golden task headlessly and (optionally) judge the transcript.
 #
-#   scripts/run-golden-task.sh <task-file> [--judge] [--exec-model <id>]
+#   scripts/run-golden-task.sh <task-file> [--judge] [--runs N] [--exec-model <id>]
 #     [--exec-effort <level>] [--judge-model <id>] [--judge-effort <level>]
 #     [--droid <droid.md> --model <id> [--effort <level>]] [--label <name>]
 #
-# What it does:
-#   1. Extracts the task's Target, optional ```bash Setup block, and ```text Prompt block.
+# What it does, once per run (--runs N repeats with fresh scratch state):
+#   1. Extracts the task's Target, Version, optional ```bash Setup block, and ```text Prompt block.
 #   2. Creates a scratch git repo, runs Setup inside it.
 #   3. Detects droid targets and runs the headless session on the droid's pinned model with
 #      the source prompt as its governing contract. LIMITATION: droid exec has no Task tool,
 #      so this is contract execution, not a true subagent invocation or model A/B.
 #   4. Invokes `droid exec` against the scratch repo with the composed prompt.
-#   5. Writes the transcript to evals/runs/<timestamp>-<task>[-<label>]/transcript.md.
-#   6. With --judge: scores the transcript against the task rubric via JUDGE.md.
-#   7. Diffs against evals/baselines/<task>.md when a baseline exists.
+#   5. Writes the transcript to evals/runs/<timestamp>-<task>[-<label>][-rN]/transcript.md.
+#   6. With --judge: scores the transcript against the task rubric via JUDGE.md and writes
+#      the parsed verdict, stamped with task/judge versions and the contract hash, to
+#      verdict.json (the comparable unit for baselines - see scripts/compare-baseline.mjs).
 #
-#   (For droid model A/Bs, do NOT use this script — see README "Fable-class models".)
+# Baselines are verdict-level, not transcript-level: accept with
+# scripts/accept-baseline.sh, compare with scripts/compare-baseline.mjs.
+# (For droid model A/Bs, do NOT use this script — see README "Fable-class models".)
 #
 # Requires: droid CLI on PATH, the relevant plugins installed.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TASK_FILE="${1:?usage: run-golden-task.sh <task-file> [--judge] [--exec-model <id>] [--exec-effort <level>] [--droid <file> --model <id> [--effort <level>]] [--label <name>]}"
+TASK_FILE="${1:?usage: run-golden-task.sh <task-file> [--judge] [--runs N] [--exec-model <id>] [--exec-effort <level>] [--droid <file> --model <id> [--effort <level>]] [--label <name>]}"
 shift
-JUDGE="" DROID_FILE="" SKILL_FILE="" MODEL="" EFFORT="" LABEL=""
+JUDGE="" DROID_FILE="" SKILL_FILE="" MODEL="" EFFORT="" LABEL="" RUNS=1
 EXEC_MODEL="" EXEC_EFFORT="" JUDGE_MODEL="claude-opus-4-8" JUDGE_EFFORT="xhigh"
 while [ $# -gt 0 ]; do
   case "$1" in
     --judge) JUDGE="--judge" ;;
+    --runs) RUNS="$2"; shift ;;
     --droid) DROID_FILE="$2"; shift ;;
     --model) MODEL="$2"; shift ;;
     --effort) EFFORT="$2"; shift ;;
@@ -42,10 +46,9 @@ while [ $# -gt 0 ]; do
   shift
 done
 if [ -n "$DROID_FILE" ] && [ -z "$MODEL" ]; then echo "--droid requires --model" >&2; exit 2; fi
+case "$RUNS" in (''|*[!0-9]*|0) echo "--runs must be a positive integer" >&2; exit 2 ;; esac
 TASK_NAME="$(basename "$TASK_FILE" .md)"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-RUN_DIR="$ROOT/evals/runs/$STAMP-$TASK_NAME$LABEL"
-mkdir -p "$RUN_DIR"
 
 # Extract the first fenced block that follows a given H2 heading.
 extract_block() { # $1=heading
@@ -60,7 +63,10 @@ TARGET="$(awk '/^## Target/{getline; while ($0 ~ /^$/) getline; print; exit}' "$
 TARGET_NAME="${TARGET%% *}"
 PROMPT="$(extract_block "Prompt")"
 SETUP="$(extract_block "Setup")"
+TASK_VERSION="$(awk '/^Version: /{print $2; exit}' "$TASK_FILE")"
+JUDGE_VERSION="$(awk '/^Version: /{print $2; exit}' "$ROOT/evals/golden-tasks/JUDGE.md")"
 [ -n "$PROMPT" ] || { echo "no ## Prompt block found in $TASK_FILE" >&2; exit 1; }
+[ -n "$TASK_VERSION" ] || { echo "no 'Version: N' line found in $TASK_FILE" >&2; exit 1; }
 
 if [ -z "$DROID_FILE" ]; then
   for CANDIDATE in "$ROOT"/plugins/*/droids/"$TARGET_NAME.md"; do
@@ -84,102 +90,185 @@ if [ -z "$DROID_FILE" ]; then
   done
 fi
 
-SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/golden-$TASK_NAME.XXXXXX")"
-git -C "$SCRATCH" init -q
-if [ -n "$SETUP" ]; then
-  (cd "$SCRATCH" && bash -euo pipefail -c "$SETUP")
-  git -C "$SCRATCH" add -A && git -C "$SCRATCH" -c user.email=eval@local -c user.name=eval commit -qm "golden-task setup" || true
+CONTRACT_SOURCE="${DROID_FILE:-$SKILL_FILE}"
+CONTRACT_SHA=""
+if [ -n "$CONTRACT_SOURCE" ]; then
+  CONTRACT_SHA="$(shasum -a 256 "$ROOT/$CONTRACT_SOURCE" | awk '{print $1}')"
 fi
 
-if [ -n "$DROID_FILE" ]; then
-  mkdir -p "$SCRATCH/.factory/droids"
-  VARIANT="$SCRATCH/.factory/droids/$(basename "$DROID_FILE")"
-  awk -v model="$MODEL" -v effort="$EFFORT" '
-    /^model: / { print "model: " model; if (effort != "") { print "reasoningEffort: " effort; skip_effort = 1 }; next }
-    /^reasoningEffort: / && skip_effort { next }
-    { print }
-  ' "$ROOT/$DROID_FILE" > "$VARIANT"
-  echo "droid variant: $(basename "$DROID_FILE" .md) -> $MODEL${EFFORT:+ ($EFFORT)} (project override in scratch repo)"
-fi
+run_once() { # $1=run index
+  local RUN_SUFFIX=""
+  [ "$RUNS" -gt 1 ] && RUN_SUFFIX="-r$1"
+  local RUN_DIR="$ROOT/evals/runs/$STAMP-$TASK_NAME$LABEL$RUN_SUFFIX"
+  mkdir -p "$RUN_DIR"
 
-{
-  if [ -n "$DROID_FILE" ]; then
-    echo "This is a golden-task contract eval for the \`$TARGET_NAME\` droid. The headless runner has no Task tool, so read \`$ROOT/$DROID_FILE\` and perform the task inline under that governing contract. Load any contract-relative references from the source location. Do not block merely because the droid or Task tool is unavailable, and do not substitute another reviewer."
-  elif [ -n "$SKILL_FILE" ]; then
-    echo "This is a golden-task contract eval for the \`$TARGET_NAME\` skill. Read \`$ROOT/$SKILL_FILE\` and perform the task inline under that governing contract. Load any contract-relative references from the source location. Do not substitute another skill or droid."
-  else
-    echo "This is a golden-task eval run. Use the \`$TARGET\` skill to handle the task below exactly as its prompt specifies. Do not substitute another skill or droid."
+  local SCRATCH
+  SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/golden-$TASK_NAME.XXXXXX")"
+  git -C "$SCRATCH" init -q
+  if [ -n "$SETUP" ]; then
+    (cd "$SCRATCH" && bash -euo pipefail -c "$SETUP")
+    git -C "$SCRATCH" add -A && git -C "$SCRATCH" -c user.email=eval@local -c user.name=eval commit -qm "golden-task setup" || true
   fi
-  echo
-  echo "$PROMPT"
-} > "$RUN_DIR/prompt.md"
 
-echo "target: $TARGET"
-echo "scratch: $SCRATCH"
-echo "run dir: $RUN_DIR"
+  if [ -n "$DROID_FILE" ]; then
+    mkdir -p "$SCRATCH/.factory/droids"
+    local VARIANT="$SCRATCH/.factory/droids/$(basename "$DROID_FILE")"
+    awk -v model="$MODEL" -v effort="$EFFORT" '
+      /^model: / { print "model: " model; if (effort != "") { print "reasoningEffort: " effort; skip_effort = 1 }; next }
+      /^reasoningEffort: / && skip_effort { next }
+      { print }
+    ' "$ROOT/$DROID_FILE" > "$VARIANT"
+    echo "droid variant: $(basename "$DROID_FILE" .md) -> $MODEL${EFFORT:+ ($EFFORT)} (project override in scratch repo)"
+  fi
 
-EXEC_ARGS=()
-[ -n "$EXEC_MODEL" ] && EXEC_ARGS+=(--model "$EXEC_MODEL")
-[ -n "$EXEC_EFFORT" ] && EXEC_ARGS+=(--reasoning-effort "$EXEC_EFFORT")
-STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-if [ "${#EXEC_ARGS[@]}" -gt 0 ]; then
-  droid exec "${EXEC_ARGS[@]}" -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto high -o text \
-    | tee "$RUN_DIR/transcript.md"
-else
-  droid exec -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto high -o text \
-    | tee "$RUN_DIR/transcript.md"
-fi
-FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
-TASK_NAME="$TASK_NAME" TARGET="$TARGET" STARTED_AT="$STARTED_AT" FINISHED_AT="$FINISHED_AT" \
-EXEC_MODEL="$EXEC_MODEL" EXEC_EFFORT="$EXEC_EFFORT" DROID_FILE="$DROID_FILE" \
-SKILL_FILE="$SKILL_FILE" \
-node -e '
-  const fs = require("node:fs");
-  const metadata = {
-    schemaVersion: 1,
-    task: process.env.TASK_NAME,
-    target: process.env.TARGET,
-    startedAt: process.env.STARTED_AT,
-    finishedAt: process.env.FINISHED_AT,
-    requestedModel: process.env.EXEC_MODEL || null,
-    requestedReasoningEffort: process.env.EXEC_EFFORT || null,
-    evidenceType: process.env.DROID_FILE || process.env.SKILL_FILE
-      ? "source_contract_execution"
-      : "headless_execution",
-    contractSource: process.env.DROID_FILE || process.env.SKILL_FILE || null,
-    pinnedDroidExercised: false
-  };
-  fs.writeFileSync(process.argv[1], `${JSON.stringify(metadata, null, 2)}\n`);
-' "$RUN_DIR/metadata.json"
-
-if [ "$JUDGE" = "--judge" ]; then
   {
-    echo "# Post-run repository evidence"
+    if [ -n "$DROID_FILE" ]; then
+      echo "This is a golden-task contract eval for the \`$TARGET_NAME\` droid. The headless runner has no Task tool, so read \`$ROOT/$DROID_FILE\` and perform the task inline under that governing contract. Load any contract-relative references from the source location. Do not block merely because the droid or Task tool is unavailable, and do not substitute another reviewer."
+    elif [ -n "$SKILL_FILE" ]; then
+      echo "This is a golden-task contract eval for the \`$TARGET_NAME\` skill. Read \`$ROOT/$SKILL_FILE\` and perform the task inline under that governing contract. Load any contract-relative references from the source location. Do not substitute another skill or droid."
+    else
+      echo "This is a golden-task eval run. Use the \`$TARGET\` skill to handle the task below exactly as its prompt specifies. Do not substitute another skill or droid."
+    fi
     echo
-    echo "## Status"
-    git -C "$SCRATCH" status --short
-    echo
-    echo "## Commit history and patches"
-    git -C "$SCRATCH" log --reverse --format='commit %H%nAuthor: %an <%ae>%nDate: %aI%n%n    %s%n%n%b' --stat --patch --all
-    echo
-    echo "## Uncommitted diff"
-    git -C "$SCRATCH" diff
-  } > "$RUN_DIR/repository-evidence.md"
-  {
-    cat "$ROOT/evals/golden-tasks/JUDGE.md"
-    echo; echo "--- TASK FILE ---"; cat "$TASK_FILE"
-    echo; echo "--- TRANSCRIPT ---"; cat "$RUN_DIR/transcript.md"
-    echo; echo "--- POST-RUN REPOSITORY EVIDENCE ---"; cat "$RUN_DIR/repository-evidence.md"
-  } > "$RUN_DIR/judge-prompt.md"
-  droid exec --model "$JUDGE_MODEL" --reasoning-effort "$JUDGE_EFFORT" \
-    -f "$RUN_DIR/judge-prompt.md" -o text | tee "$RUN_DIR/verdict.md"
-fi
+    echo "$PROMPT"
+  } > "$RUN_DIR/prompt.md"
 
-BASELINE="$ROOT/evals/baselines/$TASK_NAME.md"
+  echo "target: $TARGET (task v$TASK_VERSION, judge v$JUDGE_VERSION)"
+  echo "scratch: $SCRATCH"
+  echo "run dir: $RUN_DIR"
+
+  local EXEC_ARGS=()
+  [ -n "$EXEC_MODEL" ] && EXEC_ARGS+=(--model "$EXEC_MODEL")
+  [ -n "$EXEC_EFFORT" ] && EXEC_ARGS+=(--reasoning-effort "$EXEC_EFFORT")
+  local STARTED_AT FINISHED_AT
+  STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  if [ "${#EXEC_ARGS[@]}" -gt 0 ]; then
+    droid exec "${EXEC_ARGS[@]}" -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto high -o text \
+      | tee "$RUN_DIR/transcript.md"
+  else
+    droid exec -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto high -o text \
+      | tee "$RUN_DIR/transcript.md"
+  fi
+  FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+  TASK_NAME="$TASK_NAME" TARGET="$TARGET" STARTED_AT="$STARTED_AT" FINISHED_AT="$FINISHED_AT" \
+  EXEC_MODEL="$EXEC_MODEL" EXEC_EFFORT="$EXEC_EFFORT" DROID_FILE="$DROID_FILE" \
+  SKILL_FILE="$SKILL_FILE" TASK_VERSION="$TASK_VERSION" JUDGE_VERSION="$JUDGE_VERSION" \
+  CONTRACT_SHA="$CONTRACT_SHA" \
+  node -e '
+    const fs = require("node:fs");
+    const metadata = {
+      schemaVersion: 2,
+      task: process.env.TASK_NAME,
+      taskVersion: Number(process.env.TASK_VERSION),
+      judgeVersion: Number(process.env.JUDGE_VERSION) || null,
+      target: process.env.TARGET,
+      startedAt: process.env.STARTED_AT,
+      finishedAt: process.env.FINISHED_AT,
+      requestedModel: process.env.EXEC_MODEL || null,
+      requestedReasoningEffort: process.env.EXEC_EFFORT || null,
+      evidenceType: process.env.DROID_FILE || process.env.SKILL_FILE
+        ? "source_contract_execution"
+        : "headless_execution",
+      contractSource: process.env.DROID_FILE || process.env.SKILL_FILE || null,
+      contractSha: process.env.CONTRACT_SHA || null,
+      pinnedDroidExercised: false
+    };
+    fs.writeFileSync(process.argv[1], `${JSON.stringify(metadata, null, 2)}\n`);
+  ' "$RUN_DIR/metadata.json"
+
+  if [ "$JUDGE" = "--judge" ]; then
+    {
+      echo "# Post-run repository evidence"
+      echo
+      echo "## Status"
+      git -C "$SCRATCH" status --short
+      echo
+      echo "## Commit history and patches"
+      git -C "$SCRATCH" log --reverse --format='commit %H%nAuthor: %an <%ae>%nDate: %aI%n%n    %s%n%n%b' --stat --patch --all
+      echo
+      echo "## Uncommitted diff"
+      git -C "$SCRATCH" diff
+    } > "$RUN_DIR/repository-evidence.md"
+    {
+      cat "$ROOT/evals/golden-tasks/JUDGE.md"
+      echo; echo "--- TASK FILE ---"; cat "$TASK_FILE"
+      echo; echo "--- TRANSCRIPT ---"; cat "$RUN_DIR/transcript.md"
+      echo; echo "--- POST-RUN REPOSITORY EVIDENCE ---"; cat "$RUN_DIR/repository-evidence.md"
+    } > "$RUN_DIR/judge-prompt.md"
+    droid exec --model "$JUDGE_MODEL" --reasoning-effort "$JUDGE_EFFORT" \
+      -f "$RUN_DIR/judge-prompt.md" -o text | tee "$RUN_DIR/verdict.md"
+
+    RUN_DIR="$RUN_DIR" TASK_NAME="$TASK_NAME" TASK_VERSION="$TASK_VERSION" \
+    JUDGE_VERSION="$JUDGE_VERSION" JUDGE_MODEL="$JUDGE_MODEL" JUDGE_EFFORT="$JUDGE_EFFORT" \
+    EXEC_MODEL="$EXEC_MODEL" EXEC_EFFORT="$EXEC_EFFORT" CONTRACT_SOURCE="$CONTRACT_SOURCE" \
+    CONTRACT_SHA="$CONTRACT_SHA" STARTED_AT="$STARTED_AT" FINISHED_AT="$FINISHED_AT" \
+    python3 - <<'PYEOF'
+import json
+import os
+import re
+import sys
+
+run_dir = os.environ["RUN_DIR"]
+text = open(f"{run_dir}/verdict.md", encoding="utf-8").read()
+fenced = re.findall(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.S)
+candidate = fenced[-1] if fenced else None
+if candidate is None:
+    start = text.rfind('{\n  "task"')
+    if start == -1:
+        start = text.rfind("{")
+    depth = 0
+    end = None
+    for index in range(start, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                end = index + 1
+                break
+    candidate = text[start:end] if start != -1 and end else None
+try:
+    verdict = json.loads(candidate) if candidate else None
+except json.JSONDecodeError:
+    verdict = None
+if not isinstance(verdict, dict) or verdict.get("verdict") not in {"pass", "partial", "fail"}:
+    sys.stderr.write("could not parse a judge verdict JSON block from verdict.md\n")
+    sys.exit(1)
+record = {
+    "schemaVersion": 1,
+    "task": os.environ["TASK_NAME"],
+    "taskVersion": int(os.environ["TASK_VERSION"]),
+    "judgeVersion": int(os.environ["JUDGE_VERSION"]) if os.environ.get("JUDGE_VERSION") else None,
+    "judgeModel": os.environ["JUDGE_MODEL"],
+    "judgeReasoningEffort": os.environ["JUDGE_EFFORT"],
+    "execModel": os.environ.get("EXEC_MODEL") or None,
+    "execReasoningEffort": os.environ.get("EXEC_EFFORT") or None,
+    "contractSource": os.environ.get("CONTRACT_SOURCE") or None,
+    "contractSha": os.environ.get("CONTRACT_SHA") or None,
+    "startedAt": os.environ["STARTED_AT"],
+    "finishedAt": os.environ["FINISHED_AT"],
+    "judge": verdict,
+}
+with open(f"{run_dir}/verdict.json", "w", encoding="utf-8") as stream:
+    json.dump(record, stream, indent=2)
+    stream.write("\n")
+print(f"verdict: {verdict['verdict']} -> {run_dir}/verdict.json")
+PYEOF
+  fi
+}
+
+for RUN_INDEX in $(seq 1 "$RUNS"); do
+  [ "$RUNS" -gt 1 ] && echo "=== run $RUN_INDEX of $RUNS ==="
+  run_once "$RUN_INDEX"
+done
+
+BASELINE="$ROOT/evals/baselines/$TASK_NAME.json"
 if [ -f "$BASELINE" ]; then
-  echo; echo "--- diff vs accepted baseline (informational) ---"
-  diff -u "$BASELINE" "$RUN_DIR/transcript.md" || true
+  echo
+  echo "baseline exists — compare judged runs with:"
+  echo "  node scripts/compare-baseline.mjs $TASK_NAME evals/runs/$STAMP-$TASK_NAME$LABEL*/verdict.json"
 else
-  echo; echo "no baseline yet — to accept this run: cp $RUN_DIR/transcript.md $BASELINE"
+  echo
+  echo "no baseline yet — accept one with: scripts/accept-baseline.sh $TASK_FILE"
 fi

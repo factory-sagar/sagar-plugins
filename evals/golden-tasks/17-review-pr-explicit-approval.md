@@ -1,5 +1,7 @@
 # Golden Task 17: Review-PR Explicit Approval
 
+Version: 1
+
 ## Target
 
 `review-pr`.

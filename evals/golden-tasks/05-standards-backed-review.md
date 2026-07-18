@@ -1,5 +1,7 @@
 # Golden Task 05: Standards-backed Review
 
+Version: 1
+
 ## Target
 
 `change-review`.

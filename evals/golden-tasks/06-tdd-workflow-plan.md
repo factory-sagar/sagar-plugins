@@ -1,5 +1,7 @@
 # Golden Task 06: TDD Workflow Execution
 
+Version: 1
+
 ## Target
 
 `tdd-workflow`.

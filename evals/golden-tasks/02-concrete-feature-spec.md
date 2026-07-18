@@ -1,5 +1,7 @@
 # Golden Task 02: Concrete Feature Spec
 
+Version: 1
+
 ## Target
 
 `spec`.

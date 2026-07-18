@@ -1,0 +1,62 @@
+# Eval System
+
+Regression evidence for every prompt surface in this marketplace. Three tiers, baselined
+differently because they cost differently:
+
+| Tier | What runs | Baseline | When it runs |
+| --- | --- | --- | --- |
+| Deterministic | `scripts/validate.mjs`, `scripts/validate-evals.mjs`, guardrail unittests, review selector tests | green CI | every push and PR |
+| Routing | `routing/cases.json` scored by `scripts/eval-routing.mjs` against `policy.json` | thresholds in `policy.json` | when router vocabulary, AGENTS routing rules, or workflow descriptions change |
+| Judged golden tasks | `golden-tasks/*.md` via `scripts/run-golden-task.sh --judge` | accepted verdict baselines in `baselines/` | when a task's `## Target` contract changes |
+
+## Verdict baselines, not transcript baselines
+
+Two good runs of a stochastic system differ textually every time, so transcripts are never
+compared. The comparable unit is the judged verdict:
+
+1. `scripts/run-golden-task.sh <task> --judge` writes `verdict.json` per run, stamped with
+   the task `Version:`, the `JUDGE.md` `Version:`, the judge model, and the SHA-256 of the
+   governing contract file.
+2. `scripts/accept-baseline.sh <task>` runs the task N times (default:
+   `policy.json` `repetitions.promptChange`), requires every verdict to parse, and writes
+   `baselines/<task>.json` plus the accepted transcripts under `baselines/transcripts/`.
+   Commit both: the JSON is the floor, the transcripts are the judge-recalibration corpus.
+3. `scripts/compare-baseline.mjs <task> <verdict.json>...` exits nonzero on regression:
+   candidate pass rate below the baseline pass rate, or a new `fail` against a zero-fail
+   baseline.
+
+## When a baseline stops being comparable
+
+A verdict is only comparable while the rubric, judge, and contract are constant.
+`compare-baseline.mjs` refuses (exit 3) instead of comparing when any of these differ from
+the baseline:
+
+- **Task version** — any golden-task edit bumps its `Version:` line (CI enforces this on
+  PRs). Re-accept the baseline after the change.
+- **Judge version or judge model** — after changing `JUDGE.md` or the judge pin, first
+  re-judge the committed baseline transcripts to recalibrate, then re-accept.
+- **Contract hash** — the target droid/skill file changed. Rerun only the tasks whose
+  `## Target` maps to the changed file, then re-accept the ones that moved intentionally.
+
+A differing exec model stays comparable and is flagged (`modelChanged`) — that is the
+model-A/B path. Apply `policy.json` `modelDecision` rules to the comparison output and
+record the outcome in `model-decisions/`, then update `model-assignments.json`
+(`scripts/validate.mjs` keeps the registry, droid frontmatter, and README table in sync).
+
+## Honesty limits
+
+`droid exec` has no Task tool, so droid-targeted golden tasks measure source-contract
+adherence, not deployed subagent behavior; every run records
+`"pinnedDroidExercised": false`. Treat single-run differences as noise: acceptance uses
+N repeats, and `repetitions.modelChange` governs model comparisons.
+
+## Layout
+
+- `golden-tasks/` — versioned task rubrics plus `JUDGE.md` (the scoring contract)
+- `baselines/` — accepted verdict baselines and their transcripts (committed)
+- `routing/cases.json` — intent-routing cases (also asserted deterministically by the
+  guardrails test suite)
+- `policy.json` — thresholds: routing gates, repetition counts, model-decision rules
+- `model-assignments.json` — per-droid model registry, CI-synced to frontmatter
+- `model-decisions/` — evidence records behind every registry entry
+- `runs/`, `results/` — generated output, gitignored

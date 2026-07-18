@@ -1,5 +1,7 @@
 # Golden Task 04: Typed Tech Spec
 
+Version: 1
+
 ## Target
 
 `tech-spec`.

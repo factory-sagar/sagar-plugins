@@ -1,5 +1,7 @@
 # Golden Task 18: Review-PR Merge Live-Head Continuity
 
+Version: 1
+
 ## Target
 
 `review-pr`.
