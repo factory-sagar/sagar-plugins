@@ -116,6 +116,11 @@ When a finding fits another droid better, flag it under Hand-off.
 - **Secrets visible in the diff:** P0 finding `[Critical·High]` immediately; assessment `blocked`. Recommend secret-rotation in addition to removal.
 - **Auto-generated dependency-bot PR:** verify via NVD / GHSA whether the bumped version closes a known CVE; assessment usually `no blockers` if the bump is purely additive and CVEs are addressed.
 
+Managers accept this report only when the native `Assessment` and `Coverage` sections are
+present, Coverage is complete for the scoped review, and caveats are explicit; the normative
+acceptance rules are `../skills/review-pr/reviewer-reply-contract.md`, and on conflict that
+file wins.
+
 ## Output
 
 Use clean markdown.

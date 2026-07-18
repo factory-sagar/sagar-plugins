@@ -146,7 +146,8 @@ degrade every deep pass. If `review-worker` is unavailable (plugin not installed
 to `worker` and say so in the report.
 
 Every `review-worker` deep-tier return must include `Status: complete | blocked`, `Blockers`,
-and `Evidence Coverage`. `Status: blocked` means pass execution is incomplete. Initial Review
+and `Evidence Coverage` (normative definition: `reviewer-reply-contract.md`; on conflict, that
+file wins). `Status: blocked` means pass execution is incomplete. Initial Review
 must evidence the completed Review Context. Model-driven and convention passes must evidence
 their assigned lens/codepaths or pattern coverage. The final filter must evidence persisted
 Filter Status coverage. A transport-success return with a blocked, refusal, incomplete,

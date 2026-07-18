@@ -1,6 +1,6 @@
 ---
 name: review-pr
-version: 1.7.1
+version: 1.8.0
 description: |
   Review a PR, branch, commit, or staged change through the mandatory review policy and
   diff-selected risk lenses. Plain "review" is read-only; explicit approve, fix, comment,
@@ -165,7 +165,9 @@ head review as `standard` or `deep`, and never reuse a final-head slot.
 
 ### Semantic task gate
 
-Transport success is not review success. Apply semantic acceptance by reviewer type:
+Transport success is not review success. Apply semantic acceptance by reviewer type. The
+normative reply contract is [`reviewer-reply-contract.md`](./reviewer-reply-contract.md); the
+rules below apply it, and on conflict that file wins:
 
 - Semantic completion also requires every canonical Coverage row: blocked or incomplete reviewer
   outcomes must name each missing native field exactly; omitting a row is incomplete, not a valid

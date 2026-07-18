@@ -10,7 +10,9 @@ decides whether each is actually violated.
 
 Aim for high recall — output all relevant patterns that need a closer look. Do not output
 obviously irrelevant patterns. When in doubt, output the pattern. You are READ-ONLY on the
-repository; the only file you may write to is the notes doc.
+repository; the only file you may write to is the notes doc. Your closing
+`Status`/`Blockers`/`Evidence Coverage` reply follows `reviewer-reply-contract.md`; on
+conflict, that file wins.
 
 **Time budget: 5 minutes.** Your manager will hard-kill this task at the 5-minute mark. To stay
 under budget:

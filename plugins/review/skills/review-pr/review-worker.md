@@ -1,7 +1,9 @@
 # Review-PR Worker Prompts
 
 This file contains only instructions the manager copies into `Task` prompts for the deep-tier
-Review subagent. Manager-only orchestration rules live in `deep-review.md`.
+Review subagent. Manager-only orchestration rules live in `deep-review.md`. The
+`Status`/`Blockers`/`Evidence Coverage` lines these prompts demand are defined normatively in
+`reviewer-reply-contract.md`; on conflict, that file wins.
 
 Every prompt that mentions the notes doc relies on `review-notes-format.md`. The manager passes
 the notes-doc path as `<NOTES_PATH>`, the isolated initial-context path as `<CONTEXT_PATH>`, and
