@@ -1,5 +1,7 @@
 # Golden Task 16: Review-PR Approve Versus Merge Authority
 
+Version: 1
+
 ## Target
 
 `review-pr`.

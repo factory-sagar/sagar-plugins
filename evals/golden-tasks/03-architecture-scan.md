@@ -1,5 +1,7 @@
 # Golden Task 03: Architecture Scan
 
+Version: 1
+
 ## Target
 
 `architecture-scan`.

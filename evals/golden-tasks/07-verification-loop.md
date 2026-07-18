@@ -1,5 +1,7 @@
 # Golden Task 07: Verification Loop
 
+Version: 1
+
 ## Target
 
 `verification-loop`.

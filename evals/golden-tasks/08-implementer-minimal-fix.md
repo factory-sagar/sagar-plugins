@@ -1,5 +1,7 @@
 # Golden Task 08: Implementer Minimal Fix Application
 
+Version: 1
+
 ## Target
 
 `implementer`.

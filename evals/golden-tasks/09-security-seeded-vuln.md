@@ -1,5 +1,7 @@
 # Golden Task 09: Security Review with Seeded Vulnerabilities
 
+Version: 1
+
 ## Target
 
 `security`.

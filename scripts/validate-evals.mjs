@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 // Structural invariant validator for the committed eval definitions.
 //
-//   node scripts/validate-evals.mjs
+//   node scripts/validate-evals.mjs                       # full validation
+//   node scripts/validate-evals.mjs --require-bumps REF   # + require golden-task
+//                                                         #   Version bumps vs git REF
 //
-// Guards the harness contracts that scripts/run-golden-task.sh and
-// scripts/eval-routing.mjs depend on: golden-task section shape and target
-// resolution (replicating the runner's extraction exactly), the routing case
-// schema, policy thresholds, and the model-assignment registry's referential
-// integrity. Generated output under evals/runs/ and evals/results/ is not
+// Guards the harness contracts that scripts/run-golden-task.sh,
+// scripts/eval-routing.mjs, and scripts/compare-baseline.mjs depend on:
+// golden-task section shape, Version lines, and target resolution (replicating
+// the runner's extraction exactly), the routing case schema, policy thresholds,
+// the model-assignment registry's referential integrity, and accepted verdict
+// baselines. Generated output under evals/runs/ and evals/results/ is not
 // validated here because it is not versioned.
 //
 // Dependency-free by design, matching scripts/validate.mjs.
 
+import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -105,6 +109,9 @@ if (!tasksReadmeText) fail(tasksReadme, 'missing golden-tasks README.md');
 const taskTargets = new Map();
 for (const file of taskFiles) {
   const lines = read(file).split('\n');
+  if (!lines.some((line) => /^Version: \d+$/.test(line))) {
+    fail(file, 'no "Version: N" line — baselines are only comparable at a pinned task version');
+  }
   const target = extractTargetName(lines);
   if (!target) {
     fail(file, 'no resolvable "## Target" line');
@@ -151,6 +158,9 @@ else {
   const judge = read(judgeFile);
   for (const field of ['"verdict"', '"must_pass"', '"must_not_do"']) {
     if (!judge.includes(field)) fail(judgeFile, `judge output contract is missing the ${field} field`);
+  }
+  if (!/^Version: \d+$/m.test(judge)) {
+    fail(judgeFile, 'no "Version: N" line — verdicts are only comparable at a pinned judge version');
   }
 }
 
@@ -249,9 +259,73 @@ if (existsSync(decisionsDir)) {
 }
 
 // ---------- 7. harness scripts referenced by the docs exist ----------
-for (const script of ['run-golden-task.sh', 'eval-routing.mjs', 'eval-routing.test.mjs']) {
+for (const script of [
+  'run-golden-task.sh',
+  'eval-routing.mjs',
+  'eval-routing.test.mjs',
+  'accept-baseline.sh',
+  'compare-baseline.mjs',
+]) {
   const file = path.join(ROOT, 'scripts', script);
   if (!existsSync(file)) fail(file, 'harness script is missing');
+}
+
+// ---------- 8. accepted verdict baselines ----------
+const baselinesDir = path.join(EVALS, 'baselines');
+if (existsSync(baselinesDir)) {
+  for (const f of readdirSync(baselinesDir).filter((f) => f.endsWith('.json'))) {
+    const file = path.join(baselinesDir, f);
+    const baseline = readJson(file);
+    if (!baseline) continue;
+    if (baseline.schemaVersion !== 1) fail(file, `schemaVersion ${baseline.schemaVersion} != 1`);
+    const stem = path.basename(f, '.json');
+    if (baseline.task !== stem) fail(file, `task "${baseline.task}" != filename stem "${stem}"`);
+    if (!existsSync(path.join(tasksDir, `${stem}.md`))) fail(file, `no golden task file for baseline "${stem}"`);
+    if (!Number.isInteger(baseline.taskVersion)) fail(file, 'taskVersion must be an integer');
+    if (typeof baseline.passRate !== 'number' || baseline.passRate < 0 || baseline.passRate > 1) {
+      fail(file, 'passRate must be in [0, 1]');
+    }
+    if (!Number.isInteger(baseline.failCount) || baseline.failCount < 0) fail(file, 'failCount must be an integer >= 0');
+    if (!Array.isArray(baseline.runs) || baseline.runs.length === 0) {
+      fail(file, 'runs must be a nonempty array');
+      continue;
+    }
+    for (const run of baseline.runs) {
+      if (!['pass', 'partial', 'fail'].includes(run.verdict)) {
+        fail(file, `run verdict "${run.verdict}" must be pass, partial, or fail`);
+      }
+      if (!run.transcript || !existsSync(path.join(baselinesDir, run.transcript))) {
+        fail(file, `accepted transcript missing: ${run.transcript}`);
+      }
+    }
+  }
+}
+
+// ---------- 9. golden-task Version bumps vs a base ref ----------
+const bumpIdx = process.argv.indexOf('--require-bumps');
+if (bumpIdx !== -1) {
+  const baseRef = process.argv[bumpIdx + 1];
+  if (!baseRef) { console.error('--require-bumps requires a git ref'); process.exit(2); }
+  const git = (...args) =>
+    execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  const gitShow = (ref, p) => {
+    try { return git('show', `${ref}:${p}`); } catch { return null; }
+  };
+  const changed = [...new Set([
+    ...git('diff', '--name-only', `${baseRef}...HEAD`).split('\n'),
+    ...git('diff', '--name-only').split('\n'),
+    ...git('diff', '--name-only', '--cached').split('\n'),
+  ].filter(Boolean))];
+  for (const f of changed.filter((f) => /^evals\/golden-tasks\/\d{2}-.+\.md$/.test(f))) {
+    const before = gitShow(baseRef, f);
+    const currentPath = path.join(ROOT, f);
+    if (before === null || !existsSync(currentPath)) continue; // new or deleted task
+    const vBefore = before.match(/^Version: (\d+)$/m)?.[1] ?? null;
+    const vAfter = read(currentPath).match(/^Version: (\d+)$/m)?.[1] ?? null;
+    if (vBefore !== null && vBefore === vAfter) {
+      fail(currentPath, `golden task changed vs ${baseRef} but Version was not bumped — existing baselines would silently stop being comparable`);
+    }
+  }
 }
 
 // ---------- report ----------

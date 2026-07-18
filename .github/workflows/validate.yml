@@ -23,7 +23,7 @@ jobs:
       - name: Eval definition invariants
         run: |
           node scripts/validate-evals.mjs
-          node --test scripts/eval-routing.test.mjs
+          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs
 
       - name: Deterministic policy tests
         run: |
@@ -39,4 +39,6 @@ jobs:
 
       - name: Version bumps (PRs only)
         if: github.event_name == 'pull_request'
-        run: node scripts/validate.mjs --require-bumps "origin/${{ github.base_ref }}"
+        run: |
+          node scripts/validate.mjs --require-bumps "origin/${{ github.base_ref }}"
+          node scripts/validate-evals.mjs --require-bumps "origin/${{ github.base_ref }}"

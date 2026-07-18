@@ -1,5 +1,7 @@
 # Golden Task 11: Review-PR Comment Triage
 
+Version: 1
+
 ## Target
 
 `review-pr`.

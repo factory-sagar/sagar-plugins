@@ -1,5 +1,7 @@
 # Golden Task 12: Blind-Spot Pass
 
+Version: 1
+
 ## Target
 
 `discovering-unknowns`.

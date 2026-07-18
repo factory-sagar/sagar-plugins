@@ -1,5 +1,7 @@
 # Golden Task 01: Ambiguous Feature Request
 
+Version: 1
+
 ## Target
 
 `grilling` or `tech-spec` Path B.
