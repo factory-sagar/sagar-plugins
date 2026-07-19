@@ -387,6 +387,30 @@ for (const [name, meta] of droidMeta) {
 for (const name of listedDroids.keys()) {
   if (!droidMeta.has(name)) fail(readmeFile, `Models table lists "${name}" but no droid file exists`);
 }
+// Any table row anywhere under plugins/ or docs/ that names both a droid and a model slug
+// must agree with the droid's frontmatter (plugin READMEs and skill tables drifted before
+// this check). Rows with exactly one backticked effort token must match the pinned effort too.
+const MODEL_SLUGS = new Set(Object.keys(EFFORT_BY_MODEL));
+const EFFORT_TOKENS = new Set(['off', 'none', 'low', 'medium', 'high', 'xhigh', 'max']);
+for (const file of [...walkMd(pluginsDir), ...walkMd(path.join(ROOT, 'docs'))]) {
+  for (const line of read(file).split('\n')) {
+    if (!line.trimStart().startsWith('|')) continue;
+    const ticked = [...line.matchAll(/`([^`]+)`/g)].map(([, token]) => token);
+    const models = ticked.filter((token) => MODEL_SLUGS.has(token));
+    if (models.length !== 1) continue;
+    const efforts = ticked.filter((token) => EFFORT_TOKENS.has(token));
+    for (const token of ticked) {
+      const meta = droidMeta.get(token);
+      if (!meta) continue;
+      if (meta.model !== models[0]) {
+        fail(file, `table row pins "${token}" to ${models[0]} but frontmatter pins ${meta.model}`);
+      }
+      if (efforts.length === 1 && meta.effort && efforts[0] !== meta.effort) {
+        fail(file, `table row pins "${token}" effort ${efforts[0]} but frontmatter pins ${meta.effort}`);
+      }
+    }
+  }
+}
 
 // ---------- 9. version bumps vs a base ref ----------
 const bumpIdx = process.argv.indexOf('--require-bumps');
