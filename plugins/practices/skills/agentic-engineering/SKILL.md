@@ -1,6 +1,6 @@
 ---
 name: agentic-engineering
-version: 1.3.3
+version: 1.3.4
 description: |
   Route AI-assisted engineering work by risk, complexity, and evidence. Supplies completion,
   delegation, session, model, evaluation, and review policy when another workflow must decide
@@ -56,7 +56,8 @@ Different models fit different jobs. This marketplace uses the provisional matri
 
 | Task shape | Current provisional model | Example droid | Reason |
 |---|---|---|---|
-| Triage, classification, format-mechanical work | `gpt-5.6-luna` | `quick-analysis`, `commit-message-writer` | Fast and economical for bounded tasks |
+| Triage and classification | `gpt-5.6-luna` | `quick-analysis` | Fast and economical for bounded tasks |
+| Format-mechanical commit prose | `glm-5.2` high | `commit-message-writer` | Cheap, reliable structured output |
 | Implementation, refactors, focused code edits | `gpt-5.6-terra` high | `implementer` | Precise code changes with strong instruction following |
 | Test gap analysis and test writing | `gpt-5.6-terra` high | `test-engineer` | Focused code and contract analysis |
 | Architecture, root cause, multi-file invariants | `gpt-5.6-sol` xhigh | `planner`, `deep-understanding`, `debugger` | Deep reasoning across broad repository context |
