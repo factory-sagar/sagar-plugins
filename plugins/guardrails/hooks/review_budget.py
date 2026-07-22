@@ -24,7 +24,7 @@ REVIEW_TAG = re.compile(
 )
 SELECTED_SECURITY = re.compile(r"\[security:selected\]")
 FINAL_HEAD_HINT = re.compile(
-    r"\b(?:final|frozen|current)\b.{0,48}\b(?:head|branch|diff)\b",
+    r"\b(?:(?:final|frozen)\b.{0,48}\b(?:head|branch|diff)|current\b.{0,48}\bhead)\b",
     re.IGNORECASE,
 )
 ROUND_ONE_SLOTS = {
@@ -260,8 +260,8 @@ def review_task_violation(
     if round_text is None:
         if FINAL_HEAD_HINT.search(f"{description}\n{prompt}"):
             return (
-                "A frozen/current/final head, branch, or diff review must use a "
-                "final-head tag so the "
+                "A final/frozen head, branch, or diff review, or current head review, "
+                "must use a final-head tag so the "
                 "two-round correction budget can be enforced."
             )
         if tag == "[review:standard:retry]" and "[review:standard]" not in slots:
@@ -344,6 +344,10 @@ def reserve_review_call(
     return None
 
 
+def emit(output: dict[str, object]) -> None:
+    print(json.dumps(output))
+
+
 def deny(reason: str, session_id: str) -> None:
     log_decision(
         hook="review_budget",
@@ -352,16 +356,14 @@ def deny(reason: str, session_id: str) -> None:
         session_id=session_id,
         detail=reason,
     )
-    print(
-        json.dumps(
-            {
-                "hookSpecificOutput": {
-                    "hookEventName": "PreToolUse",
-                    "permissionDecision": "deny",
-                    "permissionDecisionReason": reason,
-                }
+    emit(
+        {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": reason,
             }
-        )
+        }
     )
 
 
@@ -412,12 +414,13 @@ def main() -> int:
             and is_security_tag
             and SELECTED_SECURITY.search(description) is None
         ):
-            deny(
-                "Every budgeted security Task description must include "
-                "`[security:selected]`.",
-                session_id,
-            )
-            return 0
+            human_description = description[match.end() :].lstrip()
+            description = f"{tag} [security:selected]"
+            if human_description:
+                description = f"{description} {human_description}"
+            normalized = True
+        else:
+            normalized = False
         if subagent_type == "security" and not is_security_tag:
             deny("A security Task may use only `:security` review stage tags.", session_id)
             return 0
@@ -434,6 +437,8 @@ def main() -> int:
                 session_id,
             )
             return 0
+    else:
+        normalized = False
     violation = reserve_review_call(
         state_dir=state_directory(),
         session_id=session_id,
@@ -443,6 +448,23 @@ def main() -> int:
     )
     if violation is not None:
         deny(violation, session_id)
+    elif normalized:
+        log_decision(
+            hook="review_budget",
+            event="PreToolUse",
+            decision="normalize",
+            session_id=session_id,
+            detail="inserted selected security marker",
+        )
+        emit(
+            {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "updatedInput": {"description": description},
+                },
+                "suppressOutput": True,
+            }
+        )
     return 0
 
 

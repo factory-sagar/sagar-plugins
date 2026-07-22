@@ -1,9 +1,9 @@
 """Emission contract for every guardrail hook.
 
 A hook writes to stdout only to change agent behavior: an intent injection,
-a permission deny, or a stop-gate decision. Every happy path is silent, every
-decision is logged to the guardrails decision log, and accidental prints are
-caught by a static census of print sites.
+a permission deny, a Task-input normalization, or a stop-gate decision. Every
+silent path is unchanged, every decision is logged to the guardrails decision
+log, and accidental prints are caught by a static census of print sites.
 """
 
 import io
@@ -197,6 +197,50 @@ class EmissionContractTests(unittest.TestCase):
         self.assertEqual(len(decisions), 1)
         self.assertEqual(decisions[0]["hook"], "review_budget")
         self.assertEqual(decisions[0]["decision"], "deny")
+
+    def test_review_budget_normalization_is_emitted_and_logged(self):
+        self.run_main(
+            review_budget,
+            {
+                "hook_event_name": "UserPromptSubmit",
+                "session_id": "emit-7-normalize",
+                "prompt": "Review the change.",
+            },
+        )
+        code, out, err = self.run_main(
+            review_budget,
+            {
+                "hook_event_name": "PreToolUse",
+                "session_id": "emit-7-normalize",
+                "tool_name": "Task",
+                "tool_input": {
+                    "subagent_type": "security",
+                    "description": (
+                        "[review:standard:security] Check config inputs"
+                    ),
+                },
+            },
+        )
+        self.assertEqual((code, err), (0, ""))
+        self.assertEqual(
+            json.loads(out),
+            {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "updatedInput": {
+                        "description": (
+                            "[review:standard:security] [security:selected] "
+                            "Check config inputs"
+                        )
+                    },
+                },
+                "suppressOutput": True,
+            },
+        )
+        decisions = self.logged_decisions()
+        self.assertEqual(len(decisions), 1)
+        self.assertEqual(decisions[0]["hook"], "review_budget")
+        self.assertEqual(decisions[0]["decision"], "normalize")
 
     def test_delivery_ledger_is_silent_on_session_start_and_non_push_commands(self):
         repo = self.make_git_repo()

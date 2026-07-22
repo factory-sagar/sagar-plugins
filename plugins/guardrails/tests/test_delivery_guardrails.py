@@ -141,6 +141,7 @@ class ReviewBudgetTests(unittest.TestCase):
             "[review:standard] Review the frozen final head",
             "[review:standard] Review final Reviews diff",
             "[review:deep:primary] Recheck hardened final branch",
+            "[review:standard] Review current head",
         ):
             with self.subTest(description=description):
                 self.assertIn(
@@ -158,6 +159,24 @@ class ReviewBudgetTests(unittest.TestCase):
                 prompt="Review the frozen committed head before this push.",
             ),
         )
+
+    def test_allows_current_branch_and_diff_in_non_final_reviews(self):
+        for description, prompt in (
+            (
+                "[review:standard] Review security handoff fix",
+                "Security-review the current uncommitted diff before delivery.",
+            ),
+            ("[review:standard] Review the current uncommitted diff", ""),
+            ("[review:standard] Review current branch changes", ""),
+        ):
+            with self.subTest(description=description, prompt=prompt):
+                self.assertIsNone(
+                    review_task_violation(
+                        description,
+                        state={"final_slots": []},
+                        prompt=prompt,
+                    )
+                )
 
     def test_standard_retry_is_allowed_once_after_standard(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -194,7 +213,9 @@ class ReviewBudgetTests(unittest.TestCase):
         for result in results[4:]:
             self.assertIn("already reserved for the standard family", result)
 
-    def test_hook_reserves_tagged_standard_security_and_rejects_untagged_security(self):
+    def test_hook_normalizes_tagged_standard_security_and_rejects_untagged_security(
+        self,
+    ):
         with tempfile.TemporaryDirectory() as directory:
             state_dir = Path(directory)
             user_prompt = {
@@ -208,31 +229,53 @@ class ReviewBudgetTests(unittest.TestCase):
                 "tool_name": "Task",
                 "tool_input": {
                     "subagent_type": "security",
-                    "description": (
-                        "[review:standard:security] [security:selected] "
-                        "Inspect changed security paths"
-                    ),
+                    "description": "[review:standard:security] Check config inputs",
                 },
             }
-            untagged_security = {
+            repair_security = {
                 "hook_event_name": "PreToolUse",
                 "session_id": "session-1",
                 "tool_name": "Task",
                 "tool_input": {
                     "subagent_type": "security",
-                    "description": "Inspect changed security paths",
+                    "description": "[security:selected] Check config inputs",
+                },
+            }
+            canonical_security = {
+                **tagged_security,
+                "tool_input": {
+                    "subagent_type": "security",
+                    "description": (
+                        "[review:standard:security] [security:selected] "
+                        "Check config inputs"
+                    ),
                 },
             }
 
             self.run_hook(user_prompt, state_dir)
-            self.assertEqual(self.run_hook(tagged_security, state_dir), "")
+            normalized_output = self.run_hook(tagged_security, state_dir)
+            self.assertEqual(
+                json.loads(normalized_output),
+                {
+                    "hookSpecificOutput": {
+                        "hookEventName": "PreToolUse",
+                        "updatedInput": {
+                            "description": (
+                                "[review:standard:security] [security:selected] "
+                                "Check config inputs"
+                            )
+                        },
+                    },
+                    "suppressOutput": True,
+                },
+            )
             state = load_review_state(review_state_path(state_dir, "session-1"))
             self.assertEqual(
                 state["review_slots"],
                 ["[review:standard:security]"],
-                "A tagged security Task must consume the standard security budget.",
+                "A normalized security Task must consume the standard security budget.",
             )
-            duplicate_output = self.run_hook(tagged_security, state_dir)
+            duplicate_output = self.run_hook(canonical_security, state_dir)
             self.assertNotEqual(
                 duplicate_output,
                 "",
@@ -247,7 +290,7 @@ class ReviewBudgetTests(unittest.TestCase):
                 "already used",
                 duplicate["hookSpecificOutput"]["permissionDecisionReason"],
             )
-            untagged_output = self.run_hook(untagged_security, state_dir)
+            untagged_output = self.run_hook(repair_security, state_dir)
             self.assertNotEqual(
                 untagged_output,
                 "",
@@ -261,6 +304,72 @@ class ReviewBudgetTests(unittest.TestCase):
             self.assertIn(
                 "security",
                 untagged["hookSpecificOutput"]["permissionDecisionReason"],
+            )
+            stage_only_session = "stage-only"
+            self.run_hook(
+                {
+                    "hook_event_name": "UserPromptSubmit",
+                    "session_id": stage_only_session,
+                    "prompt": "Review and fix the change.",
+                },
+                state_dir,
+            )
+            stage_only_output = self.run_hook(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "session_id": stage_only_session,
+                    "tool_name": "Task",
+                    "tool_input": {
+                        "subagent_type": "security",
+                        "description": "[review:standard:security]",
+                    },
+                },
+                state_dir,
+            )
+            self.assertEqual(
+                json.loads(stage_only_output)["hookSpecificOutput"]["updatedInput"],
+                {"description": "[review:standard:security] [security:selected]"},
+            )
+            stage_only_state = load_review_state(
+                review_state_path(state_dir, stage_only_session)
+            )
+            self.assertEqual(
+                stage_only_state["review_slots"],
+                ["[review:standard:security]"],
+            )
+            canonical_session = "canonical-marker-only"
+            self.run_hook(
+                {
+                    "hook_event_name": "UserPromptSubmit",
+                    "session_id": canonical_session,
+                    "prompt": "Review and fix the change.",
+                },
+                state_dir,
+            )
+            self.assertEqual(
+                self.run_hook(
+                    {
+                        "hook_event_name": "PreToolUse",
+                        "session_id": canonical_session,
+                        "tool_name": "Task",
+                        "tool_input": {
+                            "subagent_type": "security",
+                            "description": (
+                                "[review:standard:security] [security:selected]"
+                            ),
+                        },
+                    },
+                    state_dir,
+                ),
+                "",
+                "A canonical security Task without a human label must remain allowed.",
+            )
+            canonical_state = load_review_state(
+                review_state_path(state_dir, canonical_session)
+            )
+            self.assertEqual(
+                canonical_state["review_slots"],
+                ["[review:standard:security]"],
             )
 
     def test_hook_binds_review_stage_tags_to_reviewer_types(self):
@@ -876,19 +985,36 @@ class ReviewBudgetTests(unittest.TestCase):
             )
         )
 
-    def test_hook_requires_selected_marker_for_every_budgeted_security_stage(self):
-        descriptions = (
-            "[review:standard:security] Review security paths",
-            "[review:deep:security] Review security paths",
-            "[review:final:1:security] Review security paths",
-            "[review:final:2:security] Review security paths",
-            "[review:standard:retry:security] Complete security evidence",
-            "[review:deep:retry:security] Complete security evidence",
-            "[review:final:1:retry:security] Complete security evidence",
+    def test_hook_normalizes_selected_marker_for_every_valid_security_stage(self):
+        cases = (
+            ("[review:standard:security] Review security paths", ()),
+            ("[review:deep:security] Review security paths", ()),
+            ("[review:final:1:security] Review security paths", ()),
+            (
+                "[review:final:2:security] Review security paths",
+                (
+                    "[review:final:1:primary] Review frozen head",
+                    "[review:final:1:challenge] Challenge frozen head",
+                    "[review:final:2:primary] Review corrected head",
+                    "[review:final:2:challenge] Challenge corrected head",
+                ),
+            ),
+            (
+                "[review:standard:retry:security] Complete security evidence",
+                ("[review:standard:security] Review security paths",),
+            ),
+            (
+                "[review:deep:retry:security] Complete security evidence",
+                ("[review:deep:security] Review security paths",),
+            ),
+            (
+                "[review:final:1:retry:security] Complete security evidence",
+                ("[review:final:1:security] Review security paths",),
+            ),
         )
         with tempfile.TemporaryDirectory() as directory:
             state_dir = Path(directory)
-            for index, description in enumerate(descriptions):
+            for index, (description, prerequisites) in enumerate(cases):
                 with self.subTest(description=description):
                     session_id = f"security-marker-{index}"
                     self.run_hook(
@@ -899,6 +1025,14 @@ class ReviewBudgetTests(unittest.TestCase):
                         },
                         state_dir,
                     )
+                    for prerequisite in prerequisites:
+                        self.assertIsNone(
+                            reserve_review_call(
+                                state_dir=state_dir,
+                                session_id=session_id,
+                                description=prerequisite,
+                            )
+                        )
                     output = self.run_hook(
                         {
                             "hook_event_name": "PreToolUse",
@@ -912,20 +1046,26 @@ class ReviewBudgetTests(unittest.TestCase):
                         state_dir,
                     )
 
-                    self.assertNotEqual(
-                        output,
-                        "",
-                        "A budgeted security Task without [security:selected] "
-                        "must receive a deny response.",
-                    )
-                    response = json.loads(output)
                     self.assertEqual(
-                        response["hookSpecificOutput"]["permissionDecision"],
-                        "deny",
+                        json.loads(output),
+                        {
+                            "hookSpecificOutput": {
+                                "hookEventName": "PreToolUse",
+                                "updatedInput": {
+                                    "description": description.replace(
+                                        "] ", "] [security:selected] ", 1
+                                    )
+                                },
+                            },
+                            "suppressOutput": True,
+                        },
                     )
-                    self.assertIn(
-                        "[security:selected]",
-                        response["hookSpecificOutput"]["permissionDecisionReason"],
+                    state = load_review_state(
+                        review_state_path(state_dir, session_id)
+                    )
+                    self.assertEqual(
+                        state["review_slots"][-1],
+                        description.split("]", 1)[0] + "]",
                     )
 
     def test_selected_security_passes_allow_one_evidence_completion_retry(self):
@@ -2252,8 +2392,8 @@ class WorkflowPolicyContractTests(unittest.TestCase):
     def test_review_pr_requires_selected_marker_for_every_budgeted_security_task(self):
         self.assert_policy_matches(
             "plugins/review/skills/review-pr/SKILL.md",
-            r"(?is)every budgeted security Task.*\[security:selected\].*"
-            r":security",
+            r"(?is)every\s+budgeted\s+security\s+Task.*:security.*"
+            r"\[security:selected\]",
             "every budgeted security Task pairs [security:selected] with its :security stage tag",
         )
 
