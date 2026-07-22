@@ -1,6 +1,6 @@
 ---
 name: review-pr
-version: 1.8.0
+version: 1.8.1
 description: |
   Review a PR, branch, commit, or staged change through the mandatory review policy and
   diff-selected risk lenses. Plain "review" is read-only; explicit approve, fix, comment,
@@ -141,7 +141,12 @@ its independent passes over the shared notes format, then reconcile them. For br
 high-consequence mutating reviews, final round 1 is the independent broad mutating review on the
 frozen head, without a preliminary deep pair for that same head.
 
-Every `change-review` Task description starts with exactly one stage tag. Every budgeted security Task includes `[security:selected]` and its `:security` stage tag:
+Every `change-review` Task description starts with exactly one stage tag. Construct every
+budgeted security Task atomically as `<review-stage tag ending in :security> [security:selected] <human
+label>`: the review-stage tag is always the first token and `[security:selected]` immediately
+follows it. This applies to standard, retry, deep, and final-round security tasks; never issue
+partial-token repairs, and before spawning, self-check that both required tokens are present. For example:
+`[review:standard:security] [security:selected] Security review change scope`.
 
 - `[review:standard]` for a single ordinary `change-review` pass;
 - `[review:standard:retry]` for its one evidence-completion retry;
@@ -160,8 +165,8 @@ Every `change-review` Task description starts with exactly one stage tag. Every 
   evidence-completion retry; final round 2 is decision-only and permits no retry. In all cases,
   `<round>` is `1` or `2`.
 
-The guardrails plugin enforces these tags when installed. Never disguise a frozen/current/final
-head review as `standard` or `deep`, and never reuse a final-head slot.
+The guardrails plugin enforces these tags when installed. Final/frozen head, branch, or diff,
+and current head, require final-head tags; never reuse a final-head slot.
 
 ### Semantic task gate
 

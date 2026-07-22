@@ -1,6 +1,6 @@
 {
   "name": "review",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "Language-agnostic review policy and droids plus the unified review-pr workflow: short review requests receive mandatory and diff-selected lenses, while explicit approve, fix, comment, ship, and merge wording controls authority.",
   "author": {
     "name": "Sagar",
