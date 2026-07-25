@@ -1,6 +1,6 @@
 ---
 name: review-pr
-version: 1.8.1
+version: 2.0.0
 description: |
   Review a PR, branch, commit, or staged change through the mandatory review policy and
   diff-selected risk lenses. Plain "review" is read-only; explicit approve, fix, comment,
@@ -138,13 +138,13 @@ the validation plan are explicit.
 whenever any selected lens has `reviewer: security`; no sibling workflow launches those reviewers
 directly. For broad or high-consequence report or approve reviews, read `deep-review.md` and use
 its independent passes over the shared notes format, then reconcile them. For broad or
-high-consequence mutating reviews, final round 1 is the independent broad mutating review on the
-frozen head, without a preliminary deep pair for that same head.
+high-consequence mutating reviews, the pre-push pair review supplies the independent broad
+mutating review on the committed head, without a preliminary deep pair for that same head.
 
 Every `change-review` Task description starts with exactly one stage tag. Construct every
 budgeted security Task atomically as `<review-stage tag ending in :security> [security:selected] <human
 label>`: the review-stage tag is always the first token and `[security:selected]` immediately
-follows it. This applies to standard, retry, deep, and final-round security tasks; never issue
+follows it. This applies to standard, retry, deep, pair, and loop security tasks; never issue
 partial-token repairs, and before spawning, self-check that both required tokens are present. For example:
 `[review:standard:security] [security:selected] Security review change scope`.
 
@@ -152,21 +152,24 @@ partial-token repairs, and before spawning, self-check that both required tokens
 - `[review:standard:retry]` for its one evidence-completion retry;
 - `[review:standard:security]` for the `[security:selected]` risk-selected security pass, plus
   `[review:standard:retry:security]` for its one evidence-completion retry;
-- `[review:deep:primary]` and `[review:deep:challenge]` for independent non-final deep
+- `[review:deep:primary]` and `[review:deep:challenge]` for independent deep
   `change-review` passes, plus `[review:deep:retry:primary]` and
   `[review:deep:retry:challenge]` for exactly one evidence-completion retry after their
   respective passes; `[review:deep:security]` is for `[security:selected]` deep security and
   `[review:deep:retry:security]` is for its one evidence-completion retry;
-- `[review:final:<round>:primary]` and `[review:final:<round>:challenge]` for the two frozen-head
-  reviewers, plus `[review:final:<round>:security]` when `[security:selected]` security is
-  selected. Final round 1 permits `[review:final:1:retry:primary]` and
-  `[review:final:1:retry:challenge]` for exactly one evidence-completion retry after their
-  respective passes, plus `[review:final:1:retry:security]` for that pass's one
-  evidence-completion retry; final round 2 is decision-only and permits no retry. In all cases,
-  `<round>` is `1` or `2`.
+- `[review:pair:primary]` and `[review:pair:challenge]` for the two independent pre-push
+  reviewers of a broad or high-consequence mutating change, plus `[review:pair:security]` when
+  `[security:selected]` security is selected. The pair permits `[review:pair:retry:primary]`,
+  `[review:pair:retry:challenge]`, and `[review:pair:retry:security]` for exactly one
+  evidence-completion retry after their respective passes;
+- `[review:loop:<n>]` for the nth delta verification pass of the review-fix loop, plus
+  `[review:loop:<n>:retry]` for its one evidence-completion retry;
+  `[review:loop:<n>:security]` for the `[security:selected]` security pass over a correction
+  that touches risk-selected paths, plus `[review:loop:<n>:retry:security]` for its one
+  evidence-completion retry. `<n>` is `1`, `2`, or `3` and passes run in order.
 
-The guardrails plugin enforces these tags when installed. Final/frozen head, branch, or diff,
-and current head, require final-head tags; never reuse a final-head slot.
+The guardrails plugin enforces these tags when installed. Never reuse a review stage slot; the
+delta verification loop is bounded to three passes per user request.
 
 ### Semantic task gate
 
@@ -192,10 +195,10 @@ rules below apply it, and on conflict that file wins:
   completed review outcome when those requirements are met; reconcile its blocking findings.
 
 Retry once only for a refusal, inability to complete the pass, missing required native fields, or
-incomplete evidence. A `[security:selected]` standard, deep, or final-round-one security pass
-uses its stage-specific security retry tag above; final round two remains decision-only and never
-retries. If the retry remains incomplete, stop the workflow and report it blocked; do not ship or
-land. The `review-worker` contract does not apply to `change-review` or `security`.
+incomplete evidence. A `[security:selected]` standard, deep, pair, or loop security pass uses
+its stage-specific security retry tag above. If the retry remains incomplete, stop the workflow
+and report it blocked; do not ship or land. The `review-worker` contract does not apply to
+`change-review` or `security`.
 
 Every reviewer prompt must include the tracked diff scope and the explicit absolute path list
 for program-created untracked files. Require each untracked file to be read and entered in the
@@ -209,10 +212,10 @@ distinct changed risk responsibilities. A small, well-tested edit to existing ri
 logic remains light only when no size/unit threshold or independently high-consequence
 responsibility applies; overlapping selector signals from one small existing behavior are not
 distinct risk responsibilities. Deep
-review is mandatory in those cases for report and approve modes. In mutating modes, the final-head
-gate's frozen-head round-1 primary/challenge pair, plus stage-matched security when selected,
-supplies that independent broad review instead; do not also run a preliminary deep pair for the
-same head.
+review is mandatory in those cases for report and approve modes. In mutating modes, the pre-push
+verification loop's primary/challenge pair, plus stage-matched security when selected, supplies
+that independent broad review instead; do not also run a preliminary deep pair for the same
+head.
 
 Deep review requires at least two independent reviewer contexts:
 
@@ -250,49 +253,58 @@ Completion criterion: every selected lens, approved program unit, governing meta
 and substantial changed codepath has evidence; every finding is reachable, introduced by the
 reviewed scope, actionable, and confidence-labeled.
 
-### Final-head gate for broad or high-consequence mutating reviews
+### Pre-push verification loop for mutating reviews
 
-For every broad or high-consequence review in `fix`, `comments`, `ship`, or `land` mode, run this
-gate before any push. It requires a clean, verified, synchronized, committed current HEAD, but
-does not require initial findings to create a fix commit. Commit review fixes when they exist; if
-there are no changes, use the existing committed current HEAD. Never create an empty commit.
+For every broad or high-consequence review in `fix`, `comments`, `ship`, or `land` mode, run
+this loop before any push. It requires a clean, verified, synchronized, committed current HEAD,
+but does not require initial findings to create a fix commit. Commit review fixes when they
+exist; if there are no changes, use the existing committed current HEAD. Never create an empty
+commit. A light mutating review may run delta verification passes under the same tags and
+budget after a correction it wants re-verified, with its completed `[review:standard]` review
+as the initial review; the pair is mandatory only for broad or high-consequence changes.
 
-1. Before freezing scope, fetch the live base ref and calculate
+1. Before the initial pair, fetch the live base ref and calculate
    `origin/<base>...HEAD` behind/ahead state. If behind, apply the active workflow's authorized
    base-synchronization procedure. Rerun full local verification and commit any synchronization
-   result. Fetch the live base again and verify zero behind before freezing the exact base SHA
+   result. Fetch the live base again and verify zero behind before recording the exact base SHA
    and committed local head SHA. If synchronization cannot complete safely, stop as blocked.
    Then record the exact `base SHA...head SHA` diff, complete changed-file list, and applicable
    untracked-file accounting.
 2. Spawn **two fresh `change-review` Task contexts in parallel** against that same exact
-   committed diff. In the first execution, prefix their descriptions with
-   `[review:final:1:primary]` and `[review:final:1:challenge]`; if a head-changing correction
-   requires the repeated execution, use `[review:final:2:primary]` and
-   `[review:final:2:challenge]`. Do not use `review-worker` for this gate. The primary performs
-   the full selected-lens final review. The challenge focuses on ownership, transitions, rule
-   interaction, completeness, tests, metadata, and CI parity without seeing the first result.
-   When security is selected, spawn one fresh, independent
-   `[review:final:<round>:security] [security:selected]` context in the same round. Give every
-   final-round reviewer the complete changed-file list and applicable untracked-file accounting.
-3. Require both `change-review` contexts, plus stage-matched security when selected, to inspect
-   the frozen final head and satisfy their respective semantic acceptance and selected-lens
-   evidence coverage.
-4. Reconcile both final-head results into one finding set.
+   committed diff, prefixed `[review:pair:primary]` and `[review:pair:challenge]`. Do not use
+   `review-worker` for this loop. The primary performs the full selected-lens review. The
+   challenge focuses on ownership, transitions, rule interaction, completeness, tests,
+   metadata, and CI parity without seeing the first result. When security is selected, spawn
+   one fresh, independent `[review:pair:security] [security:selected]` context alongside them.
+   Give every reviewer the complete changed-file list and applicable untracked-file accounting,
+   and require semantic acceptance with complete selected-lens evidence coverage.
+3. Reconcile the pair results into one finding set. The pair runs once per user request; every
+   subsequent verification is a delta pass.
+4. If reconciliation leaves actionable in-scope findings, apply them; for each
+   head-changing correction run fresh targeted validation plus one fresh integration gate for
+   the new head, and commit. Then run one **delta verification pass**: a single fresh `change-review`
+   context tagged `[review:loop:<n>]` (starting at `n` = 1) that reviews the correction delta
+   `<last reviewed head>...HEAD` with the full `base...head` diff as context. It must confirm
+   every prior finding is closed and trace the correction's blast radius for new defects.
+   Evidence for paths the correction did not touch remains valid; a correction invalidates
+   coverage per changed path, not globally. Add a
+   `[review:loop:<n>:security] [security:selected]` context after the delta pass reserves its
+   slot when the correction touches risk-selected paths.
+5. Repeat step 4, incrementing `n`, while the latest delta pass returns actionable in-scope
+   findings.
 
-If final round 1 reconciliation produces an in-scope, head-changing correction, apply it, run
-fresh targeted validation for the correction plus one fresh integration gate for the new head,
-and commit the fix. Freeze the new base and committed head SHAs, then run round 2 against the new
-head. A final-head gate passes only when all required independent final reviewers are complete,
-evidence-covered, reconciled, and no resulting fix changes the committed local head. Record that
-head as `finalReviewedHeadSha` and carry it through every push and ship handoff. `fix` mode stops
-with that final reviewed local commit. `comments`, `ship`, and `land` may push only after the gate
-passes.
+**Loop budget and convergence:** the loop allows at most three delta verification passes per
+user request; the guardrails plugin denies a fourth. When the loop budget is exhausted, or the
+same root-cause finding survives two consecutive delta passes, block before any further edit or
+review call, report the remaining findings, and state that a new user instruction resets the
+loop budget. Scope-expanding remedies stop for a user decision at any point regardless of
+remaining budget.
 
-**Correction budget:** execute the final-head gate at most twice per user request. The first
-execution may produce one head-changing correction and one repeated gate. Final round 2 is
-decision-only: if it produces any actionable finding, block before any edit and before any retry
-or further review call, report the remaining findings, and require a new user decision to
-continue.
+The loop passes when the pair (or, for a light review, the standard review) or the latest delta
+pass reconciles clean with complete evidence coverage. Record that committed head as
+`reviewedHeadSha` and carry it through every push and ship handoff. `fix` mode stops with that
+reviewed local commit. `comments`, `ship`, and `land` may push only after the loop passes; after
+a push, CI and the merge gates own the remaining verification.
 
 ### 5. Reconcile
 
@@ -326,7 +338,7 @@ Completion criterion: one canonical finding exists per defect, with no inflated 
 - **report**: return findings and coverage. Perform no mutation.
 - **approve**: complete **report**, then run the approval gate. Do not edit, push, or merge.
 - **fix**: apply valid findings, run affected checks followed by the repository's canonical
-  milestone gate, commit locally, pass the final-head gate when required, and stop.
+  milestone gate, commit locally, pass the pre-push verification loop when required, and stop.
 - **comments**: read and follow `fix-comments.md`, then push and watch CI.
 - **ship**: follow `ship` from preflight through merge-ready.
 - **land**: pass the landing gate in `deep-review.md` Step 9, then merge.
@@ -341,7 +353,7 @@ capture `reviewedHeadSha` from the PR's `headRefOid`. For explicit approval
 combined with `comments`, `ship`, or `land`, wait until that mode is merge-ready, fetch the final
 live head (`headRefOid`), and compare it with the last `reviewedHeadSha`. If it differs, stop
 approval and require a fresh user review request. Do not launch a new review stage or reuse an
-existing review slot. Approval requires a reviewed final head; a prior different-head review never
+existing review slot. Approval requires a reviewed current head; a prior different-head review never
 substitutes for it.
 
 Before the final live-head comparison, verify against the live PR:

@@ -39,7 +39,7 @@ once; apply to any file you touch afterward.
 
 ## Consistency
 
-- [ ] One canonical term per concept: `unit`, `program head`, `final head`, `review thread`,
+- [ ] One canonical term per concept: `unit`, `program head`, `reviewed head`, `review thread`,
       `blocked`, `delivery gate`.
 - [ ] One normative definition per policy; restatements carry an on-conflict pointer.
 - [ ] No rule here contradicts `docs/WORKFLOW.md`, the hooks' actual behavior, or the

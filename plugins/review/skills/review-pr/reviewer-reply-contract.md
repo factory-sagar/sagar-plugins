@@ -53,6 +53,7 @@ native field exactly. Omitting a row is incomplete, not a valid abbreviated repo
 
 Retry a reviewer exactly once, and only for: a refusal, inability to complete the pass,
 missing required native fields, or incomplete evidence. The retry names the missing contract
-exactly. Stage-tagged retries use their stage-specific slot (`[review:*:retry:*]`);
-final round 2 is decision-only and never retries. If the retry remains incomplete, stop the
-workflow and report it blocked; do not ship, land, approve, or merge past a blocked review.
+exactly. Stage-tagged retries use their stage-specific slot (`[review:*:retry]` or
+`[review:*:retry:*]`); every review stage permits exactly one. If the retry remains incomplete,
+stop the workflow and report it blocked; do not ship, land, approve, or merge past a blocked
+review.

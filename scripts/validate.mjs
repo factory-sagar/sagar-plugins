@@ -259,8 +259,13 @@ if (guardrailHooks?.hooks) {
 }
 requireText(
   path.join(pluginsDir, 'review', 'skills', 'review-pr', 'SKILL.md'),
-  '[review:final:<round>:primary]',
-  'final-head review stage protocol',
+  '[review:pair:primary]',
+  'pre-push pair review stage protocol',
+);
+requireText(
+  path.join(pluginsDir, 'review', 'skills', 'review-pr', 'SKILL.md'),
+  '[review:loop:<n>]',
+  'delta verification loop stage protocol',
 );
 requireText(
   path.join(pluginsDir, 'review', 'droids', 'change-review.md'),

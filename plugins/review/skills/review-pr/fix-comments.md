@@ -225,28 +225,26 @@ Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.g
 EOF
 ```
 
-#### Required final-head gate for broad or high-consequence reviews
+#### Required pre-push verification loop for broad or high-consequence reviews
 
-Before any push, run the final-head gate from `SKILL.md` for every broad or high-consequence
-comments review. It uses the clean, verified, synchronized, committed current HEAD whether or
-not initial findings created a fix commit. Commit fixes when they exist; otherwise use the
-existing committed head and never create an empty commit. The gate freezes the base and committed
-head SHAs, runs two fresh `change-review` contexts in parallel against that exact diff, plus a
+Before any push, run the pre-push verification loop from `SKILL.md` for every broad or
+high-consequence comments review. It uses the clean, verified, synchronized, committed current
+HEAD whether or not initial findings created a fix commit. Commit fixes when they exist;
+otherwise use the existing committed head and never create an empty commit. The loop records
+the base and committed head SHAs, runs two fresh `change-review` contexts in parallel against
+that exact diff, tagged `[review:pair:primary]` and `[review:pair:challenge]`, plus a
 stage-matched security review when selected, and accepts only reconciled complete results. If
-round 1 reconciliation yields an in-scope fix, return to triage, run targeted verification plus
-one fresh integration gate, commit the fix, then repeat the complete gate against the new head.
-If final round 2 has any actionable finding, stop as blocked before edits, retries, or further
-review calls and require a new user decision. Record the passing committed head as
-`finalReviewedHeadSha` and carry it through the push and ship handoff. Do not push or finalize
-until the gate passes.
+reconciliation yields an in-scope fix, return to triage, run targeted verification plus one
+fresh integration gate, commit the fix, then run one delta verification pass tagged
+`[review:loop:<n>]` over the correction delta with the full diff as context. Repeat while a
+delta pass returns actionable in-scope findings. Record the clean committed head as
+`reviewedHeadSha` and carry it through the push and ship handoff. Do not push or finalize until
+the loop passes.
 
-Prefix the first pair's Task descriptions with `[review:final:1:primary]` and
-`[review:final:1:challenge]`. If a correction changes HEAD, prefix the repeated pair with
-`[review:final:2:primary]` and `[review:final:2:challenge]`.
-
-Run this gate at most twice per user request. The first execution may trigger one correction.
-If the repeated gate finds another actionable issue, stop as blocked and do not fix it or spawn
-another reviewer until the user gives a new decision.
+The loop budget is three delta verification passes per user request; the pair runs once. When
+the budget is exhausted or the same root-cause finding survives two consecutive delta passes,
+stop as blocked, report the remaining findings without fixing them or spawning another
+reviewer, and state that a new user instruction resets the loop budget.
 
 Push to the PR branch. If this is the initial post-rebase push from step 2, history was rewritten,
 so use `--force-with-lease` (safer than `--force`: it refuses to overwrite if the remote moved):
@@ -361,9 +359,10 @@ This blocks until all checks complete. If any check fails:
      rate. If it passes consistently elsewhere, treat it as real and investigate.
    - If the branch is behind base, a rebase (step 2) may clear staleness failures.
 3. If caused by your changes: fix the issue, run the local verification from Step 5, then create
-   a new corrective commit. For a broad or high-consequence review, rerun the full two-context
-   final-head gate against that corrective committed head and carry its `finalReviewedHeadSha`
-   through the push. Only after the applicable gate passes may you plain-push and re-watch CI.
+   a new corrective commit. For a broad or high-consequence review, run one delta verification
+   pass (`[review:loop:<n>]`, subject to the loop budget) over that corrective commit and carry
+   the resulting `reviewedHeadSha` through the push. Only after the applicable pass reconciles
+   clean may you plain-push and re-watch CI.
 4. If the cause is **not obvious from the logs** (test fails but the mechanism is unclear,
    behavior differs between CI and local, or a second fix attempt failed): delegate to the
    `debugger` droid with the failing check's logs and the diff before patching further. Apply
@@ -396,7 +395,7 @@ approval authority. Run the approval gate only after comments mode reaches merge
 If approval is authorized, after comments mode reaches merge-ready, fetch the final live
 `headRefOid` and compare it with the last `reviewedHeadSha`. If the approval head changes or
 differs, stop and require a fresh user review request. Never rerun the review within the existing
-request. Approval requires a reviewed final head; a prior different-head review never substitutes
+request. Approval requires a reviewed current head; a prior different-head review never substitutes
 for it. Verify there are no unresolved findings or review threads, required CI is green for the
 current head SHA, and the PR body is current and still describes the PR. Compare `author.login`
 with `gh api user --jq .login`; never infer self-authorship from bot status. If the logins match
@@ -415,9 +414,10 @@ as blocked rather than self-approving. Never approve your own PR.
 
 In land mode, apply the final live-head continuity gate in `deep-review.md` Step 9 even when
 approval authority is absent. After all other merge gates, the final API operation immediately
-before merge re-fetches `headRefOid` and requires equality with `finalReviewedHeadSha`, with no
+before merge re-fetches `headRefOid` and requires equality with `reviewedHeadSha`, with no
 intervening tool or API call. A changed head blocks merge and requires synchronization,
-verification, a new corrective commit if needed, and a full two-review final-head gate rerun.
+verification, a new corrective commit if needed, and one delta verification pass subject to the
+loop budget.
 
 If any checklist item cannot be satisfied (e.g. CI stays red after 3 attempts, or a comment
 needs the user's decision), report the PR as **Blocked** with the specific
