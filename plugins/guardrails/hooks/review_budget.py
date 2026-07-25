@@ -16,25 +16,15 @@ from typing import Iterator
 
 from guardrails_log import log_decision
 
-STATE_VERSION = 1
+STATE_VERSION = 2
+MAX_LOOP_PASSES = 3
 REVIEW_TAG = re.compile(
     r"^(\[review:(?:standard(?::(?:retry(?::security)?|security))?|"
     r"deep:(?:discovery|primary|challenge|resume|security|retry:(?:primary|challenge|security))|"
-    r"final:(\d+):(?:primary|challenge|security|retry:(?:primary|challenge|security)))\])(?:\s|$)"
+    r"pair:(?:primary|challenge|security|retry:(?:primary|challenge|security))|"
+    r"loop:(\d+)(?::(retry(?::security)?|security))?)\])(?:\s|$)"
 )
 SELECTED_SECURITY = re.compile(r"\[security:selected\]")
-FINAL_HEAD_HINT = re.compile(
-    r"\b(?:(?:final|frozen)\b.{0,48}\b(?:head|branch|diff)|current\b.{0,48}\bhead)\b",
-    re.IGNORECASE,
-)
-ROUND_ONE_SLOTS = {
-    "[review:final:1:primary]",
-    "[review:final:1:challenge]",
-}
-ROUND_TWO_TERMINAL_SLOTS = {
-    "[review:final:2:primary]",
-    "[review:final:2:challenge]",
-}
 STANDARD_SLOTS = {
     "[review:standard]",
     "[review:standard:retry]",
@@ -59,20 +49,38 @@ DEEP_WORKER_SLOTS = {
     "[review:deep:retry:primary]",
     "[review:deep:retry:challenge]",
 }
+PAIR_SLOTS = {
+    "[review:pair:primary]",
+    "[review:pair:challenge]",
+    "[review:pair:security]",
+    "[review:pair:retry:primary]",
+    "[review:pair:retry:challenge]",
+    "[review:pair:retry:security]",
+}
+PAIR_CORE_SLOTS = {
+    "[review:pair:primary]",
+    "[review:pair:challenge]",
+}
 CHANGE_REVIEW_STANDARD_SLOTS = {
     "[review:standard]",
     "[review:standard:retry]",
 }
+CHANGE_REVIEW_PAIR_SLOTS = {
+    "[review:pair:primary]",
+    "[review:pair:challenge]",
+    "[review:pair:retry:primary]",
+    "[review:pair:retry:challenge]",
+}
 RETRY_PREREQUISITES = {
     "[review:deep:retry:primary]": "[review:deep:primary]",
     "[review:deep:retry:challenge]": "[review:deep:challenge]",
-    "[review:final:1:retry:primary]": "[review:final:1:primary]",
-    "[review:final:1:retry:challenge]": "[review:final:1:challenge]",
+    "[review:pair:retry:primary]": "[review:pair:primary]",
+    "[review:pair:retry:challenge]": "[review:pair:challenge]",
 }
 SECURITY_RETRY_PREREQUISITES = {
     "[review:standard:retry:security]": "[review:standard:security]",
     "[review:deep:retry:security]": "[review:deep:security]",
-    "[review:final:1:retry:security]": "[review:final:1:security]",
+    "[review:pair:retry:security]": "[review:pair:security]",
 }
 
 
@@ -162,7 +170,6 @@ def begin_request(
                 "version": STATE_VERSION,
                 "session_id": session_id,
                 "request_token": token,
-                "final_slots": [],
                 "review_family": None,
                 "review_slots": [],
             },
@@ -170,21 +177,20 @@ def begin_request(
     return path
 
 
-def review_family(tag: str) -> str:
+def review_family(tag: str) -> str | None:
     if tag in STANDARD_SLOTS:
         return "standard"
     if tag in DEEP_SLOTS:
         return "deep"
-    return "final"
+    if tag in PAIR_SLOTS:
+        return "pair"
+    return None
 
 
 def review_slots(state: dict[str, object]) -> set[str]:
     raw_slots = state.get("review_slots")
     if isinstance(raw_slots, list):
         return {slot for slot in raw_slots if isinstance(slot, str)}
-    raw_final_slots = state.get("final_slots")
-    if isinstance(raw_final_slots, list):
-        return {slot for slot in raw_final_slots if isinstance(slot, str)}
     return set()
 
 
@@ -193,11 +199,18 @@ def reserved_family(state: dict[str, object], slots: set[str]) -> str | None:
     if isinstance(family, str):
         return family
     for slot in slots:
-        if slot in STANDARD_SLOTS or slot in DEEP_SLOTS or slot.startswith(
-            "[review:final:"
-        ):
-            return review_family(slot)
+        slot_family = review_family(slot)
+        if slot_family is not None:
+            return slot_family
     return None
+
+
+def loop_budget_violation() -> str:
+    return (
+        f"The review-fix loop allows at most {MAX_LOOP_PASSES} delta verification "
+        "passes per user request. Report the remaining findings as blocked and ask "
+        "the user for a new decision; a new user instruction resets the loop budget."
+    )
 
 
 def review_task_violation(
@@ -212,31 +225,63 @@ def review_task_violation(
         return (
             "Every change-review Task description must start with a review stage tag: "
             "`[review:standard]`, `[review:standard:retry|security|retry:security]`, "
-            "`[review:deep:discovery|primary|challenge|resume|security|retry:security]`, or "
-            "`[review:final:<1|2>:primary|challenge|security|retry:security]`."
+            "`[review:deep:discovery|primary|challenge|resume|security|retry:...]`, "
+            "`[review:pair:primary|challenge|security|retry:...]`, or "
+            "`[review:loop:<n>]` with optional `:retry`, `:security`, or "
+            "`:retry:security` variants."
         )
 
     tag = match.group(1)
-    round_text = match.group(2)
+    loop_round = match.group(2)
     slots = review_slots(state)
-    if tag.startswith("[review:final:1:") and any(
-        slot.startswith("[review:final:2:") for slot in slots
-    ):
-        return (
-            "Final round 2 has already started; do not reserve any further "
-            "final round 1 review stages."
-        )
-    selected_round_two_security = (
-        tag == "[review:final:2:security]" and SELECTED_SECURITY.search(description)
-    )
-    if ROUND_TWO_TERMINAL_SLOTS.issubset(slots) and not selected_round_two_security:
-        return (
-            "The final-head gate may run at most two rounds per user request. "
-            "Stop as blocked and request a new user decision."
-        )
+    existing_family = reserved_family(state, slots)
+
+    if loop_round is not None:
+        if existing_family is None:
+            return (
+                "Run the initial review stage (standard, deep, or pair) before a "
+                "delta verification pass."
+            )
+        if existing_family == "pair" and not PAIR_CORE_SLOTS.issubset(slots):
+            return (
+                "Complete the pair primary and challenge reviews before the "
+                "delta verification loop."
+            )
+        iteration = int(loop_round)
+        if iteration < 1 or iteration > MAX_LOOP_PASSES:
+            return loop_budget_violation()
+        variant = match.group(3)
+        if variant == "retry":
+            base = f"[review:loop:{iteration}]"
+            if base not in slots:
+                return (
+                    f"Complete the review {base} before using the {tag} "
+                    "evidence-completion retry slot."
+                )
+        elif variant == "retry:security":
+            base = f"[review:loop:{iteration}:security]"
+            if base not in slots:
+                return (
+                    f"Complete the review {base} before using the {tag} "
+                    "evidence-completion retry slot."
+                )
+        elif variant == "security":
+            base = f"[review:loop:{iteration}]"
+            if base not in slots:
+                return (
+                    f"Reserve the delta verification pass {base} before its "
+                    "security pass."
+                )
+        elif iteration > 1 and f"[review:loop:{iteration - 1}]" not in slots:
+            return (
+                f"Complete delta verification pass {iteration - 1} before "
+                f"pass {iteration}."
+            )
+        if tag in slots:
+            return f"Review budget slot {tag} was already used for this user request."
+        return None
 
     family = review_family(tag)
-    existing_family = reserved_family(state, slots)
     if existing_family is not None and existing_family != family:
         return (
             f"Review budget is already reserved for the {existing_family} family; "
@@ -256,39 +301,11 @@ def review_task_violation(
         return None
     if tag in slots:
         return f"Review budget slot {tag} was already used for this user request."
-
-    if round_text is None:
-        if FINAL_HEAD_HINT.search(f"{description}\n{prompt}"):
-            return (
-                "A final/frozen head, branch, or diff review, or current head review, "
-                "must use a final-head tag so the "
-                "two-round correction budget can be enforced."
-            )
-        if tag == "[review:standard:retry]" and "[review:standard]" not in slots:
-            return (
-                "Complete the standard review before using the "
-                "`[review:standard:retry]` slot."
-            )
-        prerequisite = RETRY_PREREQUISITES.get(tag) or SECURITY_RETRY_PREREQUISITES.get(
-            tag
-        )
-        if prerequisite is not None and prerequisite not in slots:
-            return (
-                f"Complete the review {prerequisite} before using the {tag} "
-                "evidence-completion retry slot."
-            )
-        return None
-
-    round_number = int(round_text)
-    if round_number not in {1, 2}:
+    if tag == "[review:standard:retry]" and "[review:standard]" not in slots:
         return (
-            "The final-head gate may run at most two rounds per user request. "
-            "Stop as blocked and request a new user decision."
+            "Complete the standard review before using the "
+            "`[review:standard:retry]` slot."
         )
-    if round_number == 2 and not ROUND_ONE_SLOTS.issubset(slots):
-        return "Complete round 1 primary and challenge reviews before starting round 2."
-    if round_number == 2 and tag.startswith("[review:final:2:retry:"):
-        return "Final round 2 is decision-only and does not allow evidence retries."
     prerequisite = RETRY_PREREQUISITES.get(tag) or SECURITY_RETRY_PREREQUISITES.get(tag)
     if prerequisite is not None and prerequisite not in slots:
         return (
@@ -325,21 +342,14 @@ def reserve_review_call(
         match = REVIEW_TAG.match(description)
         if match is not None:
             tag = match.group(1)
-            raw_slots = state.get("review_slots")
-            if not isinstance(raw_slots, list):
-                raw_final_slots = state.get("final_slots")
-                raw_slots = list(raw_final_slots) if isinstance(raw_final_slots, list) else []
             if tag != "[review:deep:resume]":
-                raw_slots.append(tag)
-                state["review_slots"] = raw_slots
-                state["review_family"] = review_family(tag)
-
-        if match is not None and match.group(2) is not None:
-            raw_slots = state.get("final_slots")
-            slots = list(raw_slots) if isinstance(raw_slots, list) else []
-            slots.append(match.group(1))
-            state["final_slots"] = slots
-        if match is not None:
+                raw_slots = state.get("review_slots")
+                slots = list(raw_slots) if isinstance(raw_slots, list) else []
+                slots.append(tag)
+                state["review_slots"] = slots
+                family = review_family(tag)
+                if family is not None:
+                    state["review_family"] = family
             write_review_state(path, state)
     return None
 
@@ -429,11 +439,12 @@ def main() -> int:
             return 0
         if subagent_type == "change-review" and (
             tag not in CHANGE_REVIEW_STANDARD_SLOTS
-            and not tag.startswith("[review:final:")
+            and tag not in CHANGE_REVIEW_PAIR_SLOTS
+            and not tag.startswith("[review:loop:")
         ):
             deny(
-                "A change-review Task may use only standard or final primary and "
-                "challenge review stage tags.",
+                "A change-review Task may use only standard, pair, or delta-loop "
+                "review stage tags.",
                 session_id,
             )
             return 0

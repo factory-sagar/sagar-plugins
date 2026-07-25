@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 1.5.0
+version: 1.6.0
 description: |
   Land finished work. Commits and pushes, writes the repository-template PR body, watches
   current-head CI, closes review threads, and reports merge-ready; merges only when the user
@@ -55,16 +55,17 @@ Use the plain command above. Do not pipe push output through `tail`, `tee`, `gre
 consumer. If a diagnostic pipeline is unavoidable, the same Execute command must begin with
 `set -o pipefail;` so a failed push cannot be hidden by a successful downstream command.
 
-Use a plain, fast-forward push after local verification and any required broad-review final-head
-gate. `--force-with-lease` is allowed only for the initial post-rebase push. After any successful
-push, do not amend the pushed commit: every CI or review correction must be a new corrective
-commit, re-verified locally, and pushed fast-forward.
+Use a plain, fast-forward push after local verification and any required broad-review pre-push
+verification loop. `--force-with-lease` is allowed only for the initial post-rebase push. After
+any successful push, do not amend the pushed commit: every CI or review correction must be a new
+corrective commit, re-verified locally, and pushed fast-forward.
 
-When `review-pr` hands off `finalReviewedHeadSha`, preserve it through this workflow. A
-head-changing correction must rerun synchronization, local verification, commit if needed, and
-the full two-review final-head gate before it supplies a replacement `finalReviewedHeadSha`.
-Never exceed review-pr's two-execution final-head budget in the same user request. If the
-repeated gate finds another actionable issue, stop as blocked instead of restarting review.
+When `review-pr` hands off `reviewedHeadSha`, preserve it through this workflow. A head-changing
+correction must rerun synchronization, local verification, commit if needed, and one delta
+verification pass through `review-pr` before it supplies a replacement `reviewedHeadSha`. Never
+exceed review-pr's three-pass delta loop budget in the same user request. If the budget is
+exhausted with findings remaining, stop as blocked and report that a new user instruction resets
+the loop budget.
 
 ### 4. PR create or update
 
@@ -94,10 +95,10 @@ shows a pending check, rerun the foreground watch before continuing.
 
 Read failure logs, distinguish change-caused failures from baseline failures, delegate to
 `debugger` when the mechanism is unclear, fix, create a new corrective commit, and repush. For a
-broad or high-consequence review, rerun synchronization, local verification, and the full
-two-review final-head gate before the plain corrective push. The review plugin's
-`review-pr/fix-comments.md` provides the expanded procedure when installed. Stop after three
-unsuccessful fix attempts and report the blocker.
+broad or high-consequence review, rerun synchronization, local verification, and one delta
+verification pass (subject to review-pr's loop budget) before the plain corrective push. The
+review plugin's `review-pr/fix-comments.md` provides the expanded procedure when installed.
+Stop after three unsuccessful fix attempts and report the blocker.
 
 ### 6. Resolve review threads
 
@@ -116,7 +117,7 @@ End with a short report:
 
 Merge only when the current request explicitly authorizes it. When the review plugin is
 installed, apply the landing gate from `review-pr` before merging. In a handoff with
-`finalReviewedHeadSha`, its final API operation immediately before merge re-fetches live
+`reviewedHeadSha`, its final API operation immediately before merge re-fetches live
 `headRefOid` and requires equality with that SHA, with no intervening call. Otherwise re-fetch
 current-head CI, PR-body freshness, and review threads; any unresolved state blocks merge.
 

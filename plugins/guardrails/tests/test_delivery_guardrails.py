@@ -85,82 +85,90 @@ class ReviewBudgetTests(unittest.TestCase):
     def test_requires_a_valid_review_stage_tag(self):
         self.assertIn(
             "stage tag",
-            review_task_violation("Review final branch", state={"final_slots": []}),
+            review_task_violation("Review final branch", state={"review_slots": []}),
         )
         self.assertIsNone(
             review_task_violation(
                 "[review:standard] Review change scope",
-                state={"final_slots": []},
+                state={"review_slots": []},
             )
         )
         self.assertIsNone(
             review_task_violation(
                 "[review:deep:primary] Review broad change",
-                state={"final_slots": []},
+                state={"review_slots": []},
             )
         )
-
-    def test_allows_exactly_two_complete_final_head_rounds(self):
-        state = {"final_slots": []}
-        for description in (
-            "[review:final:1:primary] Review frozen head",
-            "[review:final:1:challenge] Challenge frozen head",
-            "[review:final:2:primary] Re-review corrected head",
-            "[review:final:2:challenge] Challenge corrected head",
-        ):
-            self.assertIsNone(review_task_violation(description, state=state))
-            state["final_slots"].append(description.split("]", 1)[0] + "]")
-
         self.assertIn(
-            "at most two",
+            "stage tag",
             review_task_violation(
-                "[review:final:3:primary] Review another corrected head",
-                state=state,
+                "[review:final:1:primary] Review frozen head",
+                state={"review_slots": []},
             ),
         )
 
-    def test_rejects_duplicate_and_out_of_order_final_head_calls(self):
-        state = {"final_slots": ["[review:final:1:primary]"]}
+    def test_loop_passes_run_sequentially_and_cap_at_three(self):
+        state = {"review_slots": ["[review:standard]"]}
+        self.assertIn(
+            "Complete delta verification pass 1",
+            review_task_violation(
+                "[review:loop:2] Verify a correction out of order",
+                state=state,
+            ),
+        )
+        for description in (
+            "[review:loop:1] Verify the first correction delta",
+            "[review:loop:2] Verify the second correction delta",
+            "[review:loop:3] Verify the third correction delta",
+        ):
+            self.assertIsNone(review_task_violation(description, state=state))
+            state["review_slots"].append(description.split("]", 1)[0] + "]")
+
+        self.assertIn(
+            "at most 3",
+            review_task_violation(
+                "[review:loop:4] Verify another correction delta",
+                state=state,
+            ),
+        )
         self.assertIn(
             "already used",
             review_task_violation(
-                "[review:final:1:primary] Retry frozen head",
-                state=state,
-            ),
-        )
-        self.assertIn(
-            "Complete round 1",
-            review_task_violation(
-                "[review:final:2:primary] Review corrected head",
+                "[review:loop:2] Repeat a delta verification pass",
                 state=state,
             ),
         )
 
-    def test_rejects_final_head_work_disguised_as_another_stage(self):
-        for description in (
-            "[review:standard] Review the frozen final head",
-            "[review:standard] Review final Reviews diff",
-            "[review:deep:primary] Recheck hardened final branch",
-            "[review:standard] Review current head",
-        ):
-            with self.subTest(description=description):
-                self.assertIn(
-                    "final-head tag",
-                    review_task_violation(
-                        description,
-                        state={"final_slots": []},
-                    ),
-                )
+    def test_loop_requires_an_initial_review(self):
         self.assertIn(
-            "final-head tag",
+            "initial review",
             review_task_violation(
-                "[review:standard] Review change scope",
-                state={"final_slots": []},
-                prompt="Review the frozen committed head before this push.",
+                "[review:loop:1] Verify a correction delta",
+                state={"review_slots": []},
             ),
         )
 
-    def test_allows_current_branch_and_diff_in_non_final_reviews(self):
+    def test_loop_after_pair_requires_both_pair_reviews(self):
+        self.assertIn(
+            "pair primary and challenge",
+            review_task_violation(
+                "[review:loop:1] Verify a correction delta",
+                state={"review_slots": ["[review:pair:primary]"]},
+            ),
+        )
+        self.assertIsNone(
+            review_task_violation(
+                "[review:loop:1] Verify a correction delta",
+                state={
+                    "review_slots": [
+                        "[review:pair:primary]",
+                        "[review:pair:challenge]",
+                    ]
+                },
+            )
+        )
+
+    def test_current_head_descriptions_stay_valid_standard_reviews(self):
         for description, prompt in (
             (
                 "[review:standard] Review security handoff fix",
@@ -168,12 +176,13 @@ class ReviewBudgetTests(unittest.TestCase):
             ),
             ("[review:standard] Review the current uncommitted diff", ""),
             ("[review:standard] Review current branch changes", ""),
+            ("[review:standard] Review the committed current head", ""),
         ):
             with self.subTest(description=description, prompt=prompt):
                 self.assertIsNone(
                     review_task_violation(
                         description,
-                        state={"final_slots": []},
+                        state={"review_slots": []},
                         prompt=prompt,
                     )
                 )
@@ -203,7 +212,7 @@ class ReviewBudgetTests(unittest.TestCase):
                     "[review:standard:retry] Complete missing evidence",
                     "[review:standard:security] Repeat security review",
                     "[review:deep:primary] Start a deep review",
-                    "[review:final:1:primary] Start a final review",
+                    "[review:pair:primary] Start a pair review",
                 ),
             )
 
@@ -519,8 +528,13 @@ class ReviewBudgetTests(unittest.TestCase):
             ),
             (
                 "change-review",
-                "[review:final:1:primary] Run a final primary review",
+                "[review:pair:primary] Run a pair primary review",
                 "allow",
+            ),
+            (
+                "change-review",
+                "[review:final:1:primary] Run a retired final review",
+                "deny",
             ),
             (
                 "security",
@@ -815,7 +829,7 @@ class ReviewBudgetTests(unittest.TestCase):
                     "[review:standard] Review changed files",
                     "[review:standard] Repeat the standard review",
                     "[review:deep:primary] Start a deep review",
-                    "[review:final:1:primary] Start a final review",
+                    "[review:pair:primary] Start a pair review",
                 ),
             )
 
@@ -833,7 +847,7 @@ class ReviewBudgetTests(unittest.TestCase):
                     "[review:deep:security] Inspect security-sensitive paths",
                     "[review:deep:primary] Repeat primary review",
                     "[review:standard] Switch to a standard review",
-                    "[review:final:1:primary] Switch to a final review",
+                    "[review:pair:primary] Switch to a pair review",
                 ),
             )
 
@@ -842,161 +856,92 @@ class ReviewBudgetTests(unittest.TestCase):
         for result in results[3:]:
             self.assertIsNotNone(result)
 
-    def test_final_round_accepts_security_once_and_rejects_duplicates(self):
+    def test_pair_reserves_each_slot_once_and_rejects_duplicates(self):
         with tempfile.TemporaryDirectory() as directory:
             results = self.reserve_review_calls(
                 Path(directory),
                 (
-                    "[review:final:1:primary] Review frozen head",
-                    "[review:final:1:challenge] Challenge frozen head",
-                    "[review:final:1:security] Inspect final security changes",
-                    "[review:final:1:security] Repeat final security review",
+                    "[review:pair:primary] Review committed head",
+                    "[review:pair:challenge] Challenge committed head",
+                    "[review:pair:security] Inspect security changes",
+                    "[review:pair:security] Repeat pair security review",
+                    "[review:pair:primary] Repeat pair primary review",
                 ),
             )
 
         for result in results[:3]:
             self.assertIsNone(result)
         self.assertIn("already used", results[3])
+        self.assertIn("already used", results[4])
 
-    def test_final_round_two_requires_complete_primary_and_challenge_round_one(self):
-        with tempfile.TemporaryDirectory() as directory:
-            out_of_order = self.reserve_review_calls(
-                Path(directory),
-                (
-                    "[review:final:1:primary] Review frozen head",
-                    "[review:final:1:security] Inspect frozen security changes",
-                    "[review:final:2:security] Review correction security",
-                ),
-            )
-
-        self.assertIsNone(out_of_order[0])
-        self.assertIsNone(out_of_order[1])
-        self.assertIn("Complete round 1", out_of_order[2])
-
-    def test_final_round_two_allows_security_after_completed_round_one(self):
+    def test_pair_family_rejects_standard_and_deep_stages(self):
         with tempfile.TemporaryDirectory() as directory:
             results = self.reserve_review_calls(
                 Path(directory),
                 (
-                    "[review:final:1:primary] Review frozen head",
-                    "[review:final:1:challenge] Challenge frozen head",
-                    "[review:final:2:security] Review correction security",
+                    "[review:pair:primary] Review committed head",
+                    "[review:standard] Start a standard review",
+                    "[review:deep:primary] Start a deep review",
                 ),
             )
 
-        for result in results:
-            self.assertIsNone(result)
+        self.assertIsNone(results[0])
+        for result in results[1:]:
+            self.assertIn("already reserved for the pair family", result)
 
-    def test_completed_final_round_two_rejects_every_new_review_stage(self):
+    def test_loop_follows_the_pair_and_supports_security_passes(self):
         with tempfile.TemporaryDirectory() as directory:
             results = self.reserve_review_calls(
                 Path(directory),
                 (
-                    "[review:final:1:primary] Review frozen head",
-                    "[review:final:1:challenge] Challenge frozen head",
-                    "[review:final:2:primary] Review corrected head",
-                    "[review:final:2:challenge] Challenge corrected head",
-                    "[review:standard] Start another review",
-                    "[review:deep:primary] Start another deep review",
-                    "[review:deep:challenge] Challenge another deep review",
-                    "[review:deep:security] Start another security review",
-                    "[review:final:2:security] Inspect final security changes",
+                    "[review:pair:primary] Review committed head",
+                    "[review:pair:challenge] Challenge committed head",
+                    "[review:loop:1] Verify the correction delta",
+                    (
+                        "[review:loop:1:security] [security:selected] "
+                        "Verify correction security paths"
+                    ),
+                    "[review:loop:2:security] Skip ahead to a later security pass",
+                    "[review:loop:2] Verify the second correction delta",
                 ),
             )
 
         for result in results[:4]:
             self.assertIsNone(result)
-        for result in results[4:]:
-            self.assertIsNotNone(result)
-            if result is not None:
-                self.assertIn("at most two", result)
+        self.assertIn("[review:loop:2]", results[4])
+        self.assertIsNone(results[5])
 
-    def test_final_round_two_reserves_selected_security_after_primary_and_challenge(self):
+    def test_exhausted_loop_budget_rejects_further_delta_passes(self):
         with tempfile.TemporaryDirectory() as directory:
             results = self.reserve_review_calls(
                 Path(directory),
                 (
-                    "[review:final:1:primary] Review frozen head",
-                    "[review:final:1:challenge] Challenge frozen head",
-                    "[review:final:2:primary] Review corrected head",
-                    "[review:final:2:challenge] Challenge corrected head",
-                    (
-                        "[review:final:2:security] [security:selected] "
-                        "Review corrected security paths"
-                    ),
-                    "[review:standard] Start an unrelated review",
+                    "[review:standard] Review the change scope",
+                    "[review:loop:1] Verify the first correction delta",
+                    "[review:loop:2] Verify the second correction delta",
+                    "[review:loop:3] Verify the third correction delta",
+                    "[review:loop:4] Verify a fourth correction delta",
+                    "[review:standard] Start another standard review",
+                    "[review:deep:primary] Start another deep review",
                 ),
             )
 
-        for result in results[:5]:
+        for result in results[:4]:
             self.assertIsNone(result)
-        self.assertIsNotNone(results[5])
-
-    def test_final_round_two_blocks_all_round_one_stages_but_preserves_round_two_completion(self):
-        round_two_started = {
-            "final_slots": [
-                "[review:final:1:primary]",
-                "[review:final:1:challenge]",
-                "[review:final:1:security]",
-                "[review:final:2:primary]",
-            ]
-        }
-        for tag in (
-            "[review:final:1:primary]",
-            "[review:final:1:challenge]",
-            "[review:final:1:security]",
-            "[review:final:1:retry:primary]",
-            "[review:final:1:retry:challenge]",
-            "[review:final:1:retry:security]",
-        ):
-            with self.subTest(tag=tag):
-                violation = review_task_violation(
-                    f"{tag} Attempt a late round-one review",
-                    state=round_two_started,
-                )
-                self.assertIsNotNone(violation)
-
-        self.assertIsNone(
-            review_task_violation(
-                "[review:final:2:challenge] Complete the round-two challenge",
-                state=round_two_started,
-            )
-        )
-        self.assertIsNone(
-            review_task_violation(
-                "[review:final:2:security] [security:selected] "
-                "Complete the selected round-two security review",
-                state=round_two_started,
-            )
-        )
-        self.assertIsNone(
-            review_task_violation(
-                "[review:final:2:security] [security:selected] "
-                "Close the terminal final round",
-                state={
-                    "final_slots": [
-                        "[review:final:1:primary]",
-                        "[review:final:1:challenge]",
-                        "[review:final:1:security]",
-                        "[review:final:2:primary]",
-                        "[review:final:2:challenge]",
-                    ]
-                },
-            )
-        )
+        self.assertIn("at most 3", results[4])
+        self.assertIn("already used", results[5])
+        self.assertIn("already reserved for the standard family", results[6])
 
     def test_hook_normalizes_selected_marker_for_every_valid_security_stage(self):
         cases = (
             ("[review:standard:security] Review security paths", ()),
             ("[review:deep:security] Review security paths", ()),
-            ("[review:final:1:security] Review security paths", ()),
+            ("[review:pair:security] Review security paths", ()),
             (
-                "[review:final:2:security] Review security paths",
+                "[review:loop:1:security] Review correction security paths",
                 (
-                    "[review:final:1:primary] Review frozen head",
-                    "[review:final:1:challenge] Challenge frozen head",
-                    "[review:final:2:primary] Review corrected head",
-                    "[review:final:2:challenge] Challenge corrected head",
+                    "[review:standard] Review the change scope",
+                    "[review:loop:1] Verify the correction delta",
                 ),
             ),
             (
@@ -1008,8 +953,16 @@ class ReviewBudgetTests(unittest.TestCase):
                 ("[review:deep:security] Review security paths",),
             ),
             (
-                "[review:final:1:retry:security] Complete security evidence",
-                ("[review:final:1:security] Review security paths",),
+                "[review:pair:retry:security] Complete security evidence",
+                ("[review:pair:security] Review security paths",),
+            ),
+            (
+                "[review:loop:1:retry:security] Complete security evidence",
+                (
+                    "[review:standard] Review the change scope",
+                    "[review:loop:1] Verify the correction delta",
+                    "[review:loop:1:security] Review correction security paths",
+                ),
             ),
         )
         with tempfile.TemporaryDirectory() as directory:
@@ -1079,11 +1032,20 @@ class ReviewBudgetTests(unittest.TestCase):
                 "[review:deep:retry:security] Complete missing evidence",
             ),
             (
-                "[review:final:1:primary] Review frozen head",
-                "[review:final:1:challenge] Challenge frozen head",
-                "[review:final:1:security] Review security paths",
+                "[review:pair:primary] Review committed head",
+                "[review:pair:challenge] Challenge committed head",
+                "[review:pair:security] Review security paths",
                 (
-                    "[review:final:1:retry:security] "
+                    "[review:pair:retry:security] "
+                    "Complete missing security evidence"
+                ),
+            ),
+            (
+                "[review:standard] Review the change scope",
+                "[review:loop:1] Verify the correction delta",
+                "[review:loop:1:security] Review correction security paths",
+                (
+                    "[review:loop:1:retry:security] "
                     "Complete missing security evidence"
                 ),
             ),
@@ -1118,12 +1080,12 @@ class ReviewBudgetTests(unittest.TestCase):
                 "[review:deep:retry:challenge] Complete challenge evidence",
             ),
             (
-                "[review:final:1:primary] Review frozen head",
-                "[review:final:1:retry:primary] Complete primary evidence",
+                "[review:pair:primary] Review committed head",
+                "[review:pair:retry:primary] Complete primary evidence",
             ),
             (
-                "[review:final:1:challenge] Challenge frozen head",
-                "[review:final:1:retry:challenge] Complete challenge evidence",
+                "[review:pair:challenge] Challenge committed head",
+                "[review:pair:retry:challenge] Complete challenge evidence",
             ),
         )
         with tempfile.TemporaryDirectory() as directory:
@@ -1134,7 +1096,7 @@ class ReviewBudgetTests(unittest.TestCase):
                     test_state_dir.mkdir()
                     retry_without_initial = review_task_violation(
                         descriptions[1],
-                        state={"final_slots": []},
+                        state={"review_slots": []},
                     )
                     self.assertIsNotNone(retry_without_initial)
                     if retry_without_initial is not None:
@@ -1155,26 +1117,28 @@ class ReviewBudgetTests(unittest.TestCase):
                         ),
                     )
 
-    def test_final_round_two_rejects_all_evidence_retries_as_decision_only(self):
-        for tag in (
-            "[review:final:2:retry:primary]",
-            "[review:final:2:retry:challenge]",
-            "[review:final:2:retry:security]",
-        ):
-            with self.subTest(tag=tag):
-                violation = review_task_violation(
-                    f"{tag} Complete missing final evidence",
-                    state={
-                        "final_slots": [
-                            "[review:final:1:primary]",
-                            "[review:final:1:challenge]",
-                        ]
-                    },
-                )
+    def test_loop_retry_requires_its_pass_and_is_single_use(self):
+        self.assertIn(
+            "[review:loop:1]",
+            review_task_violation(
+                "[review:loop:1:retry] Complete missing delta evidence",
+                state={"review_slots": ["[review:standard]"]},
+            ),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            results = self.reserve_review_calls(
+                Path(directory),
+                (
+                    "[review:standard] Review the change scope",
+                    "[review:loop:1] Verify the correction delta",
+                    "[review:loop:1:retry] Complete missing delta evidence",
+                    "[review:loop:1:retry] Retry the retry",
+                ),
+            )
 
-                self.assertIsNotNone(violation)
-                if violation is not None:
-                    self.assertIn("decision-only", violation)
+        for result in results[:3]:
+            self.assertIsNone(result)
+        self.assertIn("already used", results[3])
 
     def test_duplicate_prompt_delivery_preserves_budget_state(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1194,7 +1158,7 @@ class ReviewBudgetTests(unittest.TestCase):
                 reserve_review_call(
                     state_dir=state_dir,
                     session_id="session-1",
-                    description="[review:final:1:primary] Review frozen head",
+                    description="[review:pair:primary] Review committed head",
                 )
             )
 
@@ -1208,8 +1172,8 @@ class ReviewBudgetTests(unittest.TestCase):
                 review_state_path(state_dir, "session-1")
             )
             self.assertEqual(
-                state["final_slots"],
-                ["[review:final:1:primary]"],
+                state["review_slots"],
+                ["[review:pair:primary]"],
             )
 
             with transcript.open("a", encoding="utf-8") as stream:
@@ -1227,8 +1191,8 @@ class ReviewBudgetTests(unittest.TestCase):
                 review_state_path(state_dir, "session-1")
             )
             self.assertEqual(
-                state["final_slots"],
-                ["[review:final:1:primary]"],
+                state["review_slots"],
+                ["[review:pair:primary]"],
             )
 
             with transcript.open("a", encoding="utf-8") as stream:
@@ -1244,7 +1208,7 @@ class ReviewBudgetTests(unittest.TestCase):
             state = load_review_state(
                 review_state_path(state_dir, "session-1")
             )
-            self.assertEqual(state["final_slots"], [])
+            self.assertEqual(state["review_slots"], [])
 
 
 class DeliveryLedgerTests(unittest.TestCase):
@@ -2282,11 +2246,12 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             ),
         )
 
-    def test_review_pr_makes_final_round_one_the_broad_mutating_review(self):
+    def test_review_pr_makes_the_pair_review_the_broad_mutating_review(self):
         self.assert_policy_matches(
             "plugins/review/skills/review-pr/SKILL.md",
-            r"(?is)final round 1.*independent broad mutating review.*without.*preliminary deep",
-            "final round 1 is the independent broad mutating review without a preliminary deep pair",
+            r"(?is)pair\s+review.*independent\s+broad\s+mutating\s+review.*"
+            r"without.*preliminary\s+deep",
+            "the pre-push pair review is the independent broad mutating review without a preliminary deep pair",
         )
 
     def test_supporting_review_tier_guidance_keeps_independent_high_consequence_work_deep(self):
@@ -2346,11 +2311,14 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             "[review:deep:security]",
             "[review:deep:retry:primary]",
             "[review:deep:retry:challenge]",
-            "[review:final:<round>:primary]",
-            "[review:final:<round>:challenge]",
-            "[review:final:<round>:security]",
-            "[review:final:1:retry:primary]",
-            "[review:final:1:retry:challenge]",
+            "[review:pair:primary]",
+            "[review:pair:challenge]",
+            "[review:pair:security]",
+            "[review:pair:retry:primary]",
+            "[review:pair:retry:challenge]",
+            "[review:loop:<n>]",
+            "[review:loop:<n>:retry]",
+            "[review:loop:<n>:security]",
         ):
             with self.subTest(stage_tag=stage_tag):
                 self.assertIn(
@@ -2367,12 +2335,13 @@ class WorkflowPolicyContractTests(unittest.TestCase):
         self.assertIn(
             "[security:selected]",
             policy,
-            "review-pr must mark selected final-round security before reserving it.",
+            "review-pr must mark selected security before reserving it.",
         )
         for stage_tag in (
             "[review:standard:retry:security]",
             "[review:deep:retry:security]",
-            "[review:final:1:retry:security]",
+            "[review:pair:retry:security]",
+            "[review:loop:<n>:retry:security]",
         ):
             with self.subTest(stage_tag=stage_tag):
                 self.assertIn(
@@ -2384,9 +2353,9 @@ class WorkflowPolicyContractTests(unittest.TestCase):
                     ),
                 )
         self.assertNotIn(
-            "[review:final:2:retry:security]",
+            "[review:final:",
             policy,
-            "Final round two is decision-only and must not permit a retry.",
+            "The final-head round grammar is retired; the loop replaces it.",
         )
 
     def test_review_pr_requires_selected_marker_for_every_budgeted_security_task(self):
@@ -2581,12 +2550,14 @@ class WorkflowPolicyContractTests(unittest.TestCase):
                     ),
                 )
 
-    def test_review_pr_blocks_round_two_findings_before_edits_or_more_review(self):
+    def test_review_pr_blocks_on_loop_exhaustion_or_non_convergence(self):
         self.assert_policy_matches(
             "plugins/review/skills/review-pr/SKILL.md",
-            r"(?is)final round 2.*actionable finding.*block.*before.*edit.*(?:and|before).*"
-            r"(?:further|more) review",
-            "an actionable final-round-2 finding blocks before edits or further review",
+            r"(?is)loop\s+budget\s+is\s+exhausted.*same\s+root-cause\s+finding\s+"
+            r"survives\s+two\s+consecutive.*block.*"
+            r"report\s+the\s+remaining\s+findings.*"
+            r"new\s+user\s+instruction\s+resets\s+the\s+loop\s+budget",
+            "loop exhaustion or non-convergence blocks with a report and the budget-reset recovery",
         )
 
     def test_review_pr_requires_a_decision_for_scope_expanding_remedies(self):

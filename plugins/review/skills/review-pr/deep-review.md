@@ -501,22 +501,23 @@ Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.g
 
 Use a heredoc (`git commit -F -`) if the message contains special characters.
 
-#### Required final-head gate for broad or high-consequence reviews
+#### Required pre-push verification loop for broad or high-consequence reviews
 
-Before any push, run the final-head gate from `SKILL.md` for every broad or high-consequence
-mutating review. It uses the clean, verified, synchronized, committed current HEAD whether or
-not initial findings created a fix commit. It freezes the base and committed head SHAs, runs two
-fresh `change-review` contexts in parallel against that exact diff, tags them
-`[review:final:1:primary]` and `[review:final:1:challenge]`, and accepts only reconciled complete
-results. If reconciliation yields a fix, return to Step 5 and Step 6, then commit the fix in
-Step 7 and repeat the complete gate with the corresponding `review:final:2` tags against the
-new head. Never create an empty commit.
-Record the passing committed head as `finalReviewedHeadSha` and carry it through the push and ship
-handoff. Do not push, ship, or land until the gate passes.
+Before any push, run the pre-push verification loop from `SKILL.md` for every broad or
+high-consequence mutating review. It uses the clean, verified, synchronized, committed current
+HEAD whether or not initial findings created a fix commit. It records the base and committed
+head SHAs, runs two fresh `change-review` contexts in parallel against that exact diff, tags
+them `[review:pair:primary]` and `[review:pair:challenge]`, and accepts only reconciled
+complete results. If reconciliation yields a fix, return to Step 5 and Step 6, then commit the
+fix in Step 7 and run one delta verification pass tagged `[review:loop:<n>]` over the
+correction delta with the full diff as context. Never create an empty commit.
+Record the clean committed head as `reviewedHeadSha` and carry it through the push and ship
+handoff. Do not push, ship, or land until the loop passes.
 
-The correction budget is two final-head gate executions per user request. The first execution
-may trigger one correction and one repeated gate. If the repeated gate finds another actionable
-issue, stop as blocked and report it without fixing it or spawning another reviewer.
+The loop budget is three delta verification passes per user request; the pair runs once. When
+the budget is exhausted or the same root-cause finding survives two consecutive delta passes,
+stop as blocked, report the remaining findings without fixing them or spawning another
+reviewer, and state that a new user instruction resets the loop budget.
 
 ### 8. Summarize and return to the authority mode
 
@@ -559,9 +560,9 @@ merging:
 3. CI is green (`gh pr checks`).
 4. The PR body still describes the PR after your fixes; regenerate it if the scope moved.
 
-For broad or high-consequence mutating reviews, the final-head gate in `SKILL.md` must also
-have passed against the final reviewed local commit before push, and that commit SHA is
-`finalReviewedHeadSha`.
+For broad or high-consequence mutating reviews, the pre-push verification loop in `SKILL.md`
+must also have passed against the reviewed local commit before push, and that commit SHA is
+`reviewedHeadSha`.
 
 When explicit approval is authorized, after these checks establish merge-ready, fetch the final
 live head and compare it with the last reviewed head. If the approval head changes or differs,
@@ -574,12 +575,13 @@ but explicit approval was not authorized, report the PR blocked rather than self
 
 In land mode, whether approval authority exists or not, after every other merge gate has passed,
 the final API operation immediately before merge must re-fetch the live `headRefOid` and require
-it to equal `finalReviewedHeadSha`, with no intervening tool or API call. If it differs, block
-the merge, synchronize with the changed live head, rerun local verification, commit a new
-corrective commit if needed, and rerun the full two-review final-head gate against that new head.
-Carry the resulting `finalReviewedHeadSha` through the next push and repeat this live-head check.
-Only when this comparison passes may the next operation merge the PR. Never auto-merge without an
-explicit user instruction from this session.
+it to equal `reviewedHeadSha`, with no intervening tool or API call. If it differs, block the
+merge, synchronize with the changed live head, rerun local verification, commit a new corrective
+commit if needed, and run one delta verification pass (`[review:loop:<n>]`, subject to the loop
+budget) over the delta since the last reviewed head. Carry the resulting `reviewedHeadSha`
+through the next push and repeat this live-head check. Only when this comparison passes may the
+next operation merge the PR. Never auto-merge without an explicit user instruction from this
+session.
 
 ## Severity discipline
 

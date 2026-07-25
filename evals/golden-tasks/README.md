@@ -39,7 +39,7 @@ is expensive has one. `scripts/validate-evals.mjs` warns on droids with zero tas
 | [`12-blindspot-pass.md`](./12-blindspot-pass.md) | `discovering-unknowns` | no |
 | [`13-language-agnostic-review-selection.md`](./13-language-agnostic-review-selection.md) | `review-pr` | yes |
 | [`14-review-pr-blocker-vs-transport.md`](./14-review-pr-blocker-vs-transport.md) | `review-pr` | yes |
-| [`15-review-pr-final-head-independent-review.md`](./15-review-pr-final-head-independent-review.md) | `review-pr` | yes |
+| [`15-review-pr-convergent-loop-review.md`](./15-review-pr-convergent-loop-review.md) | `review-pr` | yes |
 | [`16-review-pr-approve-vs-merge-authority.md`](./16-review-pr-approve-vs-merge-authority.md) | `review-pr` | yes |
 | [`17-review-pr-explicit-approval.md`](./17-review-pr-explicit-approval.md) | `review-pr` | yes |
 | [`18-review-pr-merge-live-head-continuity.md`](./18-review-pr-merge-live-head-continuity.md) | `review-pr` | yes |
