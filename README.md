@@ -49,44 +49,8 @@ complete public workflows call across plugin boundaries:
 | `ship` | `build`, `synthesis`, `review` | `investigation` for non-obvious CI failures |
 
 ## Core engineering flow
-
-[`docs/WORKFLOW.md`](./docs/WORKFLOW.md) is the detailed workflow contract. The main path is:
-
-```text
-IDEA
-  │
-  ▼
-/spec
-  ├─ planner, the default path for evidence-backed decisions and executable units
-  ├─ discovering-unknowns, before planning unfamiliar or taste-shaped work
-  ├─ architecture-scan, first when the question is ownership or code placement
-  ├─ grilling, when the current plan still has a major unresolved decision
-  └─ tech-spec, when an approved plan needs typed contracts and call stacks
-  │
-  ▼ operator approves the plan
-/implement <unit>
-  ├─ approved change set → implementer
-  ├─ new behavior → tdd-workflow → test-engineer (RED) → implementer (GREEN)
-  └─ small mechanical change → inline
-  │
-  └─ coding-standards + verification-loop
-  ▼
-/review-pr <target>
-  ├─ mandatory and diff-selected review lenses
-  ├─ change-review
-  ├─ security, when the selected risk lenses require it
-  └─ implementer, for authorized fixes; broad or high-consequence changes are re-reviewed
-  ▼
-/ship
-  ├─ commit-message-writer → commit → push
-  ├─ pr-describer → create or refresh the PR
-  ├─ watch CI; debugger → implementer when failures need correction
-  ├─ review-pr comments mode → reply, resolve, and re-verify
-  └─ report merge-ready
-  ▼
-"merge it"
-  └─ merge only with explicit authority, green current-head CI, and no open threads
-```
+`spec → implement → review-pr → ship`
+See [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) for the canonical routing contract.
 
 ## Models
 

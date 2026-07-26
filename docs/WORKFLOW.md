@@ -39,6 +39,7 @@ LATER          review-pr comments mode — review comments arrived on an open PR
                triage every one, fix, reply, resolve, CI green
 ```
 
+<!-- routing-table:canonical -->
 ## Entry points
 
 | Intent | Type | What happens without further prompting |

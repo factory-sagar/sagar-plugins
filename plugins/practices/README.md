@@ -38,20 +38,7 @@ The `spec` skill registers `/spec <task>` as the guaranteed entry for "spec this
 
 ## Usage
 
-The skills chain into the full procedure loop:
-
-```
-0. discovering-unknowns       → (optional) blind-spot pass when the territory is unfamiliar or criteria are taste-shaped
-1. spec or architecture-scan  → scope the work or rank refactor candidates
-2. grilling                   → stress-test the plan when requirements are still fuzzy
-3. tech-spec                  → typed contracts, seams, call stacks, and test slices
-4. tdd-workflow +             → implementation (per unit)
-   coding-standards
-5. verification-loop          → build / type-check / lint / tests pass locally
-6. review-pr                  → owns correctness and risk-matched security review (review plugin)
-7. pr-describer               → PR body from the diff (synthesis plugin)
-8. commit-message-writer      → final commit message (synthesis plugin)
-```
+For the canonical cross-plugin routing contract, see [`docs/WORKFLOW.md`](../../docs/WORKFLOW.md).
 
 `spec` remains the broadest entry point. Reach for `tech-spec` when an approved plan still needs typed contracts and call stacks, and `architecture-scan` when the real question is which refactor or ownership direction to pursue.
 
