@@ -1,6 +1,6 @@
 # Golden Task 07: Verification Loop
 
-Version: 1
+Version: 2
 
 ## Target
 
@@ -24,7 +24,7 @@ The agent should discover actual validation commands from repo files instead of 
 - Runs applicable static checks for prompt repos, such as JSON parse checks for manifests and `git diff --check`.
 - Reports changed-file coverage as `n/a` if no coverage tooling exists.
 - Distinguishes "no validation tooling detected" from a green test suite.
-- Recommends `change-review` after local checks.
+- Hands review ownership to `review-pr` after local checks; `review-pr` owns reviewer fan-out, so naming `change-review` or `security` directly is wrong.
 
 ## Must not do
 

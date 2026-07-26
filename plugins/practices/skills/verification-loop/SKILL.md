@@ -45,7 +45,7 @@ an equivalent validator or canonical gate per unit.
 | Build | Exact build command exits `0`. | Stop and fix an introduced failure. |
 | Type check | No type errors introduced by this change. | Block introduced errors; record pre-existing errors separately. |
 | Lint | No remaining applicable violations. | Fix or justify violations; keep auto-fixes separate from semantic changes. |
-| Tests | No introduced failures; changed-code coverage and skipped-test policy meet repository rules. | Block introduced failures, coverage regressions, and unjustified new skips. |
+| Tests | No introduced failures; changed-code coverage and skipped-test policy meet repository rules. When the repository has no coverage tooling, report changed-file coverage as `n/a (no coverage tooling)` rather than omitting it. | Block introduced failures, coverage regressions, and unjustified new skips. |
 | Canonical gate | The discovered repository command exits `0` at the program head. | Stop; do not substitute a convenient partial aggregate. |
 
 Run fast checks inline; delegate slow or noisy read-only commands to a `worker`, but verify its

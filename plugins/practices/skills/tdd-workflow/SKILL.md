@@ -48,9 +48,11 @@ The implementation prompt must require the deviations contract: a minor territor
 takes the conservative, reversible option and is logged with plan, repository evidence, choice,
 and impact; a premise contradiction stops and reports. Never deviate silently.
 
-Checkpoint commits, when used, identify the behavior and contain `RED: <N> failing as expected`
-or `GREEN: targeted test or validator passing`. Do not treat unrelated commits as proof; RED is
-the evidence that implementation was absent.
+Record RED before the implementation exists. Commit the failing test, or otherwise capture the
+failing run, before writing production code: a single diff containing both a test and the code
+that satisfies it is not RED evidence, because it cannot show implementation was absent.
+Checkpoint commits identify the behavior and contain `RED: <N> failing as expected` or
+`GREEN: targeted test or validator passing`. Do not treat unrelated commits as proof.
 
 ## Completion
 
