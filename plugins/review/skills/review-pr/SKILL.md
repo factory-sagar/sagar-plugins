@@ -1,16 +1,17 @@
 ---
 name: review-pr
-version: 3.0.0
+version: 3.2.0
 description: |
-  Review a PR, branch, commit, or staged change through the mandatory review policy and
-  diff-selected risk lenses. Plain "review" is read-only; explicit approve, fix, comment,
-  ship, and merge wording grants only the corresponding stronger authority.
+  Review a PR, branch, commit, or staged change through the mandatory review policy. Plain
+  "review" is read-only; explicit approve, fix, comment, ship, and merge wording grants only
+  the corresponding stronger authority.
 ---
 
 # Review PR
 
-Turn a short review request into a complete, language-agnostic review. The user supplies
-intent; the workflow supplies the method.
+Review the requested scope against [`review-policy.md`](./review-policy.md). Choose relevant
+lenses from changed responsibilities, not file type alone. Trace changed behavior, read
+program-created untracked files, and run the repository's applicable validation commands.
 
 ## Authority modes
 
@@ -25,332 +26,83 @@ Choose the narrowest mode authorized by the user's words:
 | `ship` / `push and make merge-ready` | `ship` | Push, refresh the PR, watch CI, resolve threads, report merge-ready. |
 | `merge PR <n>` / `approve and merge PR <n>` / `approve and land this PR` | `land` | `ship`, then merge only after every hard gate passes. Combined approval wording also runs the approval gate. |
 
-Words that describe quality (`thorough`, `deep`, `security`) change review depth, not
-authority. A plain review stays read-only no matter how serious the diff is.
-
-Approval is separate authority. Approval routing recognizes only an imperative `approve` that
-targets a `PR` or `pull request` in the same clause, such as `Approve PR 42`, `Approve this PR`,
-`Can you approve PR 42?`, `Approve and merge PR 42`, or `Approve and land this PR`. Advice
-questions such as `Should I approve PR 42?` or `Should we approve PR 42?`, and approval of a plan
-or change, do not authorize or route to `review-pr`.
-`merge`, `land`, `ship`, or "make merge-ready" wording never grants approval authority. If branch
-protection requires approval and explicit approval was not authorized, report the PR as blocked
-rather than self-approving.
-
-`approve PR` with no other mutation wording is an approval-only mode: complete the normal
-read-only review, then run the approval gate. It never edits, pushes, or merges. When explicit
-approval appears with `comments`, `ship`, or `land`, run the approval gate only after that mode
-has reached merge-ready.
-
-## Prompt-depth routing
-
-Classify the request before reviewing:
-
-- **Short directive**: a target and action with little design context. Run the full review
-  workflow directly. Short never means shallow.
-- **Detailed execution request**: constraints or known risks are supplied. Add them to the
-  review manifest as required concerns; do not replace the standard policy.
-- **Design-shaped request**: asks whether the architecture, ownership, contract, or approach
-  is right. Run `discovering-unknowns`, then `architecture-scan` or `tech-spec` before
-  reviewing implementation details.
-- **Failure-shaped request**: includes a regression, stack trace, or failing check. Run
-  `debugger` first; review the resulting fix against the proven cause.
-
-## Workflow
-
-### 1. Resolve the target and authority
-
-Resolve the PR, branch, commit range, named files, or staged diff. For PRs, fetch:
-
-- metadata, base and head SHA, body, linked issue, and changed-file stats;
-- inline review comments;
-- review summary bodies;
-- PR conversation comments;
-- GraphQL review-thread IDs and resolution state.
-
-Use the current repository checkout for every mode and never create a secondary checkout or
-clone. In mutating modes, check out the PR branch natively in the current checkout.
-
-Before switching branches, read `git config --bool --get workflow.disposableCheckout`:
-
-- `true`: this checkout is explicitly disposable. Run `git reset --hard` and `git clean -fd`,
-  then use `gh pr checkout <number> --force`.
-- absent or `false`: require `git status --porcelain` to be empty. If it is not empty, stop and
-  report the blocker; never stash, discard, move, or overwrite existing work.
-
-Completion criterion: the exact base SHA, head SHA, diff, existing conversation, mode, and
-working directory are known.
-
-Capture `git status --porcelain` before reviewing. Classify each untracked path as:
-
-- present before the implementation program and user-owned;
-- created by the program and reviewable;
-- unknown, which remains in scope until ownership is proven.
-
-### 2. Build the diff manifest
-
-Classify tracked, staged, and untracked implementation paths plus diff content with the sibling
-`select-review-lenses.mjs` script. Write changed paths and the unified diff to temporary
-files, then run:
-
-```bash
-node <skill-dir>/select-review-lenses.mjs \
-  --paths-file <changed-paths> --diff-file <unified-diff>
-```
-
-Every review receives the mandatory lenses. The selector adds risk lenses from evidence,
-not programming-language identity. A React component receives UI-state lenses because of
-the APIs it uses; another framework receives equivalent lenses when its signals appear.
-
-The selector returns a `policySection` heading for every lens. Use `Grep` to locate each
-heading in `review-policy.md`, then `Read` only that section through the next H2 heading.
-Load the mandatory section plus the selected sections.
-
-Completion criterion: each changed responsibility is covered by a mandatory or selected
-lens, with a recorded signal explaining every selected lens.
-
-### 3. Establish intent and conventions
-
-Reconstruct what the change is meant to accomplish from the PR, linked issue, approved
-program, tests, conversation, and surrounding code. Discover the target repository's
-conventions and canonical validation commands.
-
-When an approved program exists, create a coverage ledger with one row per unit:
-
-| Unit | Expected paths/behavior | Actual paths | Targeted validation | Evidence |
-| --- | --- | --- | --- | --- |
-
-Read governing `AGENTS.md`, README, manifest, or registry files for every changed directory.
-Build a CI-parity matrix from required workflow jobs and note which local command proves each
-job or why it is remote-only. Reuse valid current-head validation evidence and run only the
-missing CI-parity commands, recording each exit status. A missing result or remote-only reason
-leaves the matrix incomplete and blocks a clean assessment.
-
-If implementation and stated intent disagree, treat intent as unresolved evidence, not as
-permission to rationalize the code.
-
-Completion criterion: expected behavior, changed contracts, repository conventions, and
-the validation plan are explicit.
-
-### 4. Review
-
-`review-pr` owns all reviewer fan-out. Run `change-review` on every review and add `security`
-whenever any selected lens has `reviewer: security`; no sibling workflow launches those reviewers
-directly. For broad or high-consequence report or approve reviews, read `deep-review.md` and use
-its independent passes over the shared notes format, then reconcile them. For broad or
-high-consequence mutating reviews, the pre-push pair review supplies the independent broad
-mutating review on the committed head, without a preliminary deep pair for that same head.
-
-Run reviewers in the roles this workflow describes. Reviewer fan-out is bounded per user
-request: the guardrails plugin denies calls past its cap, and a new user instruction resets the
-budget. The delta verification loop still runs at most three passes.
-
-### Semantic task gate
-
-Transport success is not review success. Apply semantic acceptance by reviewer type. The
-normative reply contract is [`reviewer-reply-contract.md`](./reviewer-reply-contract.md); the
-rules below apply it, and on conflict that file wins:
-
-- Semantic completion also requires every canonical Coverage row: blocked or incomplete reviewer
-  outcomes must name each missing native field exactly; omitting a row is incomplete, not a valid
-  abbreviated report.
-- `review-worker` must return `Status`, `Blockers`, and `Evidence Coverage`. It is complete only
-  when Status is `complete` and Blockers are `none`. Initial Review must evidence that `Review
-  Context` was written. Model-driven and convention passes must evidence their assigned
-  lens/codepaths or pattern coverage, respectively. The final filter must evidence its persisted
-  `Filter Status` coverage. `Status: blocked` always means the pass execution is incomplete and
-  triggers the retry-or-block path.
-- `change-review` is complete when its native `Assessment` and native `Coverage` are present,
-  and Coverage is complete for selected lenses, changed files, substantial codepaths, and
-  applicable untracked-file accounting. `Assessment: blocked` is a completed review outcome when
-  Coverage is complete; reconcile its blocking findings.
-- `security` is complete when its native `Assessment` and native `Coverage` are present, Coverage
-  is complete for its scoped review, and caveats are explicit. `Assessment: blocked` is a
-  completed review outcome when those requirements are met; reconcile its blocking findings.
-
-Retry once only for a refusal, inability to complete the pass, missing required native fields, or
-incomplete evidence. If the retry remains incomplete, stop the workflow and report it blocked;
-do not ship or land. The `review-worker` contract does not apply to `change-review` or
-`security`.
-
-Every reviewer prompt must include the tracked diff scope and the explicit absolute path list
-for program-created untracked files. Require each untracked file to be read and entered in the
-changed-file accounting table; a normal git diff is not sufficient evidence for untracked
-content.
-
-A change is broad or high-consequence when any of these hold: more than 10 changed files,
-more than 3 approved units, externally controlled state, multi-phase transitions, migrations,
-new or materially rewritten authorization decisions, concurrency, or 3 or more materially
-distinct changed risk responsibilities. A small, well-tested edit to existing risk-sensitive
-logic remains light only when no size/unit threshold or independently high-consequence
-responsibility applies; overlapping selector signals from one small existing behavior are not
-distinct risk responsibilities. Deep
-review is mandatory in those cases for report and approve modes. In mutating modes, the pre-push
-verification loop's primary/challenge pair, plus security when selected, supplies
-that independent broad review instead; do not also run a preliminary deep pair for the same
-head.
-
-Deep review requires at least two independent reviewer contexts:
-
-1. the primary reviewer executes the full pass state machine;
-2. a fresh challenge reviewer reads the full diff and runs the mandatory ownership,
-   transition, rule-interaction, and completeness concerns without seeing the primary
-   findings.
-
-Reconcile the union. A resumed pass or comprehensive fallback inside the primary review does
-not count as independent evidence.
-
-Each selected lens must produce either:
-
-- an evidenced finding with `path:line`, mechanism, impact, and correction direction; or
-- a concrete verified-clean statement naming what was traced.
-
-The selector's `evidenceRequirements` are mandatory, not advisory. In particular, a selected
-`ui-state-reactivity` lens is incomplete unless its evidence names the real initiating owner and
-programmatic writers, follows retained state through the terminal transition event, and proves
-the winning rule where selectors or declarative policies overlap. Mock-only callback invocation
-does not satisfy this evidence.
-
-Maintain a review evidence ledger:
-
-| Lens | Changed codepaths inspected | Finding or verified-clean evidence | Validator |
-| --- | --- | --- | --- |
-
-Reject a reviewer result that says "clean" without filling every selected-lens row and every
-substantial changed codepath. Resume the reviewer with the missing rows or run an independent
-pass; never translate an incomplete reviewer return into a clean assessment.
-
-Review tests as evidence, not truth. Trace the behavior the tests claim to protect.
-
-Completion criterion: every selected lens, approved program unit, governing metadata claim,
-and substantial changed codepath has evidence; every finding is reachable, introduced by the
-reviewed scope, actionable, and confidence-labeled.
-
-### Pre-push verification loop for mutating reviews
-
-For every broad or high-consequence review in `fix`, `comments`, `ship`, or `land` mode, run
-this loop before any push. It requires a clean, verified, synchronized, committed current HEAD,
-but does not require initial findings to create a fix commit. Commit review fixes when they
-exist; if there are no changes, use the existing committed current HEAD. Never create an empty
-commit. A light mutating review may run delta verification passes after a correction it wants
-re-verified, with its completed initial review; the pair is mandatory only for broad or
-high-consequence changes.
-
-1. Before the initial pair, fetch the live base ref and calculate
-   `origin/<base>...HEAD` behind/ahead state. If behind, apply the active workflow's authorized
-   base-synchronization procedure. Rerun full local verification and commit any synchronization
-   result. Fetch the live base again and verify zero behind before recording the exact base SHA
-   and committed local head SHA. If synchronization cannot complete safely, stop as blocked.
-   Then record the exact `base SHA...head SHA` diff, complete changed-file list, and applicable
-   untracked-file accounting.
-2. Spawn **two fresh `change-review` Task contexts in parallel** against that same exact
-   committed diff. Do not use `review-worker` for this loop. The primary performs the full
-   selected-lens review. The challenge focuses on ownership, transitions, rule interaction,
-   completeness, tests, metadata, and CI parity without seeing the first result. When security
-   is selected, spawn one fresh, independent `security` context alongside them.
-   Give every reviewer the complete changed-file list and applicable untracked-file accounting,
-   and require semantic acceptance with complete selected-lens evidence coverage.
-3. Reconcile the pair results into one finding set. The pair runs once per user request; every
-   subsequent verification is a delta pass.
-4. If reconciliation leaves actionable in-scope findings, apply them; for each
-   head-changing correction run fresh targeted validation plus one fresh integration gate for
-   the new head, and commit. Then run one **delta verification pass**: a single fresh
-   `change-review` context (starting at `n` = 1) that reviews the correction delta
-   `<last reviewed head>...HEAD` with the full `base...head` diff as context. It must confirm
-   every prior finding is closed and trace the correction's blast radius for new defects.
-   Evidence for paths the correction did not touch remains valid; a correction invalidates
-   coverage per changed path, not globally. Add a `security` context when the correction touches
-   risk-selected paths.
-5. Repeat step 4, incrementing `n`, while the latest delta pass returns actionable in-scope
-   findings.
-
-**Loop budget and convergence:** the loop allows at most three delta verification passes per
-user request. When the loop budget is exhausted, or the same root-cause finding survives two
-consecutive delta passes, block before any further edit or review call, report the remaining
-findings, and state that a new user instruction resets the loop budget. Scope-expanding remedies
-stop for a user decision at any point regardless of remaining budget.
-
-The loop passes when the pair (or, for a light review, the standard review) or the latest delta
-pass reconciles clean with complete evidence coverage. Record that committed head as
-`reviewedHeadSha` and carry it through every push and ship handoff. `fix` mode stops with that
-reviewed local commit. `comments`, `ship`, and `land` may push only after the loop passes; after
-a push, CI and the merge gates own the remaining verification.
-
-### 5. Reconcile
-
-Deduplicate findings by root cause and fix locus. Classify every candidate before applying it:
-
-- **in-scope fix** — the smallest correction needed to satisfy approved intent or restore a
-  pre-existing contract changed by this diff;
-- **scope-expanding proposal** — a new subsystem, workflow, migration, backfill, rollback
-  mechanism, compatibility layer, dependency, or product behavior not authorized by the
-  approved request;
-- **invalid / pre-existing** — speculative, intentional, test-disproved, unreachable, or not
-  introduced by the reviewed scope.
-
-Apply only in-scope fixes. Reject invalid/pre-existing candidates. A valid defect with only
-scope-expanding remedies is not authorization for that remedy: stop before editing, explain the
-concrete risk and smallest known options, and require a new user decision. Do not let severity
-labels silently grant scope authority, turn product choices into automatic code changes, or let a
-fix for one finding create an unapproved architecture program.
-
-Order surviving findings by consequence:
-
-1. data loss, authorization, secret exposure, or common-path failure;
-2. broken contracts, state corruption, races, and migration hazards;
-3. missing regression protection and operational blind spots;
-4. maintainability regressions that materially raise future change risk.
-
-Completion criterion: one canonical finding exists per defect, with no inflated duplicates.
-
-### 6. Complete the authorized mode
-
-- **report**: return findings and coverage. Perform no mutation.
-- **approve**: complete **report**, then run the approval gate. Do not edit, push, or merge.
-- **fix**: apply valid findings, run affected checks followed by the repository's canonical
-  milestone gate, commit locally, pass the pre-push verification loop when required, and stop.
-- **comments**: read and follow `fix-comments.md`, then push and watch CI.
-- **ship**: follow `ship` from preflight through merge-ready.
-- **land**: pass the landing gate in `deep-review.md` Step 9, then merge.
-
-Completion criterion: the workflow reaches exactly the authorized end state and no stronger
-one.
-
-### Approval gate
-
-Run this gate only when the original request uses explicit approval authority. After the completed normal review,
-capture `reviewedHeadSha` from the PR's `headRefOid`. For explicit approval
-combined with `comments`, `ship`, or `land`, wait until that mode is merge-ready, fetch the final
-live head (`headRefOid`), and compare it with the last `reviewedHeadSha`. If it differs, stop
-approval and require a fresh user review request. Do not launch a new review stage or reuse an
-existing review slot. Approval requires a reviewed current head; a prior different-head review never
-substitutes for it.
-
-Before the final live-head comparison, verify against the live PR:
-
-1. The review has no unresolved findings and the PR has zero unresolved review threads.
+Words describing quality (`thorough`, `deep`, `security`) change depth, never authority. A
+plain review stays read-only however serious the diff. `merge`, `land`, `ship`, and "make
+merge-ready" wording never grants approval authority. Advice questions such as `Should I approve
+PR 42?` authorize nothing. If branch protection requires approval and approval was not
+explicitly authorized, report blocked rather than self-approving.
+
+Explicit approval targets a `PR` or `pull request` in the same clause. Approval alone is
+read-only. When approval accompanies `comments`, `ship`, or `land`, run the approval gate after
+that mode reaches merge-ready.
+
+## Review workflow
+
+1. Resolve the target and, for a PR, fetch its metadata, live head SHA, body, changed files, and
+   every review thread with its resolution state, using the API calls in
+   [`pr-mechanics.md`](./pr-mechanics.md). Read relevant repository instructions and validation
+   commands.
+2. Before checking out a PR branch, read `git config --bool --get workflow.disposableCheckout`.
+   When it is not `true`, require `git status --porcelain` to be clean and stop if it is not;
+   never stash, discard, or overwrite existing work. A disposable checkout may use its authorized
+   cleanup procedure.
+3. Review tracked, staged, and untracked implementation paths. Program-created untracked files
+   are in scope and must be read because a plain `git diff` does not show them. Distinguish them
+   from pre-existing user-owned files before deciding scope.
+4. Run `change-review` for the requested scope and add `security` when the changed
+   responsibilities warrant security review. Reviewer fan-out is bounded per user request. The
+   delta verification loop still runs at most three delta verification passes.
+5. Reconcile findings against the diff, surrounding code, intent, and validation evidence.
+   Each candidate is an **in-scope fix**, **scope-expanding proposal**, or
+   **invalid/pre-existing**. Apply only in-scope fixes. A valid defect with only
+   scope-expanding remedies stops for a new user decision; the finding does not authorize the
+   remedy.
+6. In a mutating mode, validate fixes, commit them when needed, and stop or continue only to the
+   authorized mode. Do not create an empty commit. For each head-changing correction, run
+   fresh targeted validation plus one fresh integration gate for the new head; validation
+   evidence from an earlier head does not carry over to changed paths. When the loop budget is exhausted, or
+   the same root-cause finding survives two consecutive delta passes, block before any further
+   edit or review call, report the remaining findings, and state that a new user instruction
+   resets the loop budget. Use [`fix-comments.md`](./fix-comments.md) for comments mode and
+   [`deep-review.md`](./deep-review.md) for broad or high-consequence reviews.
+
+A change is broad or high-consequence when it changes more than 10 files, more than 3 approved
+units, externally controlled state, multi-phase transitions, migrations, new or materially
+rewritten authorization decisions, concurrency, or 3 or more materially distinct risk
+responsibilities. A small, well-tested edit to existing risk-sensitive logic remains light only
+when none applies.
+
+## Approval gate
+
+Run this gate only when explicit approval was authorized, and only after the
+completed normal review. Approval requires a reviewed current head. Before final approval,
+verify against the live PR that:
+
+1. There are zero unresolved findings and zero unresolved review threads, confirmed by the
+   GraphQL thread query in [`pr-mechanics.md`](./pr-mechanics.md) rather than by REST comments.
 2. Required CI is green for the current head SHA.
 3. The PR body is current for that head and still describes the PR.
-4. The PR author's `author.login` differs from the authenticated current user. Determine the
-   current user with `gh api user --jq .login`; do not infer self-authorship from bot status.
+4. The PR author's `author.login` differs from the authenticated user from `gh api user --jq .login`.
 
-If any of these gates fails, report approval as blocked and do not approve. As the final API
-operation immediately before approval, re-fetch the live `headRefOid` and require it to equal
-`reviewedHeadSha`, with no intervening tool or API call. If it changed, stop approval and require
-a fresh user review request; do not launch a new review stage or reuse an existing review slot.
-Otherwise, the next operation is:
+If any gate fails, report approval blocked. As the final API operation immediately before
+approval, re-fetch the live `headRefOid` and require equality with the reviewed head, with no
+intervening call. If the live head differs, stop and require a fresh user review request.
+Otherwise execute:
 
 ```bash
 gh pr review <url> --approve --body "Review complete, required checks are green, and the PR is merge-ready."
 ```
 
-When GitHub is unavailable or the request is describe-only, do not execute that operation. After
-all gates pass, report `Result: would be submitted via gh pr review --approve, but was not
-executed — <reason>` rather than `approved`; reserve `approved` for a successfully executed
-command.
+Reserve `approved` for a successfully executed command. When the command was not executed,
+report `would be submitted via gh pr review --approve, but was not executed — <reason>`.
+Approval never implies push or merge authority.
 
-For `approve` mode, stop after this command. Approval remains additive permission and never
-implies push or merge authority.
+## Landing gate
+
+Merge only with explicit instruction. Before merging, verify against the live API that required
+CI is green for the current head SHA and zero unresolved review threads remain. Re-fetch the
+live head immediately before merging and require it to equal the reviewed head, with no
+intervening call. If any gate fails or the head changed, report blocked rather than merging.
 
 ## Output
 
@@ -359,45 +111,33 @@ implies push or merge authority.
 
 **Mode:** <report | approve | fix | comments | ship | land>
 **Target:** <base SHA>...<head SHA>
-**Tier:** <light | deep> — <one-sentence reason from the tier heuristic>
+**Tier:** <light | deep> — <reason>
 **Assessment:** <correct | needs changes | blocked | merge-ready | merged>
-
-### Selected lenses
-- <lens> — <signal>
 
 ### Findings
 - [P<n>·<confidence>] <title> — `path:line`
+  - Scope: <in-scope fix | scope-expanding proposal | invalid/pre-existing>
   - Mechanism:
   - Impact:
   - Correction:
 
 ### Coverage
-- Files read:
-- Behavior traced:
-- Program units: <covered / missing>
-- Lens evidence: <complete / missing rows>
-- Governing metadata:
-- CI-parity matrix:
+- Files and behavior traced:
+- Untracked implementation files read:
+- Policy lenses applied:
 - Validators:
-- Existing comments: <found / replied / resolved / remaining>
-- Reviewer returns: <complete / blocked; type-aware acceptance and coverage; blocked/incomplete returns name each missing native field exactly, including `Status`, `Blockers`, and `Evidence Coverage` when required>
+- Existing threads:
 - CI at head SHA:
 - PR body at head SHA:
 
 ### Approval gate
-- Findings/threads: <no unresolved findings; zero unresolved threads / blocked>
-- CI: <green for current head SHA / blocked>
-- PR body: <current for current head SHA / blocked>
-- Self-authorship comparison: <PR author.login> vs <authenticated user.login> — <pass / blocked>
-- Final live-head equality: <reviewedHeadSha> = <live headRefOid> — <pass / blocked>
-- Result: <approved via `gh pr review --approve` / would be submitted via `gh pr review --approve`, but was not executed — reason / blocked — reason>
+- Findings/threads:
+- CI:
+- PR body:
+- Self-authorship comparison:
+- Final live-head equality:
+- Result:
 
 ### Deviations
 <entries or `none`>
 ```
-
-An empty findings section says `No material issues found.` It never invents a nit to prove
-that review happened. A blocked assessment still emits the full template and every Coverage row;
-use `n/a — <reason>` rather than omitting an inapplicable row. When the user's request supplies
-hypothetical or counterfactual approval-gate states, explicitly state the block or proceed outcome
-for each supplied state.

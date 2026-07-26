@@ -318,38 +318,22 @@ requireText(
   'scope-expanding proposal',
   'review correction-scope quarantine',
 );
+// These three API facts were learned from defects: thread resolution state has no REST
+// equivalent, and the resolve mutation takes threadId (commit 7797d7b fixed exactly that).
+// Losing them silently breaks any gate that requires zero unresolved threads.
+for (const apiFact of ['isResolved', 'resolveReviewThread', 'threadId']) {
+  requireText(
+    path.join(pluginsDir, 'review', 'skills', 'review-pr', 'pr-mechanics.md'),
+    apiFact,
+    'non-inferable PR thread API fact',
+  );
+}
 requireText(
   path.join(pluginsDir, 'build', 'skills', 'ship', 'SKILL.md'),
   'Do not background it, poll a',
   'foreground CI watch contract',
 );
-// The reviewer reply contract has one normative home; every file that restates it
-// operationally must point back so policy edits cannot fork.
-requireText(
-  path.join(pluginsDir, 'review', 'skills', 'review-pr', 'reviewer-reply-contract.md'),
-  'Transport success is not review success',
-  'normative reviewer reply contract',
-);
-requireText(
-  path.join(pluginsDir, 'review', 'skills', 'review-pr', 'reviewer-reply-contract.md'),
-  'on conflict, this file\nwins',
-  'reviewer reply contract conflict rule',
-);
-for (const restatingFile of [
-  ['review', 'skills', 'review-pr', 'SKILL.md'],
-  ['review', 'skills', 'review-pr', 'deep-review.md'],
-  ['review', 'skills', 'review-pr', 'review-worker.md'],
-  ['review', 'skills', 'review-pr', 'discover-conventions.md'],
-  ['review', 'droids', 'review-worker.md'],
-  ['review', 'droids', 'change-review.md'],
-  ['review', 'droids', 'security.md'],
-]) {
-  requireText(
-    path.join(pluginsDir, ...restatingFile),
-    'reviewer-reply-contract.md',
-    'reviewer reply contract normative pointer',
-  );
-}
+
 
 // ---------- 6. README counts ----------
 // The README's "At a glance" line is the human-facing fleet inventory. It must state the

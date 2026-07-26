@@ -1068,60 +1068,6 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             ),
         )
 
-    def test_review_pr_makes_the_pair_review_the_broad_mutating_review(self):
-        self.assert_policy_matches(
-            "plugins/review/skills/review-pr/SKILL.md",
-            r"(?is)pair\s+review.*independent\s+broad\s+mutating\s+review.*"
-            r"without.*preliminary\s+deep",
-            "the pre-push pair review is the independent broad mutating review without a preliminary deep pair",
-        )
-
-    def test_supporting_review_tier_guidance_keeps_independent_high_consequence_work_deep(self):
-        for relative_path in (
-            "plugins/review/skills/review-pr/deep-review.md",
-            "plugins/review/README.md",
-        ):
-            with self.subTest(relative_path=relative_path):
-                self.assert_policy_matches(
-                    relative_path,
-                    r"(?m)^(?:-\s+)?A\s+small,\s+well-tested\s+edit\s+to\s+existing\s+"
-                    r"risk-sensitive\s+logic\s+remains\s+light\s+only\s+when\s+no\s+"
-                    r"independently\s+high-consequence\s+responsibility\s+applies\.$",
-                    "small, well-tested edits to existing risk-sensitive logic remain "
-                    "light only without an independently high-consequence responsibility",
-                )
-                self.assert_policy_matches(
-                    relative_path,
-                    r"(?m)^(?:-\s+)?Migrations,\s+concurrency,\s+externally\s+controlled\s+"
-                    r"state,\s+multi-phase\s+transitions,\s+and\s+new\s+or\s+materially\s+"
-                    r"rewritten\s+authorization\s+decisions\s+remain\s+deep\s+even\s+"
-                    r"when\s+small\.$",
-                    "migrations, concurrency, externally controlled state, "
-                    "multi-phase transitions, and new or materially rewritten "
-                    "authorization decisions remain deep even when small",
-                )
-                policy = self.policy_text(relative_path)
-                self.assertNotRegex(
-                    policy,
-                    r"(?s)Do not escalate to deep on a small, well-tested touch to a "
-                    r"risk-sensitive path alone\.\s+Escalate\s+only when the diff is also "
-                    r"large or the risk-sensitive logic is new/rewritten\.",
-                    msg=(
-                        f"{relative_path} must not restore the former conflicting "
-                        "deep-review light-tier carve-out."
-                    ),
-                )
-                self.assertNotRegex(
-                    policy,
-                    r"(?s)The escalation heuristic leans light:\s+a small, well-tested "
-                    r"touch to a risk-sensitive path stays light;\s+deep is reserved for "
-                    r"large diffs or new/rewritten risk-sensitive logic\.",
-                    msg=(
-                        f"{relative_path} must not restore the former conflicting README "
-                        "light-tier guidance."
-                    ),
-                )
-
     def test_implementer_hands_review_ownership_to_review_pr(self):
         self.assert_policy_matches(
             "plugins/build/droids/implementer.md",
@@ -1245,20 +1191,6 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             "findings cannot authorize a respec or architecture expansion",
         )
 
-    def test_review_pr_reuses_current_head_validation_evidence(self):
-        self.assert_policy_matches(
-            "plugins/review/skills/review-pr/SKILL.md",
-            r"(?is)reuse.*valid current-head validation evidence",
-            "valid current-head validation evidence is reused",
-        )
-
-    def test_review_pr_runs_only_missing_ci_parity_validation_commands(self):
-        self.assert_policy_matches(
-            "plugins/review/skills/review-pr/SKILL.md",
-            r"(?is)run only.*missing.*CI-parity command",
-            "only CI-parity commands missing from reusable evidence are run",
-        )
-
     def test_review_pr_requires_fresh_targeted_and_integration_validation_after_head_change(self):
         self.assert_policy_matches(
             "plugins/review/skills/review-pr/SKILL.md",
@@ -1273,20 +1205,6 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             r"fresh user review request",
             "a live approval head change after completed normal review requires a fresh user review request",
         )
-
-    def test_approval_head_change_stops_comment_and_deep_review_procedures(self):
-        for relative_path in (
-            "plugins/review/skills/review-pr/fix-comments.md",
-            "plugins/review/skills/review-pr/deep-review.md",
-        ):
-            with self.subTest(relative_path=relative_path):
-                self.assert_policy_matches(
-                    relative_path,
-                    r"(?is)approval.*head.*(?:changes|differs).*stop.*"
-                    r"fresh user review request.*(?:never|do not).*rerun.*"
-                    r"(?:review|existing request)",
-                    "an approval-head change stops the request and requires fresh review authority",
-                )
 
     def test_tdd_workflow_uses_selected_targeted_command_at_each_checkpoint(self):
         self.assert_policy_matches(

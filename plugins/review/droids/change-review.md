@@ -117,9 +117,8 @@ Before judging, summarize what the change does in 1–3 bullets. This forces you
 
 If any answer is no, fix before returning.
 
-Managers accept this report only when the native `Assessment` and `Coverage` labels are present
-and Coverage is complete; the normative acceptance rules are
-`../skills/review-pr/reviewer-reply-contract.md`, and on conflict that file wins.
+Return your native `Assessment` and `Coverage` labels with sufficient evidence for the scoped
+review.
 
 ## Confidence Labels
 
