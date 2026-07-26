@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "cases": [
+    {
+      "id": "precision-checklist-terminology",
+      "provenance": "sagar-plugins@382b9f3",
+      "kind": "prose",
+      "paths": ["docs/PRECISION-CHECKLIST.md"],
+      "diff": "diff --git a/docs/PRECISION-CHECKLIST.md b/docs/PRECISION-CHECKLIST.md\nindex f51e54b..102a710 100644\n--- a/docs/PRECISION-CHECKLIST.md\n+++ b/docs/PRECISION-CHECKLIST.md\n@@ -34,7 +34,7 @@ once; apply to any file you touch afterward.\n ## Consistency\n \n-- [ ] One canonical term per concept: `unit`, `program head`, `final head`, `review thread`,\n+- [ ] One canonical term per concept: `unit`, `program head`, `reviewed head`, `review thread`,\n       `blocked`, `delivery gate`.\n - [ ] One normative definition per policy; restatements carry an on-conflict pointer.\n - [ ] No rule here contradicts `docs/WORKFLOW.md`, the hooks' actual behavior, or the\n       standing rules in `AGENTS.md`; when hook behavior changes, the prose that describes it\n",
+      "expectedLenses": ["mandatory", "agentic-configuration"],
+      "forbiddenLenses": ["ui-state-reactivity", "mutation-state-ownership", "authentication-authorization", "external-input-injection", "persistence-migration", "async-concurrency", "dependencies-supply-chain", "secrets-privacy-observability", "public-contracts-compatibility", "performance-resource-use", "ci-build-release"],
+      "note": "This is documentation terminology only; its agent instructions merit configuration review, not code-risk lenses."
+    },
+    {
+      "id": "routing-eval-readme",
+      "provenance": "sagar-plugins@d2ec18c",
+      "kind": "prose",
+      "paths": ["evals/routing/README.md"],
+      "diff": "diff --git a/evals/routing/README.md b/evals/routing/README.md\nnew file mode 100644\nindex 0000000..aa88d56\n--- /dev/null\n+++ b/evals/routing/README.md\n@@ -0,0 +1,15 @@\n+# Routing Eval\n+\n+`cases.json` is the single source of routing expectations. Every case carries a `layer`:\n+\n+- `layer: \"hook\"` — decidable by the deterministic intent router\n+  (`plugins/guardrails/hooks/intent_router.py`). These cases are asserted exactly, in CI,\n+  on every PR by `plugins/guardrails/tests/test_router_cases_parity.py`.\n+- `layer: \"model\"` — requires judgment beyond the router's regexes. These run\n+  only in the live eval: collect model routing decisions into a results file and score with\n+  `node scripts/eval-routing.mjs --cases evals/routing/cases.json --results <results.json>`.\n+\n+The router's negative surface is additionally pinned by the 118-prompt noise corpus in\n+`plugins/guardrails/tests/test_router_noise_corpus.py`: those prompts must never route and\n+never grant merge/approve authority.\n",
+      "expectedLenses": ["mandatory", "agentic-configuration"],
+      "forbiddenLenses": ["ui-state-reactivity", "mutation-state-ownership", "authentication-authorization", "external-input-injection", "persistence-migration", "async-concurrency", "dependencies-supply-chain", "secrets-privacy-observability", "public-contracts-compatibility", "performance-resource-use", "ci-build-release"],
+      "note": "This explains an eval harness; agent configuration is relevant, but the prose does not change executable behavior."
+    },
+    {
+      "id": "reviewer-reply-contract",
+      "provenance": "sagar-plugins@1ad4372",
+      "kind": "prose",
+      "paths": ["plugins/review/skills/review-pr/reviewer-reply-contract.md"],
+      "diff": "diff --git a/plugins/review/skills/review-pr/reviewer-reply-contract.md b/plugins/review/skills/review-pr/reviewer-reply-contract.md\nnew file mode 100644\nindex 0000000..805c94f\n--- /dev/null\n+++ b/plugins/review/skills/review-pr/reviewer-reply-contract.md\n@@ -0,0 +1,14 @@\n+# Reviewer Reply Contract\n+\n+Normative definition of what a reviewer Task must return before its pass counts as executed.\n+Other review documents restate parts of this contract operationally; on conflict, this file\n+wins.\n+\n+## Principle\n+\n+Transport success is not review success. A Task call that returns cleanly but whose reply\n+lacks this contract is an incomplete pass, never an accepted review.\n+\n+Every `review-worker` return carries three fields:\n+\n+- `Status: complete | blocked`\n+- `Blockers: none | <specific blockers and missing evidence>`\n",
+      "expectedLenses": ["mandatory", "agentic-configuration"],
+      "forbiddenLenses": ["ui-state-reactivity", "mutation-state-ownership", "authentication-authorization", "external-input-injection", "persistence-migration", "async-concurrency", "dependencies-supply-chain", "secrets-privacy-observability", "public-contracts-compatibility", "performance-resource-use", "ci-build-release"],
+      "note": "The review-agent contract needs configuration scrutiny, but it is prose rather than an application code change."
+    },
+    {
+      "id": "auth-middleware-bearer",
+      "provenance": "synthetic",
+      "kind": "code",
+      "paths": ["src/middleware/authenticate.mjs"],
+      "diff": "diff --git a/src/middleware/authenticate.mjs b/src/middleware/authenticate.mjs\nindex 16a9b01..a1c8a44 100644\n--- a/src/middleware/authenticate.mjs\n+++ b/src/middleware/authenticate.mjs\n@@ -8,6 +8,16 @@ export async function authenticate(req, res, next) {\n-  return next();\n+  const bearer = req.headers.authorization;\n+  if (!bearer?.startsWith('Bearer ')) {\n+    return res.status(401).json({ error: 'missing bearer token' });\n+  }\n+  const session = await sessions.verify(bearer.slice(7));\n+  if (!session) {\n+    return res.status(401).json({ error: 'invalid session' });\n+  }\n+  req.userId = session.userId;\n+  return next();\n }\n",
+      "expectedLenses": ["mandatory", "authentication-authorization", "external-input-injection"],
+      "forbiddenLenses": ["ui-state-reactivity", "mutation-state-ownership", "persistence-migration", "async-concurrency", "dependencies-supply-chain", "secrets-privacy-observability", "public-contracts-compatibility", "performance-resource-use", "ci-build-release", "agentic-configuration"],
+      "note": "A request-derived bearer token and session identity require authentication and untrusted-input review."
+    },
+    {
+      "id": "add-account-index-migration",
+      "provenance": "synthetic",
+      "kind": "code",
+      "paths": ["db/migrations/20260726_add_account_index.sql"],
+      "diff": "diff --git a/db/migrations/20260726_add_account_index.sql b/db/migrations/20260726_add_account_index.sql\nnew file mode 100644\nindex 0000000..0beefa1\n--- /dev/null\n+++ b/db/migrations/20260726_add_account_index.sql\n@@ -0,0 +1,8 @@\n+BEGIN;\n+\n+CREATE INDEX CONCURRENTLY accounts_org_id_created_at_idx\n+  ON accounts (org_id, created_at DESC);\n+\n+COMMIT;\n",
+      "expectedLenses": ["mandatory", "persistence-migration"],
+      "forbiddenLenses": ["ui-state-reactivity", "mutation-state-ownership", "authentication-authorization", "external-input-injection", "async-concurrency", "dependencies-supply-chain", "secrets-privacy-observability", "public-contracts-compatibility", "performance-resource-use", "ci-build-release", "agentic-configuration"],
+      "note": "An index migration needs persistence and rollback/operational review."
+    },
+    {
+      "id": "profile-effect-component",
+      "provenance": "synthetic",
+      "kind": "code",
+      "paths": ["src/components/ProfileCard.tsx"],
+      "diff": "diff --git a/src/components/ProfileCard.tsx b/src/components/ProfileCard.tsx\nindex e2a1c0a..1541e05 100644\n--- a/src/components/ProfileCard.tsx\n+++ b/src/components/ProfileCard.tsx\n@@ -1,7 +1,19 @@\n+import { useEffect, useState } from 'react';\n+\n export function ProfileCard({ userId }) {\n-  return <section />;\n+  const [profile, setProfile] = useState(null);\n+\n+  useEffect(() => {\n+    let active = true;\n+    fetch(`/api/profiles/${userId}`)\n+      .then((response) => response.json())\n+      .then((nextProfile) => active && setProfile(nextProfile));\n+    return () => { active = false; };\n+  }, [userId]);\n+\n+  return <section>{profile?.displayName}</section>;\n }\n",
+      "expectedLenses": ["mandatory", "ui-state-reactivity", "async-concurrency"],
+      "forbiddenLenses": ["mutation-state-ownership", "authentication-authorization", "external-input-injection", "persistence-migration", "dependencies-supply-chain", "secrets-privacy-observability", "public-contracts-compatibility", "performance-resource-use", "ci-build-release", "agentic-configuration"],
+      "note": "The component effect has lifecycle and stale-result behavior to examine; its hard-coded fetch construction alone does not create an injection concern."
+    },
+    {
+      "id": "lockfile-minor-bump",
+      "provenance": "synthetic",
+      "kind": "config",
+      "paths": ["package-lock.json"],
+      "diff": "diff --git a/package-lock.json b/package-lock.json\nindex 1ca2e89..ae3bff2 100644\n--- a/package-lock.json\n+++ b/package-lock.json\n@@ -18,9 +18,9 @@\n     \"node_modules/fast-glob\": {\n-      \"version\": \"3.3.1\",\n-      \"resolved\": \"https://registry.npmjs.org/fast-glob/-/fast-glob-3.3.1.tgz\",\n-      \"integrity\": \"sha512-old\"\n+      \"version\": \"3.3.2\",\n+      \"resolved\": \"https://registry.npmjs.org/fast-glob/-/fast-glob-3.3.2.tgz\",\n+      \"integrity\": \"sha512-new\"\n     }\n   }\n }\n",
+      "expectedLenses": ["mandatory", "dependencies-supply-chain"],
+      "forbiddenLenses": ["ui-state-reactivity", "mutation-state-ownership", "authentication-authorization", "external-input-injection", "persistence-migration", "async-concurrency", "secrets-privacy-observability", "public-contracts-compatibility", "performance-resource-use", "ci-build-release", "agentic-configuration"],
+      "note": "A resolved dependency update needs supply-chain review, not application-code lens expansion."
+    },
+    {
+      "id": "workflow-node-version",
+      "provenance": "synthetic",
+      "kind": "config",
+      "paths": [".github/workflows/test.yml"],
+      "diff": "diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml\nindex 9ce9c84..c992a9d 100644\n--- a/.github/workflows/test.yml\n+++ b/.github/workflows/test.yml\n@@ -14,7 +14,7 @@ jobs:\n       - uses: actions/setup-node@v4\n         with:\n-          node-version: 20\n+          node-version: 22\n \n       - name: Test\n         run: npm test\n",
+      "expectedLenses": ["mandatory", "ci-build-release"],
+      "forbiddenLenses": ["ui-state-reactivity", "mutation-state-ownership", "authentication-authorization", "external-input-injection", "persistence-migration", "async-concurrency", "dependencies-supply-chain", "secrets-privacy-observability", "public-contracts-compatibility", "performance-resource-use", "agentic-configuration"],
+      "note": "A CI runtime-version change needs build and release review, with no product-code risk lenses."
+    }
+  ]
+}

@@ -21,9 +21,12 @@ jobs:
         run: node scripts/validate.mjs
 
       - name: Eval definition invariants
+        env:
+          SELECTOR_METRICS_ENFORCE: "0" # Flip to 1 when the selector fix lands.
         run: |
           node scripts/validate-evals.mjs
-          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs
+          node scripts/eval-selector.mjs
+          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/eval-selector.test.mjs
 
       - name: Deterministic policy tests
         run: |

@@ -207,7 +207,44 @@ if (casesDoc) {
   }
 }
 
-// ---------- 4. policy thresholds ----------
+// ---------- 4. selector cases ----------
+const selectorCasesFile = path.join(EVALS, 'selector', 'cases.json');
+const selectorCasesDoc = existsSync(selectorCasesFile)
+  ? readJson(selectorCasesFile)
+  : (fail(selectorCasesFile, 'missing selector cases'), null);
+if (selectorCasesDoc) {
+  if (selectorCasesDoc.schemaVersion !== 1) fail(selectorCasesFile, `schemaVersion ${selectorCasesDoc.schemaVersion} != 1`);
+  if (!Number.isInteger(selectorCasesDoc.version) || selectorCasesDoc.version < 1) {
+    fail(selectorCasesFile, 'version must be an integer >= 1');
+  }
+  const cases = Array.isArray(selectorCasesDoc.cases) ? selectorCasesDoc.cases : [];
+  if (cases.length !== 8) fail(selectorCasesFile, `expected exactly 8 cases, found ${cases.length}`);
+  const seen = new Set();
+  for (const c of cases) {
+    const id = c.id ?? '<missing id>';
+    if (seen.has(id)) fail(selectorCasesFile, `duplicate case id "${id}"`);
+    seen.add(id);
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) fail(selectorCasesFile, `case "${id}" id must be kebab-case`);
+    if (typeof c.provenance !== 'string' || !c.provenance.trim()) fail(selectorCasesFile, `case "${id}" missing provenance`);
+    if (!['code', 'prose', 'config'].includes(c.kind)) fail(selectorCasesFile, `case "${id}" has invalid kind`);
+    if (!Array.isArray(c.paths) || c.paths.length === 0 || c.paths.some((p) => typeof p !== 'string' || !p)) {
+      fail(selectorCasesFile, `case "${id}" paths must be a nonempty string array`);
+    }
+    if (typeof c.diff !== 'string' || !c.diff.trim()) fail(selectorCasesFile, `case "${id}" missing diff`);
+    for (const field of ['expectedLenses', 'forbiddenLenses']) {
+      if (!Array.isArray(c[field]) || c[field].some((lens) => typeof lens !== 'string' || !lens)) {
+        fail(selectorCasesFile, `case "${id}" ${field} must be a string array`);
+      }
+    }
+    if (c.expectedLenses?.[0] !== 'mandatory') fail(selectorCasesFile, `case "${id}" expectedLenses must begin with mandatory`);
+    if (c.forbiddenLenses?.some((lens) => c.expectedLenses?.includes(lens))) {
+      fail(selectorCasesFile, `case "${id}" has a lens both expected and forbidden`);
+    }
+    if (typeof c.note !== 'string' || !c.note.trim()) fail(selectorCasesFile, `case "${id}" missing note`);
+  }
+}
+
+// ---------- 5. policy thresholds ----------
 const policyFile = path.join(EVALS, 'policy.json');
 const policy = existsSync(policyFile) ? readJson(policyFile) : (fail(policyFile, 'missing policy.json'), null);
 if (policy) {
@@ -220,6 +257,22 @@ if (policy) {
     fail(policyFile, 'routing.maxExtraInvocationsPerCase must be an integer >= 0');
   }
   if (!inUnit(routing.negativeFalseInvocationRate)) fail(policyFile, 'routing.negativeFalseInvocationRate must be in [0, 1]');
+  const selector = policy.selector ?? {};
+  if (!Number.isInteger(selector.maxMedianLenses) || selector.maxMedianLenses < 1) {
+    fail(policyFile, 'selector.maxMedianLenses must be an integer >= 1');
+  }
+  if (!inUnit(selector.minLensPrecision) || selector.minLensPrecision === 0) {
+    fail(policyFile, 'selector.minLensPrecision must be in (0, 1]');
+  }
+  if (!inUnit(selector.minMandatoryRecall) || selector.minMandatoryRecall === 0) {
+    fail(policyFile, 'selector.minMandatoryRecall must be in (0, 1]');
+  }
+  if (!Number.isInteger(selector.maxProseCodeLensCases) || selector.maxProseCodeLensCases < 0) {
+    fail(policyFile, 'selector.maxProseCodeLensCases must be an integer >= 0');
+  }
+  if (!inUnit(selector.maxTierEscalationRate)) {
+    fail(policyFile, 'selector.maxTierEscalationRate must be in [0, 1]');
+  }
   const repetitions = policy.repetitions ?? {};
   for (const key of ['promptChange', 'modelChange']) {
     if (!Number.isInteger(repetitions[key]) || repetitions[key] < 1) fail(policyFile, `repetitions.${key} must be an integer >= 1`);
@@ -335,6 +388,18 @@ if (bumpIdx !== -1) {
     const vAfter = read(currentPath).match(/^Version: (\d+)$/m)?.[1] ?? null;
     if (vBefore !== null && vBefore === vAfter) {
       fail(currentPath, `golden task changed vs ${baseRef} but Version was not bumped — existing baselines would silently stop being comparable`);
+    }
+  }
+  const selectorCasesPath = 'evals/selector/cases.json';
+  if (changed.includes(selectorCasesPath)) {
+    const before = gitShow(baseRef, selectorCasesPath);
+    const currentPath = path.join(ROOT, selectorCasesPath);
+    if (before !== null && existsSync(currentPath)) {
+      const beforeVersion = JSON.parse(before).version;
+      const afterVersion = readJson(currentPath)?.version;
+      if (Number.isInteger(beforeVersion) && afterVersion <= beforeVersion) {
+        fail(currentPath, `selector cases changed vs ${baseRef} but version was not bumped`);
+      }
     }
   }
 }

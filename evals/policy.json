@@ -10,6 +10,13 @@
     "maxExtraInvocationsPerCase": 0,
     "negativeFalseInvocationRate": 0.02
   },
+  "selector": {
+    "maxMedianLenses": 5,
+    "minLensPrecision": 0.8,
+    "minMandatoryRecall": 1,
+    "maxProseCodeLensCases": 0,
+    "maxTierEscalationRate": 0.5
+  },
   "quality": {
     "criticalPassRate": 1,
     "maxReviewFalsePositiveRate": 0.05,
