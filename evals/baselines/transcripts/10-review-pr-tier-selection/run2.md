@@ -1,29 +1,33 @@
-# Review
+## Review
 
 **Mode:** fix  
-**Target:** `3a522ec...10a4a09`  
-**Tier:** light, two files make a tested message-only change to existing authorization behavior, without a new authorization decision, migration, or concurrency control.  
-**Assessment:** correct
-
-### Selected lenses
-- mandatory, all changed behavior
-- authentication-authorization, `auth` signal
-- persistence-migration, selector matched diff metadata only, no persistence code changed
-- public-contracts-compatibility, exported function
+**Target:** `9e1162c`...`f2378da`  
+**Tier:** light — two-file, single-path error-message change. A small schema migration or concurrency-control change requires deep review because the contract classifies migrations and concurrency as high-consequence.  
+**Assessment:** correct  
 
 ### Findings
-No material issues found. No fix or commit was needed.
+- [P2·high] Error-message regression test matched substrings — `src/auth-guard.test.ts:4`
+  - Scope: in-scope fix
+  - Mechanism: `toThrow(string)` accepts a message containing the expected text, so altered guidance could pass.
+  - Impact: the stated unauthorized guidance was not pinned exactly.
+  - Correction: committed `f2378da` using an anchored regular expression.
 
 ### Coverage
-- Files read: `src/auth-guard.ts`, `src/auth-guard.test.ts`
-- Behavior traced: null input throws the intended clearer message; authenticated user remains unchanged.
-- Lens evidence: complete, no migration exists and the error reveals no sensitive resource information.
-- Validators: `bun test` passed, 2 tests; `git diff --check` passed.
-- CI-parity matrix: no manifest, workflow, README, or canonical validation script is present.
-- Existing comments / PR metadata: n/a, branch comparison.
+- Files and behavior traced: `src/auth-guard.ts`, `src/auth-guard.test.ts`; missing-user error and present-user return path.
+- Untracked implementation files read: none.
+- Policy lenses applied: intent/completeness, correctness, regression evidence, authentication boundary.
+- Validators: `bun test` passed, `git diff --check main...HEAD` passed, matcher behavior confirmed.
+- Existing threads: n/a — branch comparison, not a PR.
+- CI at head SHA: n/a — no PR.
+- PR body at head SHA: n/a — no PR.
 
-### Tier contrast
-An otherwise equally small schema migration or concurrency-control change requires the **deep** tier automatically. Migrations and concurrency are explicitly high-consequence responsibilities, so they cannot use this light single-pass review and, in fix mode, require the committed-head primary/challenge verification loop.
+### Approval gate
+- Findings/threads: n/a — approval not authorized.
+- CI: n/a — approval not authorized.
+- PR body: n/a — approval not authorized.
+- Self-authorship comparison: n/a — approval not authorized.
+- Final live-head equality: n/a — approval not authorized.
+- Result: n/a — fix mode stops after local commit; no push performed.
 
 ### Deviations
-Inline review was performed as explicitly requested, without substituting another skill or droid.
+Executed inline rather than invoking review droids, as requested.

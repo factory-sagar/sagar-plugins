@@ -993,8 +993,12 @@ class WorkflowPolicyContractTests(unittest.TestCase):
         return (self.REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8")
 
     def assert_policy_matches(self, relative_path, pattern, behavior):
+        # Unwrap line breaks for required-phrase matching so reflowing a paragraph cannot fail
+        # an assertion whose rule is still present. Prohibition checks keep the raw text,
+        # because they rely on line anchors to scope a match to a single line.
+        unwrapped = re.sub(r"[ \t]*\n[ \t]*", " ", self.policy_text(relative_path))
         self.assertRegex(
-            self.policy_text(relative_path),
+            unwrapped,
             pattern,
             msg=f"{relative_path} must state that {behavior}.",
         )
@@ -1226,11 +1230,44 @@ class WorkflowPolicyContractTests(unittest.TestCase):
             r"(?is)GREEN:.*targeted (?:test|validator|verification)",
             "GREEN checkpoint templates record only targeted verification",
         )
+        # The rule is that full-suite claims wait for program completion. It does not matter
+        # whether a "Self-Check" section wraps it; that wrapper was scaffolding.
         self.assert_policy_matches(
             "plugins/practices/skills/tdd-workflow/SKILL.md",
-            r"(?is)Self-Check.*targeted (?:test|validator|verification).*"
-            r"program completion",
-            "the TDD self-check reserves full-suite claims for program completion",
+            r"(?is)targeted (?:test|validator|verification).*"
+            r"(?:full suite|integration gate).*program completion",
+            "full-suite claims are reserved for program completion",
+        )
+
+    # These four rules were each lost to a prose edit and recovered only by a judged eval run
+    # or a manual audit. Pinning them here moves detection from an expensive model run to a
+    # free assertion.
+    def test_tdd_requires_the_real_seam_and_rejects_mock_satisfied_proof(self):
+        self.assert_policy_matches(
+            "plugins/practices/skills/tdd-workflow/SKILL.md",
+            r"(?is)real (?:behavior )?seam.*mock-satisfied test is not proof",
+            "RED must run through the real seam and a mock-satisfied test is not proof",
+        )
+
+    def test_verification_loop_rejects_an_aggregate_script_as_evidence(self):
+        self.assert_policy_matches(
+            "plugins/practices/skills/verification-loop/SKILL.md",
+            r"(?is)aggregate.*not evidence",
+            "a convenience aggregate script is not evidence that standalone validators ran",
+        )
+
+    def test_review_pr_orders_findings_by_consequence(self):
+        self.assert_policy_matches(
+            "plugins/review/skills/review-pr/SKILL.md",
+            r"(?is)order surviving findings by consequence.*data loss.*authorization",
+            "surviving findings are ordered by consequence, starting with data loss and authorization",
+        )
+
+    def test_review_pr_requires_exact_output_template_fidelity(self):
+        self.assert_policy_matches(
+            "plugins/review/skills/review-pr/SKILL.md",
+            r"(?is)emit this template exactly.*n/a.*rather than omitting",
+            "the output template is emitted exactly, using n/a instead of dropping a row",
         )
 
     def test_public_plugin_readmes_hand_review_ownership_to_review_pr(self):

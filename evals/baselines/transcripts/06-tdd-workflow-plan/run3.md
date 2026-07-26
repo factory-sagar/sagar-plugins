@@ -1,33 +1,30 @@
-# Behavior
+# Command Palette Suggestions
 
-Given ordered commands, searching returns only enabled matching commands, ranks case-insensitive prefix matches above substring matches, and preserves input order within equal match ranks.
+## Behavior Statement
+Given commands and a query, when users search the palette, enabled prefix matches appear before enabled substring matches, while equal match classes retain command order.
 
-# Standards Loaded
-
-- `tdd-workflow/SKILL.md`
+## Standards Loaded
 - `coding-standards/SKILL.md`
 - `TESTING_AND_VERIFICATION.md`
 - `DESIGNING_MODULES.md`
 - `TYPE_CONTRACTS.md`
 
-# RED/GREEN Slices
+## RED/GREEN Slices
+1. **Prefix suggestions**
+   - RED `3c29d2b`: 2 failing tests, placeholder throws `not implemented`.
+   - GREEN `bc945ac`: 2 passing tests.
 
-1. **Ranking and stability**
-   - RED: `cb992da`, 2 tests failed with `Error: not implemented`.
-   - GREEN: `b10e20f`, grouped prefix and substring matches while preserving encounter order. Targeted suite: 2 passing.
+2. **Prefix ranking, substring matches, stable ordering**
+   - RED `7c6d1e2`: assertion failure, substring matches were omitted.
+   - GREEN `bb4a1b4`: 3 passing tests.
 
-2. **Disabled commands**
-   - RED: `a1de5bd`, disabled-command test failed because disabled prefix and substring commands were returned.
-   - GREEN: `efcee3c`, skips `disabled` commands before matching. Targeted suite: 3 passing.
+3. **Disabled commands**
+   - RED `b76ca59`: assertion failure, disabled prefix and substring matches were included.
+   - GREEN `37e9116`: 4 passing tests.
 
-# Validation Evidence
-
-- `npm --prefix ".../golden-06-tdd-workflow-plan.9LSGUb" test`
-  - **3 passed, 0 failed**, duration `51.985042ms`.
-- `node --test --experimental-test-coverage ".../src/command-palette.test.mjs"`
-  - **3 passed, 0 failed**
-  - `src/command-palette.mjs`: **100% line, branch, and function coverage**.
-- `git diff --check 7bbb134..HEAD`: passed.
-- Working tree is clean on `main`.
-
-Deviations: TDD steps were performed inline as explicitly required.
+## Validation Evidence
+- `npm test`: **4 passed, 0 failed**
+- `node --test --experimental-test-coverage`: **100% line, branch, and function coverage** for `src/command-palette.mjs`
+- `git diff --check`: passed
+- All RED/GREEN commits are reachable from `HEAD`.
+- Working tree is clean.

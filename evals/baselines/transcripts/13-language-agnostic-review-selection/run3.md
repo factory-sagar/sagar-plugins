@@ -1,55 +1,67 @@
 ## Review
 
 **Mode:** report  
-**Target:** `62f51d4c3bbaaa6023884d9624cda67a37f27358...77c51e6978d348d70598644435640a6fa597b6ba`  
-**Tier:** deep, the new worker handles externally supplied authorization state, shared mutable state, persistence, retries, and credentials.  
+**Target:** `ffb275d3a0e0590e4920a6f7c85a44ac405bd302...b1d36ea587b4ddd31e54818c50c4f70ae261f49b`  
+**Tier:** deep — external webhook input, authorization state, SQL persistence, retries, and credential handling  
 **Assessment:** needs changes
 
-### Selected lenses
-- `mandatory` — mandatory for every changed behavior
-- `secrets-privacy-observability` — new logger emits the bearer token
+### Selected review lenses
+- Mandatory: intent/completeness, correctness/invariants, failures, tests/evidence, ownership/mutation, boundaries, and operations.
+- Targeted: state ownership, authentication/authorization, external input, persistence, queue retry safety, and secrets/observability.
 
 ### Findings
-- [P0·high] Bearer credential is logged verbatim — `worker/process_job.py:25`
-  - Mechanism: The success log interpolates `bearer_token`, exposing a replayable credential to log readers and sinks.
-  - Impact: Credential theft and user impersonation.
-  - Correction: Do not log the token. Use only approved, non-secret correlation data.
+- [P0·high] Bearer token is written to logs — `worker/process_job.py:25`
+  - Scope: in-scope fix
+  - Mechanism: The raw webhook-supplied bearer token is interpolated into an INFO log entry.
+  - Impact: Log readers or a log-store compromise gain replayable credentials.
+  - Correction: Remove the token from logs. Use safe identifiers for correlation if needed.
 
-- [P1·high] Failed persistence leaves the membership cache inconsistent — `worker/process_job.py:15-23`
-  - Mechanism: The cache updates before `connection.execute`; an exception retries and re-raises without restoring or invalidating the cache.
-  - Impact: Consumers can observe a role that was never stored, including an unintended elevated role.
-  - Correction: Persist first, then publish to the cache only after success, or restore/invalidate cache state on failure.
+- [P0·medium] Role changes trust unverified webhook claims — `worker/process_job.py:9`
+  - Scope: scope-expanding proposal
+  - Mechanism: `tenant_id`, `user_id`, and `role` directly control cache and SQL mutations; the extracted bearer token is never verified or authorized.
+  - Impact: Without an upstream guarantee, crafted events can assign arbitrary roles across tenants.
+  - Correction: Establish a verified event-identity and tenant-role authorization boundary before side effects.
 
-- [P1·high] Webhook fields are used without boundary validation — `worker/process_job.py:9-19`
-  - Mechanism: Decoded JSON is indexed and its tenant, user, and role values mutate cache and SQL state without shape, type, or role validation.
-  - Impact: Malformed events raise unclassified exceptions and invalid values can reach authorization state.
-  - Correction: Parse into a validated membership event before any state mutation, rejecting malformed and invalid input.
+- [P1·high] Cache can claim a role SQL did not persist — `worker/process_job.py:15`
+  - Scope: in-scope fix
+  - Mechanism: The shared cache is updated before `connection.execute`; an exception retries and re-raises without reverting the cache. A zero-row `UPDATE` is also treated as success.
+  - Impact: Cache consumers can observe a role absent from the database.
+  - Correction: Require successful persistence of exactly the intended target before publishing the cache entry, and preserve or invalidate the prior cache state on failure.
 
-- [P1·medium] Every persistence exception is retried — `worker/process_job.py:21-23`
-  - Mechanism: `except Exception` schedules retry for transient, permanent, and programming failures alike.
-  - Impact: Permanent poison jobs can loop indefinitely.
-  - Correction: Retry only classified transient failures and route terminal failures separately.
+- [P1·high] Permanent database failures are retried as transient jobs — `worker/process_job.py:21`
+  - Scope: in-scope fix
+  - Mechanism: Every `Exception` from the SQL operation invokes `retry(raw_webhook)` without passing or classifying the cause.
+  - Impact: Constraint and programming failures become poison-job retries that consume worker capacity.
+  - Correction: Retry only recognized transient failures; surface permanent failures to the queue's terminal/dead-letter path.
 
-- [P2·high] No regression coverage protects this stateful worker — `worker/process_job.py:8-25`
-  - Mechanism: The repository has no tests for parsing, cache/database consistency, retries, or secret-safe logging.
-  - Impact: The listed failures can regress undetected.
-  - Correction: Add public-seam tests for valid input, malformed input, persistence failure, retry classification, cache consistency, and log redaction.
+- [P1·medium] Webhook data is not structurally or semantically validated — `worker/process_job.py:9`
+  - Scope: in-scope fix
+  - Mechanism: Arbitrary JSON values flow directly into cache keys and the role update, with no object/type checks or role allowlist.
+  - Impact: Malformed events fail unpredictably or corrupt membership state.
+  - Correction: Parse a strict event shape and validate identifiers and permitted roles before mutation.
+
+- [P2·high] No regression coverage protects this worker — `worker/process_job.py:8`
+  - Scope: in-scope fix
+  - Mechanism: The repository has no tests or configured test tooling for success, persistence failure, retry selection, cache consistency, authorization, or token redaction.
+  - Impact: These security and consistency contracts can regress undetected.
+  - Correction: Add entrypoint-level tests covering the listed behaviors.
 
 ### Coverage
-- **Files read:** `worker/process_job.py`, full `main...HEAD` diff, repository metadata inventory.
-- **Behavior traced:** parsing, cache update, bound SQL update, retry/rethrow, success logging.
-- **Program units:** no approved program supplied.
-- **Lens evidence:** complete. SQL parameter binding and tenant/user predicates were verified clean.
-- **Governing metadata:** no README, AGENTS.md, manifest, tests, or CI workflow exists.
-- **CI-parity matrix:** n/a, no CI jobs or project validation commands are defined.
-- **Validators:** `compile(...)`, in-memory behavior probe, and `git diff --check` passed.
-- **Existing comments:** n/a, branch-range review.
-- **Reviewer returns:** complete, including `change-review`, security, deep primary/fallback, and independent challenge review.
-- **CI at head SHA:** n/a, no remote or CI configuration.
-- **PR body at head SHA:** n/a, not a PR.
+- Files and behavior traced: `worker/process_job.py`, from JSON parsing through cache mutation, SQL update, retry, and logging.
+- Untracked implementation files read: `worker/__pycache__/process_job.cpython-314.pyc`, generated by the syntax validator; no untracked source implementation files existed before validation.
+- Policy lenses applied: selected lenses above, plus SQL injection was ruled out because values use parameter placeholders.
+- Validators: `git diff --check main...HEAD`, `python3 -m py_compile worker/process_job.py` passed. No project test, lint, typecheck, or build command exists.
+- Existing threads: n/a, local `main...HEAD` range rather than a PR.
+- CI at head SHA: n/a, no CI configuration exists.
+- PR body at head SHA: n/a, local range rather than a PR.
 
 ### Approval gate
-n/a, report mode.
+- Findings/threads: n/a, report mode.
+- CI: n/a, report mode.
+- PR body: n/a, report mode.
+- Self-authorship comparison: n/a, report mode.
+- Final live-head equality: n/a, report mode.
+- Result: n/a, approval was not authorized.
 
 ### Deviations
-The resumed deep-review worker produced no new evidence, so the required comprehensive fallback was used. The independent challenge worker was retried once after its initial response lacked a designated separate notes path.
+Generated and retained `worker/__pycache__/` while running Python syntax validation. It is untracked and was not deleted under repository-safety rules.

@@ -24,6 +24,11 @@
             "type": "command",
             "command": "python3 \"${DROID_PLUGIN_ROOT}/hooks/delivery_ledger.py\"",
             "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${DROID_PLUGIN_ROOT}/hooks/plugin_freshness.py\"",
+            "timeout": 20
           }
         ]
       }

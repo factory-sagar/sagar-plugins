@@ -1,48 +1,44 @@
-Summary: The importer violates its caller-facing contract by rejecting expected outcomes and trusting unvalidated JSON.
+Summary: The importer violates its caller-facing contract by rejecting for expected outcomes and trusts unvalidated JSON. The new behavior also lacks tests.
 
 Assessment: needs changes
 
 What This Change Does:
-- Decodes a saved filter from JSON.
-- Rejects unsupported versions and missing field references.
-- Returns the decoded filter when checks pass.
+- Parses a saved-filter JSON string.
+- Rejects unsupported versions and references to unavailable fields.
+- Returns the imported filter when validation succeeds.
 
 Coverage:
-- Read in full: `src/importSavedFilter.ts`
+- Read in full: `src/importSavedFilter.ts` (complete supplied new file)
 - Skimmed (with reason): none
-- Not looked at (and why): none within the supplied diff; callers and repository tests were unavailable
+- Not looked at (and why): callers and repository tests were not supplied
 - Tests run: none — static review only
-- Selected-lens evidence:
-  - Boundary parsing and type contracts: `src/importSavedFilter.ts:7-8`, Finding 2
-  - Expected failures and async behavior: `src/importSavedFilter.ts:10-16`, Finding 1
-  - Success path: `src/importSavedFilter.ts:19`, clean assuming correctly shaped input
-  - Test coverage: no tests accompanied the new module, Finding 3
-- Changed-file accounting: `src/importSavedFilter.ts`, complete new file inspected
+- Selected-lens evidence: Caller-facing typed outcomes fail at `src/importSavedFilter.ts:10-17`; boundary parsing is unsafe at `src/importSavedFilter.ts:7-14`.
+- Changed-file accounting: `src/importSavedFilter.ts` inspected in full
 
 Findings:
-- [P1·high] Expected outcomes reject the promise instead of using the workflow’s typed channel: `src/importSavedFilter.ts:10-16`
+- [P1·high] Expected outcomes become rejected promises — `src/importSavedFilter.ts:10-17`
   Scope: in-scope fix
-  Why: Unsupported versions and missing fields are declared normal caller-handled outcomes, but both branches throw. Because the function is `async`, these become rejected promises and are absent from its inferred success-only return type.
-  Impact: The surrounding workflow cannot exhaustively distinguish these expected outcomes through its typed result handling.
-  Follow-up: Return the repository’s precise tagged result or error union for unsupported versions and missing fields.
+  Why: Unsupported versions and missing referenced fields are explicitly caller-handled expected outcomes, but this async function throws raw `Error` objects. Its inferred return type only exposes `Promise<SavedFilter>`.
+  Impact: The caller cannot distinguish these outcomes through its typed workflow and instead receives unexpected promise rejections.
+  Follow-up: Return both cases through the repository’s established typed result channel, using distinct variants the caller can exhaustively handle.
 
-- [P1·high] Serialized input is trusted without runtime parsing: `src/importSavedFilter.ts:7-14`
+- [P1·high] Decoded JSON bypasses runtime parsing — `src/importSavedFilter.ts:7`
   Scope: in-scope fix
-  Why: `JSON.parse(rawJson) as SavedFilter` provides no runtime proof. Malformed JSON throws, while values such as `null`, missing `fieldIds`, or non-array `fieldIds` cause unclassified exceptions when properties are accessed.
-  Impact: Ordinary invalid import data can escape as `SyntaxError` or `TypeError` instead of a stable typed import outcome.
-  Follow-up: Decode to `unknown`, parse the complete shape at this boundary, and classify syntax and schema failures into the typed outcome channel.
+  Why: `JSON.parse(rawJson) as SavedFilter` asserts untrusted data satisfies the domain type. Inputs such as `{}` or `{"version":"v1"}` reach `parsed.fieldIds.filter` and throw `TypeError`; malformed JSON also escapes through an exception.
+  Impact: Invalid or incomplete imports bypass the expected failure channel and may crash the workflow.
+  Follow-up: Parse the decoded value from `unknown`, validate every required property and element type, and return parse failures through the typed outcome contract.
 
-- [P2·medium] New boundary and failure behavior lacks test evidence: `src/importSavedFilter.ts:7-19`
+- [P2·high] New boundary and failure behavior has no tests — `src/importSavedFilter.ts:7-19`
   Scope: in-scope fix
-  Why: The supplied change contains no caller-facing tests for its parsing and expected-failure branches.
-  Impact: Rejected promises could replace typed outcomes without regression detection.
-  Follow-up: Add behavior tests covering valid input, malformed or incomplete shapes, unsupported versions, and missing referenced fields, asserting typed outcomes through the exported function.
+  Why: The supplied diff adds no tests for successful import, unsupported versions, missing referenced fields, malformed JSON, or incomplete shapes.
+  Impact: The two contract violations above can merge without regression evidence.
+  Follow-up: Add caller-facing behavior tests asserting typed outcomes for every success and failure path.
 
 Validation Notes:
-- Commands run: none; review used the supplied inline diff and read-only file inspection
-- Standards loaded: `coding-standards/SKILL.md`, `BOUNDARIES_AND_PARSING.md`, `ERROR_HANDLING.md`, `ASYNC_AND_WORKFLOWS.md`, `TYPE_CONTRACTS.md`, `TESTING_AND_VERIFICATION.md`, `VOCABULARY.md`
+- Commands run: none; the supplied new-file diff was reviewed directly
+- Standards loaded: `coding-standards/SKILL.md`, `VOCABULARY.md`, `BOUNDARIES_AND_PARSING.md`, `ERROR_HANDLING.md`, `ASYNC_AND_WORKFLOWS.md`, `TESTING_AND_VERIFICATION.md`, `TYPE_CONTRACTS.md`
 - Hand-off to `security`: none
 - Hand-off to `deep-understanding`: none
 - Wrong-droid call by parent: no
-- Caveats: The evaluation workspace contained no source tree, callers, or existing tests, so surrounding usage could not be independently traced.
+- Caveats: Repository callers and existing test conventions were unavailable; the explicit caller contract was sufficient to establish the findings.
 - Pre-existing issues spotted (out of scope): none

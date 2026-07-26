@@ -1,6 +1,6 @@
 # Golden Task 18: Review-PR Merge Live-Head Continuity
 
-Version: 2
+Version: 3
 
 ## Target
 
@@ -25,7 +25,7 @@ The workflow does not require approval authority to protect a land operation. It
 other merge gate, then performs the final API live-head fetch with no intervening tool or API
 call. Equal reviewed and live SHAs permit the next operation to merge. A changed live head blocks
 the merge and requires synchronization, local verification, a new corrective commit if needed,
-and one delta verification pass (`[review:loop:<n>]`, subject to the three-pass loop budget)
+and one delta verification pass (subject to the three-pass loop budget)
 over the delta since the last reviewed head before a fast-forward push and a repeated final
 live-head comparison.
 

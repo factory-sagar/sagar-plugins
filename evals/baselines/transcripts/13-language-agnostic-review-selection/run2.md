@@ -1,70 +1,65 @@
 ## Review
 
 **Mode:** report  
-**Target:** `536f830afda04d7a5cec6bf84913216123cecc7a...32b6a41a314fc1c944f6d660b4ddc482b83d4363`  
-**Tier:** deep, webhook-controlled role changes coordinate shared state, SQL persistence, retries, and credentials.  
-**Assessment:** needs changes
+**Target:** `f72705237462d4ce95457801ccb7176f470a8e15...daadde8d66ec37c1a9459801334bd301ff3bf14d`  
+**Tier:** deep — externally controlled tenant-role mutation, shared cache, persistence, retry workflow, and credential handling  
+**Assessment:** needs changes  
 
-### Selected lenses
-- **Mandatory**: applies to every changed behavior.
-- **Secrets, Privacy, and Observability**: the new logger records a bearer token.
+**Selected review lenses:** intent and completeness; correctness and invariants; tests and evidence; failures; ownership and mutation; boundaries and contracts; mutation and state ownership; authentication and authorization; external input and injection; persistence; async, concurrency, and distributed work; secrets, privacy, and observability; operations and rollback.
 
 ### Findings
-- [P1·high] Do not log or requeue bearer credentials, `worker/process_job.py:13,22-25`
-  - Mechanism: logs the raw bearer token and sends the raw webhook, including that token, to retry infrastructure.
-  - Impact: reusable credentials can leak through logs and possibly persistent queues.
-  - Correction: omit the token from telemetry and retry only a minimal, secret-free command.
+- [P0·high] Unverified webhook claims can assign arbitrary tenant roles — `process_job.py:9`
+  - Scope: scope-expanding proposal
+  - Mechanism: Payload-provided tenant, user, and role are used as authoritative values, while the bearer token is never authenticated or authorized.
+  - Impact: A forged webhook can grant privileged roles across tenants.
+  - Correction: Define and implement the webhook authentication and authorization contract, derive tenant scope from verified identity, and allowlist valid roles before mutation.
 
-- [P1·medium] Authenticate and authorize role mutations, `worker/process_job.py:10-20`
-  - Mechanism: tenant, user, and role are accepted from the webhook without visible verification or role allowlisting.
-  - Impact: a forgeable or replayed job could grant arbitrary tenant roles.
-  - Correction: verify trusted webhook identity and authorize the role transition before mutation. Upstream authentication is not present in this repository, so this finding is confidence-qualified.
+- [P0·high] Bearer token is logged in plaintext — `process_job.py:25`
+  - Scope: in-scope fix
+  - Mechanism: The success log interpolates `bearer_token` directly.
+  - Impact: Log readers and downstream log systems can recover a reusable credential.
+  - Correction: Remove the token from logs and use only explicitly safe correlation data.
 
-- [P1·high] Publish cache state only after a confirmed durable update, `worker/process_job.py:15-25`
-  - Mechanism: cache mutation precedes SQL execution; zero-row updates are accepted; no transaction-ownership contract is established.
-  - Impact: cache can authorize a role that SQL did not persist.
-  - Correction: require a committed, affected-row-confirmed transition before cache publication and success logging.
+- [P1·high] Cache state is published before persistence succeeds — `process_job.py:15`
+  - Scope: in-scope fix
+  - Mechanism: The cache is updated before SQL executes and is not reverted on failure. A zero-row `UPDATE` is also accepted as success.
+  - Impact: Authorization consumers can observe a role absent from durable storage.
+  - Correction: Verify a successful durable update affecting the expected membership before updating the cache, preserving prior cache state on failure.
 
-- [P1·high] Make delivery ordering and replay handling durable, `worker/process_job.py:9-24`
-  - Mechanism: no event identity, ordering version, per-key serialization, or persisted retry progress exists.
-  - Impact: stale, concurrent, or redelivered jobs can reverse roles or leave cache and SQL divergent.
-  - Correction: use a durable idempotency identity and guarded/versioned tenant-role transition.
+- [P1·high] All database failures are retried indiscriminately — `process_job.py:21`
+  - Scope: in-scope fix
+  - Mechanism: `except Exception` retries transient and permanent failures identically.
+  - Impact: Poison jobs can loop indefinitely and exhaust worker or database capacity.
+  - Correction: Retry only classified transient failures and send permanent rejections through the terminal failure path.
 
-- [P1·medium] Classify retryable failures and preserve the original error, `worker/process_job.py:21-23`
-  - Mechanism: `except Exception` retries permanent failures, and a retry-callback error replaces the database failure.
-  - Impact: futile retries, duplicate delivery, and lost diagnostic cause.
-  - Correction: classify transient database failures, assign retry ownership once, and preserve the initiating exception.
+- [P1·high] Raw identifiers and roles bypass boundary validation — `process_job.py:9`
+  - Scope: in-scope fix
+  - Mechanism: Parsed JSON is assumed to have valid, hashable identifiers and an allowed role before any side effect.
+  - Impact: Malformed messages can crash the worker or persist invalid authorization state.
+  - Correction: Validate payload shape, identifier types, required fields, and allowed role values before mutation.
 
-- [P2·high] Validate webhook shape before mutation, `worker/process_job.py:9-15`
-  - Mechanism: JSON decoding and key extraction do not establish object shape, field types, allowed roles, or terminal-input handling.
-  - Impact: malformed or semantically invalid input has incidental failure behavior and can reach cache logic.
-  - Correction: parse a strict membership command at the boundary and explicitly dead-letter invalid input.
-
-- [P2·high] Add regression coverage and a canonical validation gate, `worker/process_job.py:8-25`
-  - Mechanism: the repository has no tests, manifest, or CI workflow.
-  - Impact: cache/SQL consistency, retry semantics, role validation, and token-redaction regressions have no executable protection.
-  - Correction: add caller-facing tests, including representative database behavior, and wire them into CI.
-
-- [P3·high] Use a domain-specific handler name, `worker/process_job.py:8`
-  - Mechanism: `process_job` obscures the membership-role action.
-  - Impact: callers cannot identify the operation from its interface.
-  - Correction: rename it to a concrete domain action, such as `apply_tenant_membership`.
+- [P2·high] No regression coverage protects the worker’s critical paths — `process_job.py:8`
+  - Scope: in-scope fix
+  - Mechanism: No tests cover success, failed or zero-row persistence, retry classification, cache consistency, input rejection, or token-safe logging.
+  - Impact: The defects above can regress undetected.
+  - Correction: Add entrypoint-level tests covering these outcomes.
 
 ### Coverage
-- **Files read:** `worker/process_job.py`
-- **Behavior traced:** webhook parsing, cache mutation, SQL update, zero-row result, failure/retry flow, replay/concurrency, and token logging.
-- **Program units:** no approved program or PR metadata available.
-- **Lens evidence:** complete.
-- **Governing metadata:** no README, AGENTS.md, manifest, tests, docs, or workflows exist.
-- **CI-parity matrix:** n/a, no configured CI or local project gate.
-- **Validators:** `git diff --check` and Python syntax compilation passed.
-- **Existing comments:** n/a, range review rather than PR.
-- **Reviewer returns:** complete, including independent challenge and security passes.
-- **CI at head SHA:** n/a.
-- **PR body at head SHA:** n/a.
+- Files and behavior traced: `process_job.py:1-25`, including JSON parsing, cache mutation, SQL update, retry, and logging.
+- Untracked implementation files read: none, worktree was clean.
+- Policy lenses applied: selected lenses listed above. Parameterized SQL was verified safe from direct SQL injection.
+- Validators: `python3` AST syntax parse passed; `git diff --check main...HEAD` passed. No repository test, lint, typecheck, or build configuration exists.
+- Existing threads: n/a, local branch-range review.
+- CI at head SHA: n/a, no PR target.
+- PR body at head SHA: n/a, no PR target.
 
 ### Approval gate
-- **Result:** n/a, approval was not authorized.
+- Findings/threads: n/a — report mode, findings remain.
+- CI: n/a — no PR target.
+- PR body: n/a — no PR target.
+- Self-authorship comparison: n/a — report mode.
+- Final live-head equality: n/a — report mode.
+- Result: n/a — approval was not authorized.
 
 ### Deviations
-None. The repository remains clean and unchanged.
+Added the selected-lenses line before findings to honor the requested review ordering.

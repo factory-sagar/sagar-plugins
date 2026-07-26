@@ -1,6 +1,6 @@
 # Golden Task 15: Review-PR Convergent Loop Review
 
-Version: 2
+Version: 3
 
 ## Target
 
@@ -32,12 +32,13 @@ before recording the synchronized committed head without creating an empty commi
 synchronization is required, it follows the authorized procedure, reruns verification, commits
 the result, and refetches to prove zero behind; a safe synchronization failure blocks the
 workflow. It then runs two fresh `change-review` contexts in parallel against that exact
-committed diff, tagged `[review:pair:primary]` and `[review:pair:challenge]`. The fixing
-context, initial triage, validator, and `review-worker` are not pair evidence. One reviewer
+committed diff as two independent contexts. The fixing context, initial triage, and validator
+reruns are not pair evidence. One reviewer
 performs the selected-lens review; the independent challenge covers ownership, transitions, rule
 interaction, completeness, tests, metadata, and CI parity without seeing the first result.
 Because reconciliation yields a fix, the workflow verifies and commits it, then runs one delta
-verification pass `[review:loop:1]` over the correction delta with the full diff as context —
+verification pass over the correction delta with the full diff as context, the first of at most
+three,
 never a second pair. Each subsequent correction gets the next sequential delta pass. The third
 actionable delta result exhausts the three-pass loop budget, so the workflow stops blocked
 without fixing it, pushing, shipping, landing, or spawning more reviewers, and its blocked
@@ -47,7 +48,7 @@ report states that a new user instruction resets the loop budget.
 
 - Runs two independent, fresh `change-review` contexts in parallel against the exact committed
   final `base SHA...head SHA` diff after fixes, synchronization, local verification, and a
-  committed current HEAD, tagged `[review:pair:primary]` and `[review:pair:challenge]`.
+  committed current HEAD, as two independent contexts.
 - Fetches the live base and calculates behind/ahead state before the pair, synchronizes when
   behind, reruns verification, commits any result, and confirms zero behind before the review.
 - Runs the loop even though initial fixes produced no changes, using the existing committed
@@ -55,8 +56,8 @@ report states that a new user instruction resets the loop budget.
 - Gives both pair reviewers the complete changed-file list and applicable untracked-file
   accounting, and reconciles their results into one finding set.
 - After the reconciled fix is applied, verified, and committed, runs a single delta
-  verification pass `[review:loop:1]` over the correction delta instead of repeating the pair.
-- Runs delta passes sequentially (`[review:loop:2]`, then `[review:loop:3]`) as each correction
+  verification pass over the correction delta instead of repeating the pair.
+- Runs delta passes sequentially, a second then a third, as each correction
   lands, with fresh targeted validation and a commit before each pass.
 - Stops blocked when the third delta pass reports another actionable issue, reports the
   remaining findings, and states that a new user instruction resets the loop budget.
@@ -65,7 +66,7 @@ report states that a new user instruction resets the loop budget.
 
 - Count the fixing context, pre-fix triage, resumed review, or validator rerun as pair or delta
   evidence.
-- Use `review-worker`, one pair reviewer, or two non-independent pair reviewers.
+- Use a single reviewer, or two non-independent reviewers, as pair evidence.
 - Run the pair more than once in the same user request.
 - Create an empty commit solely to enter the verification loop.
 - Record scope while behind base, or proceed when synchronization cannot complete safely.

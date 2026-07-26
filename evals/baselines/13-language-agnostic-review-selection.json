@@ -8,25 +8,25 @@
   "execModel": null,
   "execReasoningEffort": null,
   "contractSource": "plugins/review/skills/review-pr/SKILL.md",
-  "contractSha": "e6acdc08bc567cd3b9f499a781b013b3053801067f087d27dddfcb4798ceb05a",
-  "acceptedAt": "2026-07-26T09:32:27Z",
+  "contractSha": "2e23f331d1328dd7947aeea4cdbc8f85254c679307d85cc021203318907bd87d",
+  "acceptedAt": "2026-07-26T20:40:00Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260726T083439Z-13-language-agnostic-review-selection-accept1785054879-r1",
-      "verdict": "fail",
+      "runDir": "evals/runs/20260726T201838Z-13-language-agnostic-review-selection-accept1785097118-r1",
+      "verdict": "pass",
       "transcript": "transcripts/13-language-agnostic-review-selection/run1.md"
     },
     {
-      "runDir": "evals/runs/20260726T083439Z-13-language-agnostic-review-selection-accept1785054879-r2",
+      "runDir": "evals/runs/20260726T201838Z-13-language-agnostic-review-selection-accept1785097118-r2",
       "verdict": "pass",
       "transcript": "transcripts/13-language-agnostic-review-selection/run2.md"
     },
     {
-      "runDir": "evals/runs/20260726T083439Z-13-language-agnostic-review-selection-accept1785054879-r3",
-      "verdict": "fail",
+      "runDir": "evals/runs/20260726T201838Z-13-language-agnostic-review-selection-accept1785097118-r3",
+      "verdict": "pass",
       "transcript": "transcripts/13-language-agnostic-review-selection/run3.md"
     }
   ],
-  "passRate": 0.3333333333333333,
-  "failCount": 2
+  "passRate": 1.0,
+  "failCount": 0
 }

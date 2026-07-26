@@ -1,60 +1,64 @@
-I've read the governing `security` droid contract and its normative `reviewer-reply-contract.md`, and confirmed the diffed file is not otherwise present in the repo (empty repo, inline diff is the complete post-change state of `src/platform-analytics.ts`). No dependency versions are involved, so no CVE lookups are required. Performing the review inline under the `security` contract.
+I've read the governing `security` contract and confirmed the environment: this is an empty fixture repo (no commits, no `src/`), so the inline diff is the authoritative post-change state of a new file. That's the full content to review (a new file = the diff is the complete file), so static review can proceed. No dependencies with versions are introduced, so no CVE lookups are warranted, and per the contract I will not run package commands.
 
 # Security Review
 
 ## Summary
-`blocked` — a hardcoded API credential is committed as a silent fallback, and caller-controlled input is concatenated into a SQL string (injection-prone sink).
+`blocked` — an active credential is embedded as a hard-coded fallback in the diff (`src/platform-analytics.ts:1`), and user-controlled input is string-interpolated into SQL (latent injection).
 
 ## Assessment
 `blocked`
 
 ## Scope Confirmed
-- Target: inline unified diff adding new file `src/platform-analytics.ts` (repo has no commits; diff is the full post-change file).
+- Target: inline unified diff adding `src/platform-analytics.ts` (new file).
 - Surface: 1 file, +18 / −0 lines.
-- Assumption (per parent directive): `daysParam` is caller-controlled HTTP query input; the string literal `"statsig-console-fallback-for-local-dev"` is an active credential, not an inert placeholder. This removes reachability/placeholder demotion for both findings.
+- Assumption: The file is not present in the working tree (`git status` shows only `.factory/`; no `src/`), so I reviewed the provided diff as the complete, authoritative post-change file. Per the task, `daysParam` is treated as caller-controlled HTTP query input and the literal `STATSIG_TOKEN` fallback is treated as an active credential.
 
 ## Coverage
 - Changed files and codepaths:
-  - `src/platform-analytics.ts:1` — module-level `STATSIG_TOKEN` with hardcoded literal fallback.
-  - `src/platform-analytics.ts:3-11` — `usageOverDays()`: `daysParam` → `Number()` (`:4`) → interpolated into SQL template (`:8`) → executed via injected `runQuery` (`:10`).
-  - `src/platform-analytics.ts:13-18` — `fetchGateStatus()`: `gate` interpolated into outbound URL (`:14`), `STATSIG_TOKEN` sent as `Bearer` auth (`:15`), unvalidated `res.json()` (`:17`).
-- Security dimensions applied: Injection/SQL (A03) — sink found, arbitrary injection blocked by coercion; Information Disclosure / Secrets handling (A02/A07, CWE-798) — hardcoded credential confirmed; Elevation/Integrity — leaked token enables Statsig gate access; SSRF/Request-tampering — evaluated for `gate`, reachability unconfirmed; DoS — bounded/minor; Crypto/Deserialization/Path-traversal — n/a to this diff.
-- Evidence gaps: no caller/route source for `usageOverDays` or `fetchGateStatus` exists in the repo (empty repo); reachability is taken from the parent directive for `daysParam`, and is unconfirmed for `gate`.
+  - `src/platform-analytics.ts:1` — module-level `STATSIG_TOKEN` with a literal fallback, consumed at `:15`.
+  - `src/platform-analytics.ts:3-11` — `usageOverDays()`: `daysParam` → `Number()` → interpolated into SQL at `:8`, passed to injected `runQuery`.
+  - `src/platform-analytics.ts:13-18` — `fetchGateStatus()`: `gate` interpolated into a fixed-host URL at `:14`; sends `Bearer` token at `:15`.
+- Security dimensions applied:
+  - Information Disclosure / Secrets handling → hard-coded credential (finding 1).
+  - Injection (Tampering) → SQL string interpolation (finding 2).
+  - SSRF / Path traversal → `gate` URL interpolation evaluated (Needs Follow-up; host is fixed, trust source of `gate` unspecified).
+  - Spoofing/EoP → silent authentication with a known token when env var unset (part of finding 1).
+- Evidence gaps: Callers/routes are not in scope (new file, no callers in repo); the trust source of `fetchGateStatus`'s `gate` argument is not provided.
 
 ## What This Change Touches (security-relevant)
-- Trust boundaries crossed: new function consuming HTTP query input into a SQL query; new outbound network egress to `api.statsig.example` carrying a bearer credential.
-- Privileged operations involved: database query execution (`runQuery`); authenticated third-party API call (Statsig gates).
-- Untrusted input sources introduced: `daysParam` (query string), and `gate` (unknown caller; treated as potentially untrusted).
+- Trust boundaries crossed: new HTTP-fed input (`daysParam`) reaching a SQL string; new network egress carrying a bearer credential.
+- Privileged operations involved: database query execution (via injected `runQuery`), authenticated outbound API call to `api.statsig.example`.
+- Untrusted input sources introduced: `daysParam` (designated caller-controlled); `gate` (trust source unspecified).
 
 ## Findings (max 8)
 
-- [Critical·High] Hardcoded API credential committed as silent fallback — `src/platform-analytics.ts:1` (consumed at `src/platform-analytics.ts:15`)
-  - Why: `const STATSIG_TOKEN = process.env.STATSIG_TOKEN ?? "statsig-console-fallback-for-local-dev";` embeds a literal credential in source. Per the directive this is an active token. Attack path: (1) anyone with read access to the source or built artifact/bundle extracts the token verbatim and calls `https://api.statsig.example/gates/*` as the application (read/modify feature gates → integrity/authorization impact); (2) the `??` fallback fails *open* — in any environment where `STATSIG_TOKEN` is unset (including a misconfigured prod), the app silently authenticates with this known, shared, source-embedded token instead of erroring, so the leaked credential can be the live credential.
-  - Impact: Credential disclosure (CWE-798), unauthorized access to the Statsig gates API, and potential feature-flag tampering by any party who reads the repo.
-  - Remediation: Remove the literal; fail closed when the env var is absent (`if (!process.env.STATSIG_TOKEN) throw ...`). Rotate/revoke the leaked token since it is now in VCS history. Load secrets from a secret manager and document the required var in `.env.example`.
-  - References: CWE-798 Use of Hard-coded Credentials; OWASP A07:2021 Identification & Auth Failures / A02:2021 Cryptographic Failures (secret management).
+- **[Critical·High] Hard-coded credential fallback used as an active bearer token — `src/platform-analytics.ts:1` (used at `:15`)**
+  - Why: `const STATSIG_TOKEN = process.env.STATSIG_TOKEN ?? "statsig-console-fallback-for-local-dev";`. The literal is treated as an active credential and is committed to source. Two attack paths: (a) anyone with read access to the repo or a client/server bundle extracts the token directly from source; (b) in any environment where `STATSIG_TOKEN` is unset (or empty-string via a misconfig), the `??` fallback silently authenticates every outbound request at `:15` with a credential that is now public — no error, no signal.
+  - Impact: Disclosure of a live Statsig console credential. An attacker holding it can call the Statsig API as this principal — read/modify feature gates and configuration, i.e., integrity and availability impact on feature flags plus potential data exposure. The secret persists in git history even after later removal.
+  - Remediation: Remove the literal fallback; require the env var and fail closed if absent (`if (!process.env.STATSIG_TOKEN) throw ...`). Rotate the credential immediately (it must be considered compromised the moment it lands in a commit), then load it from a secrets manager. Add `STATSIG_TOKEN` to `.env.example` (name only, no value).
+  - References: CWE-798 (Use of Hard-coded Credentials), CWE-259; OWASP A07:2021 (Identification and Authentication Failures), A05:2021 (Security Misconfiguration).
 
-- [Medium·High] Caller-controlled value concatenated into SQL string (injection sink; currently blocked only by numeric coercion) — `src/platform-analytics.ts:8` (input at `:4`, executed at `:10`)
-  - Why: `WHERE day >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)` builds SQL by string interpolation of a caller-derived value rather than parameterization (CWE-89 / OWASP A03). Attack path: HTTP `daysParam` → `Number(daysParam)` → `${days}` → `runQuery(sql)`. Honest exploitability as written: `Number()` always yields a numeric primitive / `NaN` / `Infinity`, whose string form contains no SQL metacharacters (no quotes, spaces, semicolons, or comment markers), so classic injection (UNION/stacked/comment) is **not** achievable today — this is why it is not rated Critical. Residual, directly attacker-triggerable behavior: non-numeric input yields `INTERVAL NaN DAY` / `Infinity` (malformed query → errors), and very large values (`days=1e309`, huge integers) produce degenerate/expensive `DATE_SUB` windows. The safety is incidental to a coercion, not a designed control.
-  - Impact: Present-day: malformed-query errors / minor resource pressure. Latent: the code is one refactor away from full SQL injection — escalates to [Critical·High] if the `Number()` coercion is removed, if `days` is ever passed as a string, or if this pattern is copied to a non-numeric column/identifier context.
-  - Remediation: Use a parameterized/bound query (`... INTERVAL ? DAY` with a bound parameter) or validate to a bounded positive integer (`Number.isInteger` + range clamp) before use; never interpolate request-derived values into SQL text.
-  - References: CWE-89 SQL Injection; OWASP A03:2021 Injection.
+- **[Low·High] User input interpolated into SQL — latent SQL injection, currently neutralized only by incidental `Number()` coercion — `src/platform-analytics.ts:4-8`**
+  - Why: `daysParam` (caller-controlled) is placed into the query via `` `... INTERVAL ${days} DAY ...` `` at `:8`. The attacker-controlled path is real (HTTP query → `daysParam` → SQL). However, `const days = Number(daysParam)` at `:4` coerces the entire string to a numeric primitive: the only possible interpolated values are a number, `NaN`, `Infinity`, or `-Infinity`. `Number()` (unlike `parseInt`) rejects any partially-numeric string to `NaN`, so no SQL metacharacter (quote, space, `;`, `--`, parenthesis) can survive into the query. Classic SQLi is therefore not exploitable in the current code — the protection is incidental, not a parameterized query.
+  - Impact: Today: none exploitable; malformed inputs yield `NaN`/`Infinity` producing a syntactically invalid `INTERVAL`, so the single query errors out (minor robustness issue, not attacker leverage). Latent: the pattern is one edit away from a High·High injection — e.g., removing/relaxing the `Number()` cast, passing `daysParam` raw, or adding a second interpolated (string) column would immediately expose the `sessions` table to injection through the injected `runQuery`.
+  - Remediation: Use a parameterized/bound query for the interval value rather than string interpolation; additionally validate `days` as a bounded positive integer (`Number.isInteger(days) && days > 0 && days <= MAX`) and reject otherwise, so `NaN`/`Infinity` never reach SQL.
+  - References: CWE-89 (SQL Injection); OWASP A03:2021 (Injection).
+
+If none: (not applicable)
 
 ## Needs Follow-up
-- `fetchGateStatus(gate)` at `src/platform-analytics.ts:14`: `gate` is interpolated directly into the outbound URL path. If `gate` is caller-controlled (not evident in this repo), it enables request tampering (path traversal within the host, added query params) and could, in the worst case, misdirect the request carrying the `Bearer` token. Confirm the caller and whether `gate` is user-supplied; if so, allowlist/encode it. Resolution requires the calling code, which is absent from this diff.
+- **URL path/query injection via `gate` — `src/platform-analytics.ts:14`.** `gate` is interpolated into `https://api.statsig.example/gates/${gate}`. The host is fixed, so this is not SSRF (host cannot be redirected). But if `gate` is attacker-controlled, values like `../../admin` (URL-normalized) or `x?flag=y` could reach other paths/params on the same host while carrying the `Bearer` token. Reachability depends on whether `gate` originates from untrusted input, which is not established in this scope. Resolve by tracing `gate`'s callers; if untrusted, enforce an allowlist/`encodeURIComponent` and rate it Low–Medium accordingly.
 
 ## Hand-off
-- To `change-review` (correctness, not security): the `NaN`/`Infinity` malformed-query behavior from `Number(daysParam)` is also a plain robustness/correctness bug worth handling.
+- To `change-review` (correctness, not security): `res.ok` is not checked before `res.json()` (`:17`), and `NaN`/`Infinity` producing a broken `INTERVAL` is a robustness bug — non-security correctness items.
 - To `deep-understanding` (architectural redesign): none.
-- Wrong-droid call by parent: no — this is a security review of a diff, correctly scoped to `security`.
+- Wrong-droid call by parent: no — this is a security scope and was handled inline under the `security` contract as instructed.
 
 ## Non-Issues Avoided
-- "Critical SQL injection": ruled out as-written because `Number()` coercion prevents any SQL metacharacter from reaching the query; reported instead at calibrated severity with the conditional-escalation note, per the contract's no-over-claiming rule.
-- Outbound call uses `https://` — token is not sent in cleartext, so no transport-exposure finding.
-- `res.json()` parsing of the Statsig response is not attacker-controlled deserialization; no finding.
+- SSRF via `fetchGateStatus`: ruled out as host-changing SSRF — the scheme/host are hard-coded; only path/query manipulation is possible (captured under Needs Follow-up).
+- "Exploitable High/Critical SQLi": deliberately not claimed — `Number()` coercion at `:4` fully blocks metacharacter injection in the current code; reporting it as directly exploitable would be inaccurate. Flagged as latent/defense-in-depth instead.
 
 ## Validation Notes
-- Commands run (read-only): `git status --porcelain`, `ls -la`, `ls -la src` (confirmed empty repo; file exists only in the inline diff). No `git show` possible (no commits).
-- Package-manager commands: none run (static review only, per contract).
-- External lookups (CVE/CWE): none — no dependency/version changes in scope; findings are code-pattern based (CWE-798, CWE-89).
-- Caveats: No callers/routes exist in the repo, so `daysParam` reachability is taken from the parent directive and `gate` reachability is unconfirmed (see Needs Follow-up). Line anchors are relative to the new file as introduced by the diff.
+- Commands run: `git status --porcelain`, `ls -la`, `ls -la src` (read-only); `Glob` for `**/platform-analytics.ts` and `**/*.ts` (no matches — file not on disk, confirming the diff is the review target).
+- External lookups (CVE/CWE): none — no versioned dependencies introduced; CWE/OWASP references are standard classifications, not version-specific advisories.
+- Caveats: No callers/routes exist in this fixture repo, so `daysParam` was treated as caller-controlled per the task instruction and `gate`'s trust source could not be traced. Static review only; no package commands executed.

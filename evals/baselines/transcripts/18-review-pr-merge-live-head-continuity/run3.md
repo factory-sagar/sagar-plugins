@@ -1,24 +1,46 @@
-# Landing Decision
+## Review
 
-**Mode:** `land`  
-**Tier:** deep, the PR is broad and high-consequence.  
-**Approval:** not authorized, do not self-approve.
+**Mode:** land  
+**Target:** `<base-sha>`...`<reviewed-head-sha>`  
+**Tier:** deep, broad high-consequence change  
+**Assessment:** merge-ready  
 
-With all stated merge gates satisfied and the final live `headRefOid` equal to `<reviewed-head-sha>`, the next and only operation is to merge the PR. No GitHub operation was executed because GitHub is unavailable in this eval.
+### Findings
+- None, all required merge gates are stated as passed.
 
-# If the Live Head Changed
+### Coverage
+- Files and behavior traced: n/a (contract scenario, no diff supplied)
+- Untracked implementation files read: n/a (contract scenario)
+- Policy lenses applied: deep-review and landing gate
+- Validators: pre-push verification completed for `<reviewed-head-sha>`
+- Existing threads: zero unresolved, per premise
+- CI at head SHA: green for `<reviewed-head-sha>`, per premise
+- PR body at head SHA: current, per premise
 
-If the final live `headRefOid` is `<changed-head-sha>`, **block the merge**. Do not merge or approve.
+### Approval gate
+- Findings/threads: n/a (approval was not authorized)
+- CI: n/a (approval was not authorized)
+- PR body: n/a (approval was not authorized)
+- Self-authorship comparison: n/a (approval was not authorized)
+- Final live-head equality: `<reviewed-head-sha>` equals reviewed head
+- Result: no approval action is permitted or required
 
-Required recovery:
+### Deviations
+none
 
-1. Synchronize the local PR branch with `<changed-head-sha>`.
-2. Re-run local verification.
-3. Commit a new corrective commit if synchronization or verification requires one, never amend the pushed commit.
-4. Run one fresh delta `change-review` pass for `<reviewed-head-sha>...HEAD`, with the full base-to-head diff as context. Include security review if risk-selected paths changed.
-5. Reconcile clean results within the remaining three-pass delta budget, then record the resulting committed SHA as the new `reviewedHeadSha`.
-6. Push normally, wait for required CI to pass on that new head, re-fetch and resolve all review threads, and ensure the PR body remains current.
-7. Re-run every landing gate against the live PR.
-8. As the final API operation immediately before merge, re-fetch `headRefOid` with no intervening API/tool call. Merge only if it equals the new `reviewedHeadSha`; otherwise repeat this recovery sequence.
+## Next Action
 
-If branch protection requires approval, remain blocked until an authorized external approval exists.
+Perform the merge operation immediately, with no intervening API call. Do not self-approve. The merge uses the repository's configured merge method.
+
+## If the Final Live Head Were `<changed-head-sha>`
+
+Block the merge. Then:
+
+1. Synchronize local state with `<changed-head-sha>`.
+2. Rerun local verification for that live head.
+3. If necessary, make and commit an in-scope corrective commit.
+4. Run one deep delta-verification pass over changes since `<reviewed-head-sha>`, subject to the review-loop budget. Do not repeat the full review.
+5. Carry the resulting reviewed head through a fast-forward push, without rewriting history.
+6. Refresh the PR body for the resulting head, then confirm required CI is green and all review threads are resolved.
+7. As the final pre-merge API operation, re-fetch `headRefOid` and require equality with the resulting reviewed head, with no intervening call.
+8. Only then perform the merge operation.

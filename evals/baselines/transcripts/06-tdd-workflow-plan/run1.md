@@ -1,47 +1,43 @@
 # Implemented
 
-Command palette suggestions now hide disabled commands, rank prefix matches ahead of substring matches, and preserve input order for equal scores.
+**Behavior:** Given commands and a query, return enabled matching commands with prefix matches before substring matches, preserving input order for equal scores.
 
-## Behavior Statement
+# Standards Loaded
 
-As a command-palette user, I can search available commands and receive predictable, prioritized suggestions.
-
-## Standards Loaded
-
-- `tdd-workflow`
-- `coding-standards`
+- `coding-standards/SKILL.md`
 - `TESTING_AND_VERIFICATION.md`
 - `DESIGNING_MODULES.md`
 - `TYPE_CONTRACTS.md`
 
-## TDD Evidence
+# TDD Evidence
 
-1. **Disabled commands**
-   - RED: `npm test -- src/command-palette.test.mjs` failed, `2` failures, `Error: not implemented`.
-   - GREEN: same command passed, `2/2`.
+1. **Prefix ranking**
+   - RED: targeted test failed with `not implemented`.
+   - GREEN: targeted test passed, `2/2`.
+   - Commits: `f6318c9`, `8bc346c`.
 
-2. **Prefix ranking**
-   - RED: same command failed, `2` passing and `1` assertion failure showing substring match preceding prefix match.
-   - GREEN: same command passed, `3/3`.
+2. **Disabled commands**
+   - RED: targeted test failed because the disabled command was returned.
+   - GREEN: targeted test passed, `3/3`.
+   - Commits: `4728a3c`, `9128a7f`.
 
 3. **Stable equal-score ordering**
-   - Added regression test after ranking implementation. It was immediately GREEN because the comparator returns `0` for equal scores and Node sorting is stable.
-   - Validation: same command passed, `4/4`.
+   - Added a behavior test covering both equal prefix and equal substring scores.
+   - GREEN immediately, `4/4`, because the existing zero-score comparator and runtime stable sort already preserved input ordering.
+   - Commit: `2116fce`.
 
-4. **Refactor**
-   - Added JSDoc contract without behavior changes.
-   - Validation: same command passed, `4/4`.
+# Validation
 
-## Validation
+```text
+npm test
+✔ tests 4
+✔ pass 4
+✔ fail 0
+```
 
-| Phase | Result |
-|---|---|
-| Build | n/a, no build tooling declared |
-| Type-check | n/a, plain JavaScript with no type-checker |
-| Lint | n/a, no lint tooling declared |
-| Tests and coverage | `node --test --experimental-test-coverage`, exit `0`, `4` passed, `0` failed, `0` skipped, `67.596583ms` |
-| Coverage | `src/command-palette.mjs`: `100.00%` lines, branches, functions |
+```text
+git diff --check 6741c57..HEAD
+# passed with no output
+```
 
-`git diff --check 4591785..HEAD` passed. Post-verification review found no material issues. Working tree is clean.
-
-Deviations: none.
+Working tree is clean.

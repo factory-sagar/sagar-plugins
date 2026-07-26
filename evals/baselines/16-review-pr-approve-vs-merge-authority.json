@@ -8,21 +8,21 @@
   "execModel": null,
   "execReasoningEffort": null,
   "contractSource": "plugins/review/skills/review-pr/SKILL.md",
-  "contractSha": "14c36715869c6cfe0606d6289d4643ca2f52cb64fa20d945acbfc0ef0141451a",
-  "acceptedAt": "2026-07-26T08:45:49Z",
+  "contractSha": "2e23f331d1328dd7947aeea4cdbc8f85254c679307d85cc021203318907bd87d",
+  "acceptedAt": "2026-07-26T20:43:51Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260726T084210Z-16-review-pr-approve-vs-merge-authority-accept1785055330-r1",
+      "runDir": "evals/runs/20260726T204000Z-16-review-pr-approve-vs-merge-authority-accept1785098400-r1",
       "verdict": "pass",
       "transcript": "transcripts/16-review-pr-approve-vs-merge-authority/run1.md"
     },
     {
-      "runDir": "evals/runs/20260726T084210Z-16-review-pr-approve-vs-merge-authority-accept1785055330-r2",
+      "runDir": "evals/runs/20260726T204000Z-16-review-pr-approve-vs-merge-authority-accept1785098400-r2",
       "verdict": "pass",
       "transcript": "transcripts/16-review-pr-approve-vs-merge-authority/run2.md"
     },
     {
-      "runDir": "evals/runs/20260726T084210Z-16-review-pr-approve-vs-merge-authority-accept1785055330-r3",
+      "runDir": "evals/runs/20260726T204000Z-16-review-pr-approve-vs-merge-authority-accept1785098400-r3",
       "verdict": "pass",
       "transcript": "transcripts/16-review-pr-approve-vs-merge-authority/run3.md"
     }

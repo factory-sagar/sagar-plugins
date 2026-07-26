@@ -8,21 +8,21 @@
   "execModel": null,
   "execReasoningEffort": null,
   "contractSource": "plugins/practices/skills/tdd-workflow/SKILL.md",
-  "contractSha": "6e09c21884f47aea90ac937008941716b642c9a03f866dada1df418af890c773",
-  "acceptedAt": "2026-07-26T08:37:24Z",
+  "contractSha": "eeef904d88a4a88cd74a1ab3c7e38e1858bcc8a86b77bc93289facb802c995f9",
+  "acceptedAt": "2026-07-26T22:40:01Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260726T082014Z-06-tdd-workflow-plan-accept1785054014-r1",
+      "runDir": "evals/runs/20260726T222443Z-06-tdd-workflow-plan-accept1785104683-r1",
       "verdict": "pass",
       "transcript": "transcripts/06-tdd-workflow-plan/run1.md"
     },
     {
-      "runDir": "evals/runs/20260726T082014Z-06-tdd-workflow-plan-accept1785054014-r2",
+      "runDir": "evals/runs/20260726T222443Z-06-tdd-workflow-plan-accept1785104683-r2",
       "verdict": "pass",
       "transcript": "transcripts/06-tdd-workflow-plan/run2.md"
     },
     {
-      "runDir": "evals/runs/20260726T082014Z-06-tdd-workflow-plan-accept1785054014-r3",
+      "runDir": "evals/runs/20260726T222443Z-06-tdd-workflow-plan-accept1785104683-r3",
       "verdict": "pass",
       "transcript": "transcripts/06-tdd-workflow-plan/run3.md"
     }
