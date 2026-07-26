@@ -363,9 +363,17 @@ export function staleBaselineErrors({
     }
   }
   for (const task of tasks) {
-    if (!changedFiles.has(task.contractSource)) continue;
-    const baseline = lookup(acceptedBaselines, task.task);
     const accept = `scripts/accept-baseline.sh evals/golden-tasks/${task.task}.md`;
+    const baseline = lookup(acceptedBaselines, task.task);
+    // A rubric edit invalidates a verdict just as surely as a contract edit does, and
+    // compare-baseline.mjs already refuses to compare across task versions.
+    if (baseline && changedFiles.has(`evals/golden-tasks/${task.task}.md`)
+      && baseline.taskVersion !== task.taskVersion) {
+      stale.push(
+        `golden task "${task.task}" changed to Version ${task.taskVersion} but its baseline was accepted at Version ${baseline.taskVersion} — re-accept with ${accept}`,
+      );
+    }
+    if (!changedFiles.has(task.contractSource)) continue;
     if (!baseline) {
       stale.push(
         `golden task "${task.task}" targets changed contract "${task.contractSource}" but has no accepted baseline — re-accept with ${accept}`,
@@ -443,6 +451,9 @@ if (freshIdx !== -1) {
   const tasks = [...taskTargets].map(([task, target]) => ({
     task,
     contractSource: resolveTargetContract(target),
+    taskVersion: Number(
+      read(path.join(tasksDir, `${task}.md`)).match(/^Version: (\d+)$/m)?.[1],
+    ) || null,
   }));
   for (const message of staleBaselineErrors({
     tasks,
