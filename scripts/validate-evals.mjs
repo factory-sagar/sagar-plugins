@@ -4,6 +4,9 @@
 //   node scripts/validate-evals.mjs                       # full validation
 //   node scripts/validate-evals.mjs --require-bumps REF   # + require golden-task
 //                                                         #   Version bumps vs git REF
+//   node scripts/validate-evals.mjs --require-fresh-baselines REF
+//                                                         # + require baselines matching
+//                                                         #   changed contracts vs git REF
 //
 // Guards the harness contracts that scripts/run-golden-task.sh,
 // scripts/eval-routing.mjs, and scripts/compare-baseline.mjs depend on:
@@ -16,6 +19,7 @@
 // Dependency-free by design, matching scripts/validate.mjs.
 
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,15 +46,30 @@ for (const plugin of readdirSync(pluginsDir)) {
   const droidsDir = path.join(pluginsDir, plugin, 'droids');
   if (existsSync(droidsDir)) {
     for (const f of readdirSync(droidsDir)) {
-      if (f.endsWith('.md')) droidNames.add(path.basename(f, '.md'));
+      if (!f.endsWith('.md')) continue;
+      const name = path.basename(f, '.md');
+      droidNames.add(name);
     }
   }
   const skillsDir = path.join(pluginsDir, plugin, 'skills');
   if (existsSync(skillsDir)) {
     for (const s of readdirSync(skillsDir)) {
-      if (existsSync(path.join(skillsDir, s, 'SKILL.md'))) skillNames.add(s);
+      if (!existsSync(path.join(skillsDir, s, 'SKILL.md'))) continue;
+      skillNames.add(s);
     }
   }
+}
+
+function resolveTargetContract(target) {
+  for (const plugin of readdirSync(pluginsDir).filter((name) => !name.startsWith('.')).sort()) {
+    const source = path.join('plugins', plugin, 'droids', `${target}.md`);
+    if (existsSync(path.join(ROOT, source))) return source;
+  }
+  for (const plugin of readdirSync(pluginsDir).filter((name) => !name.startsWith('.')).sort()) {
+    const source = path.join('plugins', plugin, 'skills', target, 'SKILL.md');
+    if (existsSync(path.join(ROOT, source))) return source;
+  }
+  return null;
 }
 
 // ---------- 1. golden tasks ----------
@@ -161,6 +180,7 @@ for (const name of [...droidNames].sort()) {
 
 // ---------- 2. judge contract ----------
 const judgeFile = path.join(tasksDir, 'JUDGE.md');
+let judgeVersion = null;
 if (!existsSync(judgeFile)) fail(judgeFile, 'missing JUDGE.md');
 else {
   const judge = read(judgeFile);
@@ -170,6 +190,7 @@ else {
   if (!/^Version: \d+$/m.test(judge)) {
     fail(judgeFile, 'no "Version: N" line — verdicts are only comparable at a pinned judge version');
   }
+  judgeVersion = Number(judge.match(/^Version: (\d+)$/m)?.[1]) || null;
 }
 
 // ---------- 3. routing cases ----------
@@ -283,6 +304,7 @@ for (const script of [
 
 // ---------- 8. accepted verdict baselines ----------
 const baselinesDir = path.join(EVALS, 'baselines');
+const baselines = new Map();
 if (existsSync(baselinesDir)) {
   for (const f of readdirSync(baselinesDir).filter((f) => f.endsWith('.json'))) {
     const file = path.join(baselinesDir, f);
@@ -290,6 +312,7 @@ if (existsSync(baselinesDir)) {
     if (!baseline) continue;
     if (baseline.schemaVersion !== 1) fail(file, `schemaVersion ${baseline.schemaVersion} != 1`);
     const stem = path.basename(f, '.json');
+    baselines.set(stem, baseline);
     if (baseline.task !== stem) fail(file, `task "${baseline.task}" != filename stem "${stem}"`);
     if (!existsSync(path.join(tasksDir, `${stem}.md`))) fail(file, `no golden task file for baseline "${stem}"`);
     if (!Number.isInteger(baseline.taskVersion)) fail(file, 'taskVersion must be an integer');
@@ -312,6 +335,74 @@ if (existsSync(baselinesDir)) {
   }
 }
 
+function lookup(collection, key) {
+  return collection instanceof Map ? collection.get(key) : collection[key];
+}
+
+function hasKey(collection, key) {
+  return collection instanceof Map
+    ? collection.has(key)
+    : Object.prototype.hasOwnProperty.call(collection, key);
+}
+
+export function staleBaselineErrors({
+  tasks,
+  changedFiles,
+  baselines: acceptedBaselines,
+  currentHashes,
+  judgeVersion: currentJudgeVersion,
+}) {
+  const stale = [];
+  for (const baseline of acceptedBaselines instanceof Map
+    ? acceptedBaselines.values()
+    : Object.values(acceptedBaselines)) {
+    if (!hasKey(currentHashes, baseline.contractSource)) {
+      stale.push(
+        `baseline "${baseline.task}" contractSource "${baseline.contractSource}" no longer exists — remove or retarget the baseline`,
+      );
+    }
+  }
+  for (const task of tasks) {
+    if (!changedFiles.has(task.contractSource)) continue;
+    const baseline = lookup(acceptedBaselines, task.task);
+    const accept = `scripts/accept-baseline.sh evals/golden-tasks/${task.task}.md`;
+    if (!baseline) {
+      stale.push(
+        `golden task "${task.task}" targets changed contract "${task.contractSource}" but has no accepted baseline — re-accept with ${accept}`,
+      );
+      continue;
+    }
+    const currentHash = lookup(currentHashes, task.contractSource);
+    if (currentHash !== baseline.contractSha) {
+      stale.push(
+        `golden task "${task.task}" targets changed contract "${task.contractSource}" but current hash ${currentHash.slice(0, 12)} != baseline hash ${baseline.contractSha.slice(0, 12)} — re-accept with ${accept}`,
+      );
+    }
+  }
+  if (changedFiles.has('evals/golden-tasks/JUDGE.md')) {
+    for (const baseline of acceptedBaselines instanceof Map
+      ? acceptedBaselines.values()
+      : Object.values(acceptedBaselines)) {
+      if (baseline.judgeVersion !== currentJudgeVersion) {
+        stale.push(
+          `baseline "${baseline.task}" judgeVersion ${baseline.judgeVersion} != current JUDGE.md Version ${currentJudgeVersion} after JUDGE.md changed — verdicts are only comparable at a pinned judge version; re-accept with scripts/accept-baseline.sh evals/golden-tasks/${baseline.task}.md`,
+        );
+      }
+    }
+  }
+  return stale;
+}
+
+const changedFilesSince = (baseRef) => {
+  const git = (...args) =>
+    execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  return new Set([
+    ...git('diff', '--name-only', `${baseRef}...HEAD`).split('\n'),
+    ...git('diff', '--name-only').split('\n'),
+    ...git('diff', '--name-only', '--cached').split('\n'),
+  ].filter(Boolean));
+};
+
 // ---------- 9. golden-task Version bumps vs a base ref ----------
 const bumpIdx = process.argv.indexOf('--require-bumps');
 if (bumpIdx !== -1) {
@@ -322,12 +413,8 @@ if (bumpIdx !== -1) {
   const gitShow = (ref, p) => {
     try { return git('show', `${ref}:${p}`); } catch { return null; }
   };
-  const changed = [...new Set([
-    ...git('diff', '--name-only', `${baseRef}...HEAD`).split('\n'),
-    ...git('diff', '--name-only').split('\n'),
-    ...git('diff', '--name-only', '--cached').split('\n'),
-  ].filter(Boolean))];
-  for (const f of changed.filter((f) => /^evals\/golden-tasks\/\d{2}-.+\.md$/.test(f))) {
+  const changed = changedFilesSince(baseRef);
+  for (const f of [...changed].filter((f) => /^evals\/golden-tasks\/\d{2}-.+\.md$/.test(f))) {
     const before = gitShow(baseRef, f);
     const currentPath = path.join(ROOT, f);
     if (before === null || !existsSync(currentPath)) continue; // new or deleted task
@@ -339,8 +426,44 @@ if (bumpIdx !== -1) {
   }
 }
 
+// ---------- 10. changed contract baselines vs a base ref ----------
+const freshIdx = process.argv.indexOf('--require-fresh-baselines');
+if (freshIdx !== -1) {
+  const baseRef = process.argv[freshIdx + 1];
+  if (!baseRef) { console.error('--require-fresh-baselines requires a git ref'); process.exit(2); }
+  const currentHashes = new Map();
+  const sources = new Set([
+    ...[...taskTargets.values()].map(resolveTargetContract),
+    ...[...baselines.values()].map((baseline) => baseline.contractSource),
+  ]);
+  for (const source of sources) {
+    if (!source || !existsSync(path.join(ROOT, source))) continue;
+    currentHashes.set(source, createHash('sha256').update(read(path.join(ROOT, source))).digest('hex'));
+  }
+  const tasks = [...taskTargets].map(([task, target]) => ({
+    task,
+    contractSource: resolveTargetContract(target),
+  }));
+  for (const message of staleBaselineErrors({
+    tasks,
+    changedFiles: changedFilesSince(baseRef),
+    baselines,
+    currentHashes,
+    judgeVersion,
+  })) {
+    const task = message.match(/^golden task "([^"]+)"/)?.[1];
+    const baseline = message.match(/^baseline "([^"]+)"/)?.[1];
+    fail(
+      task ? path.join(tasksDir, `${task}.md`) : path.join(baselinesDir, `${baseline}.json`),
+      message,
+    );
+  }
+}
+
 // ---------- report ----------
-for (const w of warnings) console.log(`WARN  ${w}`);
-for (const e of errors) console.log(`ERROR ${e}`);
-console.log(`\n${taskFiles.length} golden tasks, ${taskTargets.size} resolved targets — ${errors.length} error(s), ${warnings.length} warning(s)`);
-process.exit(errors.length > 0 ? 1 : 0);
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  for (const w of warnings) console.log(`WARN  ${w}`);
+  for (const e of errors) console.log(`ERROR ${e}`);
+  console.log(`\n${taskFiles.length} golden tasks, ${taskTargets.size} resolved targets — ${errors.length} error(s), ${warnings.length} warning(s)`);
+  process.exit(errors.length > 0 ? 1 : 0);
+}

@@ -38,6 +38,9 @@ the baseline:
 - **Contract hash** — the target droid/skill file changed. Rerun only the tasks whose
   `## Target` maps to the changed file, then re-accept the ones that moved intentionally.
 
+CI enforces these comparability rules on PRs whenever a targeted contract or `JUDGE.md` changes.
+Fix a freshness failure with `scripts/accept-baseline.sh evals/golden-tasks/<task>.md`.
+
 A differing exec model stays comparable and is flagged (`modelChanged`) — that is the
 model-A/B path. Apply `policy.json` `modelDecision` rules to the comparison output and
 record the outcome in `model-decisions/`, then update `model-assignments.json`
