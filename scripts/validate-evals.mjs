@@ -20,6 +20,13 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { REVIEW_LENSES } from '../plugins/review/skills/review-pr/select-review-lenses.mjs';
+
+const MIN_SELECTOR_CASES = 50;
+const MIN_CASES_PER_LENS = 3;
+const MIN_PROSE_CONFIG_CASES = 12;
+const MIN_REAL_PROVENANCE_SHARE = 0.6;
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const EVALS = path.join(ROOT, 'evals');
 const errors = [];
@@ -218,7 +225,12 @@ if (selectorCasesDoc) {
     fail(selectorCasesFile, 'version must be an integer >= 1');
   }
   const cases = Array.isArray(selectorCasesDoc.cases) ? selectorCasesDoc.cases : [];
-  if (cases.length !== 8) fail(selectorCasesFile, `expected exactly 8 cases, found ${cases.length}`);
+  // Corpus size and balance are invariants, not preferences: per-lens precision and recall
+  // are only meaningful with several labeled cases per lens, and prose/config cases are the
+  // ones that expose keyword contamination.
+  if (cases.length < MIN_SELECTOR_CASES) {
+    fail(selectorCasesFile, `expected at least ${MIN_SELECTOR_CASES} cases, found ${cases.length}`);
+  }
   const seen = new Set();
   for (const c of cases) {
     const id = c.id ?? '<missing id>';
@@ -241,6 +253,26 @@ if (selectorCasesDoc) {
       fail(selectorCasesFile, `case "${id}" has a lens both expected and forbidden`);
     }
     if (typeof c.note !== 'string' || !c.note.trim()) fail(selectorCasesFile, `case "${id}" missing note`);
+  }
+  const expectedCounts = new Map();
+  for (const c of cases) {
+    for (const lens of c.expectedLenses ?? []) {
+      expectedCounts.set(lens, (expectedCounts.get(lens) ?? 0) + 1);
+    }
+  }
+  for (const { id } of REVIEW_LENSES) {
+    const count = expectedCounts.get(id) ?? 0;
+    if (count < MIN_CASES_PER_LENS) {
+      fail(selectorCasesFile, `lens "${id}" is expected in only ${count} cases; need ${MIN_CASES_PER_LENS} for a measurable recall`);
+    }
+  }
+  const proseOrConfig = cases.filter((c) => c.kind === 'prose' || c.kind === 'config').length;
+  if (proseOrConfig < MIN_PROSE_CONFIG_CASES) {
+    fail(selectorCasesFile, `only ${proseOrConfig} prose/config cases; need ${MIN_PROSE_CONFIG_CASES} to measure keyword contamination`);
+  }
+  const real = cases.filter((c) => !/^synthetic$/i.test((c.provenance ?? '').trim())).length;
+  if (cases.length > 0 && real / cases.length < MIN_REAL_PROVENANCE_SHARE) {
+    fail(selectorCasesFile, `only ${real}/${cases.length} cases have real provenance; need ${Math.round(MIN_REAL_PROVENANCE_SHARE * 100)}%`);
   }
 }
 
