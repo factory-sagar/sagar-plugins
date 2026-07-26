@@ -2,416 +2,531 @@
 
 ## Summary
 
-Add versioned JSON export and import for saved filters. Imports validate JSON and the portable filter definition before persisting, rejecting malformed JSON, unsupported versions, and references to deleted fields.
+Add a versioned, portable saved-filter JSON document. Export serializes an authorized saved filter as version `1`; import parses and validates the document before saving it. Imports reject malformed JSON, unsupported versions, and every reference to a non-active field, including deleted fields.
 
 ## Context / Current State
 
-No repository was supplied. This spec uses logical module names and treats current saved-filter APIs, authorization, persistence, schema, telemetry, and test conventions as repository-dependent assumptions.
+No repository was provided. This specification assumes saved filters already have:
+
+- An authenticated owner or actor context.
+- A canonical in-memory filter definition.
+- A persistence path for creating and reading saved filters.
+- A field catalog or schema capable of determining which fields are currently active for a filter scope.
+
+Repository-specific routes, source paths, error conventions, schema library, persistence implementation, and exact filter-AST shape remain assumptions to resolve during implementation.
 
 ## Goals
 
-- Export one saved filter as portable, versioned JSON.
-- Import one exported JSON document as a new saved filter.
-- Reject malformed JSON.
-- Reject unknown format versions.
-- Reject filters referencing fields that no longer exist.
-- Preserve existing saved-filter access control.
+- Export an authorized saved filter as a downloadable JSON document.
+- Import a JSON document as a new saved filter through the existing creation path.
+- Reject:
+  - malformed JSON;
+  - structurally invalid version-1 documents;
+  - any unsupported `version`;
+  - filters referencing fields that are no longer active, including deleted fields.
+- Keep parsing, field validation, authorization, persistence, and protocol serialization at separate boundaries.
 
 ## Non-Goals
 
-- Bulk import/export.
-- Updating an existing saved filter during import.
-- Migrating unsupported historical formats.
-- Importing executable code, arbitrary metadata, ownership, sharing, usage statistics, or audit history.
-- Cross-product field mapping.
+- Cross-version migrations or automatic upgrades.
+- Editing an existing saved filter through import.
+- Recovering deleted fields.
+- Supporting non-JSON formats.
+- Adding arbitrary import/export of unrelated user data.
 
 ## Invariants
 
-- Only canonical, portable filter definition data crosses the export boundary.
-- Imported text is `unknown` until JSON parsing and format parsing succeed.
-- Imported field references must resolve against currently active fields before persistence.
-- Expected failures are typed values, not thrown control flow.
-- A successful import creates exactly one new filter and never overwrites another.
-- Export and import preserve semantic filter meaning, not identity or ownership.
+1. Only `format: "saved-filter"` documents with `version: 1` are accepted.
+2. Unknown versions are rejected before version-specific document parsing.
+3. Raw JSON, decoded JSON, storage rows, and HTTP/file payloads never enter domain or service logic unparsed.
+4. Every field-bearing location in a filter definition is checked against the current active field catalog before persistence.
+5. A rejected import creates no saved-filter record or idempotency receipt representing success.
+6. Export omits persistence identity and ownership metadata, such as database IDs, owner IDs, timestamps, and audit fields.
+7. The import document and filter literal values are never logged, traced, or included in error summaries.
 
 ## Design Constraints
 
-Standards applied: `DESIGNING_MODULES`, `BOUNDARIES_AND_PARSING`, `ERROR_HANDLING`, `OBSERVABILITY`, `TESTING_AND_VERIFICATION`, `TYPE_CONTRACTS`, `ASYNC_AND_WORKFLOWS`, and the RGR TDD workflow.
+Standards applied: `BOUNDARIES_AND_PARSING.md`, `DESIGNING_MODULES.md`, `ERROR_HANDLING.md`, `OBSERVABILITY.md`, `ASYNC_AND_WORKFLOWS.md`, `TESTING_AND_VERIFICATION.md`, `TYPE_CONTRACTS.md`, and `tdd-workflow`.
 
-- Reuse the repository’s existing saved-filter parser, persistence adapter, authorization mechanism, schema library, `Result` shape, and telemetry path.
-- Treat stored filter definitions and imported JSON as separate untrusted boundaries.
-- Use strict parsing for the import envelope and all nested command objects.
-- Maintain caller-owned cancellation for all I/O.
-- The create operation must have an idempotency policy if the existing import endpoint is retryable.
+- Use the repository's established schema parser and typed-result convention.
+- Version dispatch must use a permissive header parse followed by a strict version-1 parse.
+- Mutating import requests reject unknown version-1 object fields.
+- Expected failures use precise tagged result unions.
+- The import create operation must use the existing idempotency mechanism, or introduce a scoped import receipt if none exists.
 
 ## Alternatives Considered
 
-### Option 1: Export and import raw persistence records
+### Option 1: Client-only JSON parsing and direct save
 
-Export the database row and reinsert it on import.
+The browser parses JSON, checks fields from its currently loaded UI metadata, then calls the existing create endpoint.
 
-**Rejected:** leaks persistence schema, identity, owner, timestamps, and internal fields. It also couples portability to storage and cannot safely distinguish deleted fields from stale records.
+**Trade-offs**
 
-### Option 2: Export the existing public saved-filter response DTO
+- Low initial server work.
+- Trusts stale client field metadata.
+- Lets non-browser callers bypass validation.
+- Cannot reliably protect persistence from malformed or deleted field references.
 
-Reuse the API response as the import payload.
+**Rejected:** validation must be enforced at the server-side application boundary.
 
-**Rejected:** public response DTOs often include server-managed fields and display-only projections. Combining protocol response and import command shapes creates an accidental interface and weakens strict parsing.
+### Option 2: Export and re-import opaque persistence rows
 
-### Option 3: Versioned portable-definition envelope, recommended
+Export the database row or existing storage JSON, then restore it on import.
 
-Define a dedicated JSON envelope whose `filter` member is a portable definition, parse it at import, validate field references through an existing-field lookup seam, then create a new saved filter.
+**Trade-offs**
 
-**Selected:** separates protocol, domain, and persistence representations; makes version dispatch explicit; and confines evolution to one codec.
+- Minimal translation code.
+- Couples the file format to storage schema and migrations.
+- Risks exporting ownership, audit, database, or deleted-field state.
+- Makes safe versioning difficult.
+
+**Rejected:** persistence DTOs are not portable domain documents.
+
+### Option 3: Versioned portable document with server-owned validation
+
+Export projects a canonical saved filter into a portable versioned DTO. Import parses, validates active fields, converts to the canonical domain value, then uses the existing create path.
+
+**Trade-offs**
+
+- Explicit compatibility contract and failure behavior.
+- Keeps field validity close to current authoritative schema.
+- Requires a codec and field-catalog seam.
+
+**Recommended.**
 
 ## Recommendation
 
-Use **Option 3**. Add a `SavedFilterTransfer` boundary module that owns v1 encoding and decoding. Reuse the existing domain module to validate filter semantics, the existing field catalog to resolve field references, and the existing saved-filter store to create the new resource.
+Implement a shared `SavedFilterPortableV1` codec in the saved-filter domain area, plus application services for export and import. The codec owns document structure and structural filter parsing; the import service owns authorization, active-field resolution, domain binding, idempotency, and persistence sequencing.
 
 ## Proposed Design
 
 ### Domain Model and Types
 
 ```ts
-declare const savedFilterIdBrand: unique symbol;
-declare const fieldIdBrand: unique symbol;
+type Result<T, E> =
+  | { readonly _tag: "ok"; readonly value: T }
+  | { readonly _tag: "err"; readonly error: E };
 
-type SavedFilterId = string & {
-  readonly [savedFilterIdBrand]: "SavedFilterId";
-};
+type SavedFilterId = string & { readonly __brand: "SavedFilterId" };
+type FieldReference = string & { readonly __brand: "FieldReference" };
+type ImportRequestId = string & { readonly __brand: "ImportRequestId" };
 
-type FieldId = string & {
-  readonly [fieldIdBrand]: "FieldId";
-};
+/** Existing parsed actor or principal type. */
+type SavedFilterActor = ExistingSavedFilterActor;
 
-type SavedFilterActor = /* existing authenticated principal type */ unknown;
+/** Existing scope identifying the saved filter's list, object, or resource context. */
+type SavedFilterScope = ExistingSavedFilterScope;
 
-type PortableFilterDefinitionV1 = {
-  readonly name: string;
-  readonly query: /* existing canonical saved-filter query */ unknown;
-};
+/** Existing canonical filter value with valid, bound field definitions. */
+type SavedFilterDefinition = ExistingSavedFilterDefinition;
 
-type SavedFilterTransferV1 = {
+/**
+ * A structurally valid filter whose field references have not yet been resolved
+ * against the destination's current active field catalog.
+ */
+type UnboundSavedFilterDefinition = ExistingUnboundSavedFilterDefinition;
+
+type SavedFilterPortableV1 = Readonly<{
   readonly format: "saved-filter";
   readonly version: 1;
-  readonly filter: PortableFilterDefinitionV1;
-};
+  readonly filter: Readonly<{
+    readonly name: string;
+    readonly definition: PortableSavedFilterDefinitionV1;
+    // Include a portable scope discriminator only if the existing domain requires one.
+  }>;
+}>;
 
-type ParsedSavedFilterTransfer =
-  | {
-      readonly version: 1;
-      readonly definition: PortableFilterDefinitionV1;
-    };
+/**
+ * An explicit, JSON-safe projection of the existing filter AST or criteria model.
+ *
+ * This must contain every current field-bearing construct, including condition,
+ * sort, grouping, aggregation, display, or other field-reference nodes that
+ * exist in the repository's saved-filter model.
+ */
+type PortableSavedFilterDefinitionV1 = ExistingPortableFilterDefinitionV1;
 ```
 
-`PortableFilterDefinitionV1` must contain only values required to recreate the filter’s behavior. The repository’s existing canonical filter definition owns the concrete query structure. It must exclude:
+The actual AST DTO must be derived from the existing canonical filter definition. It must not be a storage row or a cast of decoded JSON.
 
-- saved-filter ID;
-- owner and sharing state;
-- creation/update timestamps;
-- audit data;
-- persistence-only columns;
-- server-calculated display data.
+```ts
+type MalformedSavedFilterJson = Readonly<{
+  readonly _tag: "MalformedSavedFilterJson";
+}>;
+
+type InvalidSavedFilterDocument = Readonly<{
+  readonly _tag: "InvalidSavedFilterDocument";
+  readonly reason:
+    | "invalid-envelope"
+    | "invalid-v1-shape"
+    | "unknown-v1-field"
+    | "invalid-filter-definition";
+}>;
+
+type UnknownSavedFilterVersion = Readonly<{
+  readonly _tag: "UnknownSavedFilterVersion";
+  readonly receivedVersion: number;
+}>;
+
+type DeletedFieldReferences = Readonly<{
+  readonly _tag: "DeletedFieldReferences";
+  readonly fieldIds: ReadonlyArray<FieldReference>;
+}>;
+
+type IncompatibleSavedFilterScope = Readonly<{
+  readonly _tag: "IncompatibleSavedFilterScope";
+}>;
+
+type ImportCancelled = Readonly<{
+  readonly _tag: "ImportCancelled";
+}>;
+
+type SavedFilterImportError =
+  | MalformedSavedFilterJson
+  | InvalidSavedFilterDocument
+  | UnknownSavedFilterVersion
+  | DeletedFieldReferences
+  | IncompatibleSavedFilterScope
+  | ImportCancelled
+  | ExistingAuthorizationError
+  | ExistingFieldCatalogError
+  | ExistingSavedFilterPersistenceError;
+```
 
 ### Types, Interfaces, and APIs
 
 ```ts
-type ExportSavedFilterInput = {
-  readonly actor: SavedFilterActor;
-  readonly savedFilterId: SavedFilterId;
-};
+/**
+ * Parses raw JSON text into a structurally valid, unbound version-1 document.
+ * Unknown versions are identified before strict version-1 parsing.
+ */
+function parseSavedFilterPortableDocument(
+  text: string,
+): Result<
+  Readonly<{
+    readonly name: string;
+    readonly definition: UnboundSavedFilterDefinition;
+    readonly declaredScope?: SavedFilterScope;
+  }>,
+  MalformedSavedFilterJson | InvalidSavedFilterDocument | UnknownSavedFilterVersion
+>;
 
-type ImportSavedFilterInput = {
-  readonly actor: SavedFilterActor;
-  readonly json: string;
-  readonly idempotencyKey?: string;
-};
+/** Returns every field reference found anywhere in the parsed definition. */
+function collectReferencedFields(
+  definition: UnboundSavedFilterDefinition,
+): ReadonlySet<FieldReference>;
 
-type ImportSavedFilterSuccess = {
-  readonly savedFilterId: SavedFilterId;
-  readonly name: string;
-};
+/**
+ * Binds field references to current active fields and performs any field-type,
+ * operator, and value compatibility checks required by the existing filter model.
+ */
+function bindActiveFields(
+  definition: UnboundSavedFilterDefinition,
+  activeFields: ActiveFilterFields,
+): Result<SavedFilterDefinition, InvalidSavedFilterDocument>;
 
-type ImportSavedFilterError =
-  | SavedFilterImportMalformedJson
-  | SavedFilterImportInvalidDocument
-  | SavedFilterImportUnsupportedVersion
-  | SavedFilterImportDeletedFieldReference
-  | SavedFilterImportUnauthorized
-  | SavedFilterStoreUnavailable;
-
-type SavedFiltersForTransfer = {
-  findReadable(
-    input: ExportSavedFilterInput,
-    options?: { readonly signal?: AbortSignal },
-  ): Promise<Result<SavedFilter, SavedFilterNotFound | SavedFilterAccessDenied | SavedFilterStoreUnavailable>>;
-
-  createImported(
-    input: {
+interface ActiveFilterFieldCatalog {
+  findActive(
+    input: Readonly<{
       readonly actor: SavedFilterActor;
-      readonly definition: PortableFilterDefinitionV1;
-      readonly idempotencyKey?: string;
-    },
-    options?: { readonly signal?: AbortSignal },
-  ): Promise<Result<ImportSavedFilterSuccess, SavedFilterAccessDenied | SavedFilterStoreUnavailable>>;
-};
+      readonly scope: SavedFilterScope;
+      readonly fieldIds: ReadonlySet<FieldReference>;
+    }>,
+    options?: Readonly<{ readonly signal?: AbortSignal }>,
+  ): Promise<Result<ActiveFilterFields, ExistingFieldCatalogError>>;
+}
 
-type ActiveFieldsForTransfer = {
-  findMissing(
-    fieldIds: ReadonlySet<FieldId>,
-    options?: { readonly signal?: AbortSignal },
-  ): Promise<Result<ReadonlySet<FieldId>, FieldCatalogUnavailable>>;
-};
+interface SavedFiltersForImport {
+  createImported(
+    input: Readonly<{
+      readonly actor: SavedFilterActor;
+      readonly scope: SavedFilterScope;
+      readonly name: string;
+      readonly definition: SavedFilterDefinition;
+      readonly importRequestId: ImportRequestId;
+    }>,
+    options?: Readonly<{ readonly signal?: AbortSignal }>,
+  ): Promise<Result<ExistingSavedFilter, ExistingSavedFilterPersistenceError>>;
+}
 
-type SavedFilterTransferService = {
-  export(
-    input: ExportSavedFilterInput,
-    options?: { readonly signal?: AbortSignal },
-  ): Promise<Result<SavedFilterTransferV1, SavedFilterNotFound | SavedFilterAccessDenied | SavedFilterStoreUnavailable>>;
-
-  import(
-    input: ImportSavedFilterInput,
-    options?: { readonly signal?: AbortSignal },
-  ): Promise<Result<ImportSavedFilterSuccess, ImportSavedFilterError>>;
-};
-```
-
-```ts
-type SavedFilterTransferCodec = {
-  encodeV1(filter: SavedFilter): SavedFilterTransferV1;
-
-  parse(
-    raw: unknown,
-  ): Result<
-    ParsedSavedFilterTransfer,
-    | SavedFilterImportInvalidDocument
-    | SavedFilterImportUnsupportedVersion
+interface SavedFiltersForExport {
+  findAuthorized(
+    input: Readonly<{
+      readonly actor: SavedFilterActor;
+      readonly savedFilterId: SavedFilterId;
+    }>,
+    options?: Readonly<{ readonly signal?: AbortSignal }>,
+  ): Promise<
+    Result<
+      ExistingSavedFilter,
+      ExistingSavedFilterNotFound | ExistingAuthorizationError | ExistingSavedFilterPersistenceError
+    >
   >;
-};
+}
 ```
-
-Expected failure tags:
 
 ```ts
-type SavedFilterImportMalformedJson = {
-  readonly _tag: "SavedFilterImportMalformedJson";
-};
+type ImportSavedFilterRequest = Readonly<{
+  readonly actor: SavedFilterActor;
+  readonly targetScope: SavedFilterScope;
+  readonly documentText: string;
+  readonly importRequestId: ImportRequestId;
+}>;
 
-type SavedFilterImportInvalidDocument = {
-  readonly _tag: "SavedFilterImportInvalidDocument";
-  readonly reason: "invalid-envelope" | "invalid-filter-definition";
-};
+interface ImportSavedFilter {
+  import(
+    request: ImportSavedFilterRequest,
+    options?: Readonly<{ readonly signal?: AbortSignal }>,
+  ): Promise<Result<ExistingSavedFilter, SavedFilterImportError>>;
+}
 
-type SavedFilterImportUnsupportedVersion = {
-  readonly _tag: "SavedFilterImportUnsupportedVersion";
-  readonly version: number | string | undefined;
-};
-
-type SavedFilterImportDeletedFieldReference = {
-  readonly _tag: "SavedFilterImportDeletedFieldReference";
-  readonly missingFieldIds: ReadonlyArray<FieldId>;
-};
+interface ExportSavedFilter {
+  export(
+    request: Readonly<{
+      readonly actor: SavedFilterActor;
+      readonly savedFilterId: SavedFilterId;
+    }>,
+    options?: Readonly<{ readonly signal?: AbortSignal }>,
+  ): Promise<
+    Result<
+      SavedFilterPortableV1,
+      ExistingSavedFilterNotFound | ExistingAuthorizationError | ExistingSavedFilterPersistenceError
+    >
+  >;
+}
 ```
-
-The transport adapter maps these failures to the repository’s established protocol errors. At minimum, malformed JSON, invalid documents, unsupported versions, and deleted-field references must be distinguishable to the caller.
 
 ### Seams, Boundaries, Adapters, and Implementations
 
-| Owner | Responsibility | Must not know |
-|---|---|---|
-| Inbound API/UI adapter | Authenticate, parse route/request envelope, serialize download or response | filter query internals, persistence |
-| `SavedFilterTransferService` | Coordinate export/import policy, authorization inputs, field validation, persistence calls | HTTP/framework request shapes |
-| `SavedFilterTransferCodec` | Strictly encode v1 and parse/version-dispatch imported documents | users, storage, HTTP |
-| Existing saved-filter domain module | Validate canonical filter rules and collect referenced `FieldId`s | JSON, storage rows |
-| `ActiveFieldsForTransfer` adapter | Resolve whether referenced fields remain active | transfer-envelope rules |
-| Existing saved-filter persistence adapter | Read readable filters and create imported filters | raw import JSON |
+| Owner | Responsibility |
+|---|---|
+| Saved-filter portable codec | Version header parsing, strict V1 parsing, projection, field-reference collection, domain binding. Pure, no I/O. |
+| Import service | Sequences parsing, scope compatibility, active-field lookup, binding, idempotent create, and typed failures. |
+| Export service | Reads an authorized canonical saved filter and projects it into `SavedFilterPortableV1`. |
+| Field-catalog adapter | Translates the repository's schema, metadata store, or field registry into `ActiveFilterFields`. It must exclude deleted fields. |
+| Saved-filter repository adapter | Reads and persists canonical saved filters. Storage rows are parsed at this boundary. |
+| HTTP/server-action adapter | Authenticates, bounds uploaded file size, reads text, invokes services, and projects typed results to existing protocol errors. |
+| UI adapter | Starts download from an export response and sends selected file text plus a stable import request ID. It performs no authoritative validation. |
 
-The codec is the sole version seam. Future versions extend `parse` with an explicit version case, never by permissive fallback.
+The core import service must not know about browser `File`, HTTP requests, multipart forms, ORM rows, or raw database errors.
 
 ## Call Stacks and Data Flow
 
 ### Current / Old Flow
 
+The exact saved-filter create/read flow is repository-dependent. Before implementation, identify:
+
 ```txt
-saved-filter UI/API
-  -> existing saved-filter read or create handler
-  -> existing service
+saved-filter UI or protocol entrypoint
+  -> authorization convention
+  -> existing saved-filter service or repository
   -> persistence adapter
-  -> saved-filter response DTO
+  -> storage
 ```
 
-There is no portable transfer contract.
+The new feature must reuse this authorized canonical path rather than duplicate persistence behavior.
 
 ### Proposed / New Flow: Export
 
 ```txt
-authenticated export request
-  -> inbound adapter parses savedFilterId
-  -> ExportSavedFilterInput
-  -> SavedFilterTransferService.export
-  -> SavedFiltersForTransfer.findReadable
-  -> SavedFilter domain value
-  -> SavedFilterTransferCodec.encodeV1
-  -> SavedFilterTransferV1
-  -> JSON.stringify at protocol boundary
-  -> attachment/download response
+export control or GET export entrypoint
+  -> authenticate and parse SavedFilterId
+  -> ExportSavedFilter.export(actor, savedFilterId)
+  -> SavedFiltersForExport.findAuthorized(...)
+  -> canonical ExistingSavedFilter
+  -> toSavedFilterPortableV1(savedFilter)
+  -> SavedFilterPortableV1
+  -> protocol projection: JSON.stringify(document)
+  -> application/json download named by the existing safe filename convention
 ```
-
-`JSON.stringify` operates only on the codec-produced DTO. The adapter sets the repository-standard JSON content type and a safe filename derived from an approved display name or existing naming helper.
 
 ### Proposed / New Flow: Import
 
 ```txt
-authenticated import request
-  -> inbound adapter parses request container
-  -> raw JSON text
-  -> JSON.parse inside import boundary
-  -> unknown
-  -> SavedFilterTransferCodec.parse
-  -> ParsedSavedFilterTransfer
-  -> existing domain parser reconstructs canonical definition
-  -> collectReferencedFieldIds(definition)
-  -> ActiveFieldsForTransfer.findMissing
-  -> no missing fields
-  -> SavedFiltersForTransfer.createImported
-  -> ImportSavedFilterSuccess
+file selection or import request
+  -> enforce existing import/body-size limit
+  -> decode file as UTF-8 text
+  -> authenticate and parse target scope + ImportRequestId
+  -> ImportSavedFilter.import(...)
+  -> JSON.parse(text) as unknown
+  -> parse envelope header: format + numeric version
+  -> version === 1 dispatch
+  -> strict V1 parser
+  -> UnboundSavedFilterDefinition
+  -> collectReferencedFields(definition)
+  -> ActiveFilterFieldCatalog.findActive(actor, targetScope, fieldIds)
+  -> reject every absent or inactive field reference
+  -> bindActiveFields(definition, activeFields)
+  -> SavedFilterDefinition
+  -> SavedFiltersForImport.createImported(...)
+  -> imported canonical saved filter
   -> protocol projection
 ```
 
 ### Failure Flow
 
 ```txt
-JSON.parse throws SyntaxError
-  -> boundary catches and classifies
-  -> SavedFilterImportMalformedJson
-  -> protocol error response
+invalid UTF-8 or JSON syntax
+  -> MalformedSavedFilterJson
+  -> existing client-facing invalid-import response
 
-codec rejects envelope / nested definition
-  -> SavedFilterImportInvalidDocument
-  -> protocol error response
+valid JSON, missing or malformed envelope
+  -> InvalidSavedFilterDocument { reason: "invalid-envelope" }
 
-codec sees unsupported version
-  -> SavedFilterImportUnsupportedVersion
-  -> protocol error response
+valid header, version !== 1
+  -> UnknownSavedFilterVersion
 
-field lookup returns missing IDs
-  -> SavedFilterImportDeletedFieldReference
-  -> no write
-  -> protocol error response
+version 1, unknown or malformed V1 fields
+  -> InvalidSavedFilterDocument
 
-store / field catalog dependency failure
-  -> adapter classifies unknown cause
-  -> typed dependency error
-  -> existing error-reporting path
+valid V1 AST, any referenced field absent from active catalog
+  -> DeletedFieldReferences
+  -> no bind, no persistence call
+
+valid active fields, invalid operator or value for resolved field type
+  -> InvalidSavedFilterDocument { reason: "invalid-filter-definition" }
+
+authorization, catalog, or persistence dependency failure
+  -> existing typed dependency or authorization failure
+  -> existing protocol error translation
 ```
 
-No raw JSON, parsed query values, or caught causes are included in returned errors or telemetry.
+The active-field check must cover all field references, not only primary filter predicates.
 
 ### Retry / Cancellation / Idempotency Flow
 
 ```txt
-request AbortSignal
-  -> transfer service
-  -> field catalog lookup and saved-filter store calls
+import request with ImportRequestId
+  -> validate document and active fields
+  -> transactionally create saved filter plus import receipt
+  -> return original created result for a repeated ImportRequestId
 ```
 
-- The service must pass the caller signal downstream.
-- Import has no retries or background work.
-- If the existing import endpoint can be retried, use its established idempotency mechanism. The same idempotency key must replay the original successful import instead of creating another filter.
-- If no retryable command infrastructure exists, document import as non-retryable before exposing it through a retrying transport.
+- Reuse the repository's existing mutation idempotency facility if present.
+- Otherwise, make `(actor or owner scope, importRequestId)` unique and persist the created saved-filter identity atomically with creation.
+- Do not use a document hash alone as the idempotency key, because two intentional imports of the same file must remain distinguishable.
+- Propagate a caller-owned `AbortSignal` to file/network, catalog, and repository operations where supported.
+- A cancellation before persistence returns `ImportCancelled`.
+- If cancellation occurs after a committed create but before the response, retrying the same request ID must replay the original result.
+- Export has no mutating side effect and requires no retry mechanism.
 
 ### Observability Flow
 
-Use the existing telemetry path at the inbound adapter and service boundary. Emit only safe fields:
+```txt
+entrypoint correlation context
+  -> import/export service outcome
+  -> existing telemetry mechanism
+```
+
+Emit only safe fields:
 
 ```ts
 {
-  operation: "importSavedFilter",
-  transferVersion: 1,
-  errorTag: result.error._tag,
-  missingFieldCount: result.error._tag === "SavedFilterImportDeletedFieldReference"
-    ? result.error.missingFieldIds.length
-    : undefined,
+  operation: "importSavedFilter" | "exportSavedFilter",
+  scopeKind: safeScopeKind,
+  savedFilterId: safeSavedFilterId,
+  importedVersion: 1,
+  referencedFieldCount: number,
+  rejectedFieldCount: number,
+  errorTag: SavedFilterImportError["_tag"],
 }
 ```
 
-Do not log JSON text, complete filter definitions, or raw caught errors.
+Never emit raw document text, filter values, file contents, names, arbitrary parse errors, or unclassified thrown causes.
 
 ## Files to Add / Change / Delete
 
-Exact paths are open until repository inspection. Map these responsibilities to the closest established modules:
+Actual paths must follow repository layout. The following are logical owners.
 
-| Logical module | Change | Responsibility |
-|---|---|---|
-| `saved-filters/transfer.ts` | Add | v1 envelope types, strict parser, encoder, transfer errors |
-| `saved-filters/transfer-service.ts` | Add or extend existing service | Export/import orchestration and narrow dependency interfaces |
-| `saved-filters/domain.ts` | Change if absent | Canonical definition parser and `collectReferencedFieldIds` |
-| `saved-filters/http.ts` or route/controller | Change | Import/export entrypoints and protocol projections |
-| `saved-filters/store.ts` | Change if needed | Readable lookup and imported create operation |
-| `fields/catalog.ts` | Change only if no existing capability | `findMissing` implementation over active fields |
-| transfer codec tests | Add | Strict decoding/version behavior |
-| transfer service tests | Add | Field validation, persistence, error propagation |
-| endpoint/integration tests | Add | User-visible export/import behavior |
+| Logical module | Change |
+|---|---|
+| `saved-filters/domain/saved-filter-portable-v1.ts` | Add `SavedFilterPortableV1`, header parser, strict V1 parser, export projection, structural definition parser, and field-reference collector. |
+| Existing saved-filter domain module | Add or reuse `bindActiveFields` and the canonical-to-portable definition projection. |
+| `saved-filters/application/import-saved-filter.ts` | Add import orchestration and precise failure union. |
+| `saved-filters/application/export-saved-filter.ts` | Add authorized export orchestration. |
+| Existing field-schema adapter | Add a batched active-field lookup for an actor and saved-filter scope. |
+| Existing saved-filter repository adapter | Add idempotent imported-create support only if existing create semantics do not provide it. |
+| Existing import/export route, server action, or controller | Add raw document intake, typed response projection, JSON download response, and size-limit enforcement. |
+| Existing UI saved-filter controls | Add export and import actions using existing download/file-picker conventions. |
+| Existing migration directory, if needed | Add import-receipt uniqueness storage only when no established idempotency store exists. |
+| Corresponding domain, application, adapter, protocol, and UI test files | Add behavior tests below. |
 
-No migrations are required unless the existing idempotency policy needs durable replay records.
+No existing files should be deleted.
 
 ## RGR TDD Test Plan
 
-### Slice 1: Export v1
+### Slice 1: Exported portable document
 
-**RED:** Through the export service interface, a readable saved filter produces a v1 portable envelope containing only canonical portable definition data.
+**Given** an authorized saved filter, **when** export is requested, **then** the result is a V1 document containing the canonical portable definition and no persistence identity metadata.
 
-**GREEN:** Add `encodeV1` and service wiring.
+- **RED:** Behavior test through `ExportSavedFilter`.
+- **GREEN:** Add canonical-to-V1 projection.
+- **REFACTOR:** Centralize projection with the portable codec.
 
-**REFACTOR:** Extract projection helpers only if the existing domain model makes portable selection non-obvious.
+### Slice 2: Malformed JSON
 
-### Slice 2: Import accepted v1 document
+**Given** an import document with invalid JSON syntax, **when** imported, **then** it returns `MalformedSavedFilterJson` and creates no filter.
 
-**RED:** Importing exported v1 JSON creates one new filter with equivalent canonical definition and current actor ownership. Assert observable store records through a recording adapter or representative database seam.
+- Supply a recording repository through the real persistence seam.
+- Assert the repository contains no created filter, not internal method calls.
 
-**GREEN:** Parse, reconstruct, and persist the definition.
+### Slice 3: Unknown version dispatch
 
-**REFACTOR:** Keep protocol projection separate from persistence projection.
+**Given** valid JSON with `format: "saved-filter"` and `version: 2`, **when** imported, **then** it returns `UnknownSavedFilterVersion`, even when the document also contains V2-only fields.
 
-### Slice 3: Malformed and invalid JSON
+This proves header parsing occurs before strict V1 parsing.
 
-**RED:** Invalid JSON text returns `SavedFilterImportMalformedJson`; valid JSON with invalid envelope or nested definition returns `SavedFilterImportInvalidDocument`; neither writes a filter.
+### Slice 4: Strict V1 parsing
 
-**GREEN:** Add JSON parse classification and strict codec parsing.
+**Given** a V1 document with malformed filter shape or unknown V1 properties, **when** imported, **then** it returns `InvalidSavedFilterDocument` and performs no persistence.
 
-### Slice 4: Unknown version
+### Slice 5: Deleted-field rejection
 
-**RED:** A structurally valid envelope with an unsupported version returns `SavedFilterImportUnsupportedVersion`; no field lookup or write occurs.
+**Given** a structurally valid V1 filter referencing a field absent from `ActiveFilterFieldCatalog`, **when** imported, **then** it returns `DeletedFieldReferences` and does not save.
 
-**GREEN:** Add explicit version dispatch.
+Cover every field-bearing construct present in the repository's filter model, such as predicates, sorting, grouping, aggregation, and visible-field configuration.
 
-### Slice 5: Deleted field references
+### Slice 6: Valid import
 
-**RED:** A valid v1 definition referencing one or more inactive/deleted field IDs returns `SavedFilterImportDeletedFieldReference`, reports only the missing IDs according to existing disclosure policy, and performs no write.
+**Given** a V1 document whose references all resolve to active fields, **when** imported, **then** it creates a canonical saved filter through the existing persistence seam and returns its normal import projection.
 
-**GREEN:** Add reference collection and `ActiveFieldsForTransfer.findMissing` check.
+### Slice 7: Field-type binding
 
-### Slice 6: Access, dependency, and cancellation behavior
+**Given** an active field with an incompatible operator or value, **when** imported, **then** it returns `InvalidSavedFilterDocument` before persistence.
 
-**RED:** Export access denial, import authorization denial, field-catalog failure, store failure, and request cancellation preserve typed outcomes and produce no partial write.
+### Slice 8: Authorization and scope
 
-**GREEN:** Propagate existing authorization, typed failure, and cancellation contracts.
+**Given** an unauthorized actor or incompatible destination scope, **when** import or export is requested, **then** the existing authorization behavior is preserved and no data is disclosed or persisted.
 
-### Cross-cutting verification
+### Slice 9: Idempotent import retry
 
-- Codec behavior tests: v1 round trip preserves semantic definition, rejects unknown keys, rejects non-object/null/array inputs, and rejects unknown versions.
-- Adapter contract test: field catalog distinguishes active from deleted fields using the real persistence seam when deletion semantics depend on database state.
-- Endpoint/integration test: export download followed by import returns a new saved-filter identity with equivalent behavior.
-- Run the repository’s canonical formatter, lint, typecheck, targeted tests, and full test suite after implementation.
+**Given** an import request ID whose initial create committed, **when** the same request is retried, **then** it returns the original saved filter and creates no duplicate.
+
+Use the representative local database when uniqueness or transaction behavior is claimed.
+
+### Slice 10: Protocol and UI boundary
+
+- Export response has `application/json` and a safe `.json` filename.
+- Import endpoint correctly projects malformed JSON, unknown version, and deleted-field typed errors.
+- Representative UI test verifies selecting a valid file reaches the import seam and displays the repository-standard result.
+
+### Property Coverage
+
+Where the existing test stack supports it:
+
+```txt
+for every valid canonical saved filter whose referenced fields remain active:
+  parseSavedFilterPortableDocument(JSON.stringify(toSavedFilterPortableV1(filter)))
+  -> bindActiveFields(...)
+  -> canonical definition equivalent to the original portable projection
+```
 
 ## Risks and Open Questions
 
-1. **Canonical filter representation:** Confirm which existing domain value is the portable source of truth and whether its current parser rejects all stale/deleted references.
-2. **Deleted-field semantics:** Confirm whether “deleted” means physically absent, soft-deleted, inactive, inaccessible to the importing actor, or all of these. The field lookup must match that product definition.
-3. **Name collisions:** This spec preserves the imported name. If names must be unique per owner/scope, reuse the existing create policy and expose its typed conflict failure.
-4. **Authorization scope:** Confirm whether export/import must be restricted by workspace, project, or ownership, then pass the existing typed principal into the service.
-5. **Idempotency:** Confirm whether the transport retries import requests. If yes, persistence must provide a durable replay mechanism.
-6. **External query values:** If filter values can contain sensitive data, confirm whether export is allowed to include them. This spec assumes portability requires them and that existing authorization already permits viewing them.
-7. **Version evolution:** Version `1` is the initial supported version. Unknown versions must never be coerced into v1.
+1. **Portable filter shape:** The exact filter AST, field-bearing nodes, and existing parser must be inspected before defining `PortableSavedFilterDefinitionV1`.
+2. **Filter scope:** If filters are scoped to a list, entity type, workspace, or data source, determine whether V1 embeds a portable scope discriminator or import always targets the current scope.
+3. **Deleted versus unavailable fields:** The field-catalog adapter should treat every non-active referenced field as rejected. Confirm whether the product needs a user-visible distinction between deleted, inaccessible, and never-existing fields.
+4. **Literal values:** Confirm whether saved-filter values can contain sensitive business data. Regardless, they must not be emitted to telemetry or error output.
+5. **Idempotency storage:** Reuse existing mutation idempotency if available; otherwise add a minimal transactional receipt with repository-approved schema and retention policy.
+6. **Protocol details:** Reuse existing route, server-action, upload size limit, download, error-status, and localization conventions rather than introducing parallel infrastructure.
 
-**Deviations: none.**
+**Deviations:** none.

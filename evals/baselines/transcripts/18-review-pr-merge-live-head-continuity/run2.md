@@ -1,29 +1,48 @@
-# Landing decision
+## Review
 
-**Mode:** `land`  
-**Tier:** deep, this is a broad, high-consequence PR.
+**Mode:** land  
+**Target:** `<base SHA>`...`<reviewed-head-sha>`  
+**Tier:** deep — broad, high-consequence PR  
+**Assessment:** merge-ready  
 
-With all merge gates satisfied and the final, immediately preceding live-head check confirming:
+### Findings
+- n/a — this is a gating-continuity evaluation; the completed review is assumed to have no unresolved findings.
 
-```text
-reviewedHeadSha == headRefOid == <reviewed-head-sha>
-```
+### Coverage
+- Files and behavior traced: n/a — no PR diff was provided.
+- Untracked implementation files read: n/a — no repository contents were provided.
+- Policy lenses applied: deep-review and landing-gate requirements.
+- Validators: pre-push verification completed for committed `<reviewed-head-sha>`.
+- Existing threads: zero unresolved, confirmed through the required GraphQL thread query.
+- CI at head SHA: required CI green for `<reviewed-head-sha>`.
+- PR body at head SHA: current.
 
-the next and only operation is to **merge the PR**. Do not make any intervening tool or API call, and do not submit an approval because approval was not authorized. This is describe-only because GitHub is unavailable.
+### Approval gate
+- Findings/threads: n/a — approval was not authorized.
+- CI: n/a — approval gate not run.
+- PR body: n/a — approval gate not run.
+- Self-authorship comparison: n/a — approval gate not run.
+- Final live-head equality: passed for the landing gate, `<reviewed-head-sha>` equals `<reviewed-head-sha>`.
+- Result: no approval may be submitted.
 
-# If the live head is `<changed-head-sha>`
+### Deviations
+GitHub is unavailable, so the merge is described rather than executed.
 
-**Block the merge.** A different live head invalidates continuity with the reviewed commit.
+### Next action
 
-Required recovery steps:
+Do **not** approve the PR. With no intervening API call after the final `headRefOid` comparison, the next operation must be the repository-configured merge mutation for this PR. It must merge the already-reviewed `<reviewed-head-sha>` directly, using the repository’s required merge method.
 
-1. Synchronize the local PR branch with `<changed-head-sha>`.
-2. Rerun applicable local verification.
-3. Commit a new corrective commit only if needed, never create an empty commit.
-4. Run one fresh delta `change-review` over `<reviewed-head-sha>...HEAD`, with the complete base-to-head diff as context. Include security review if the changed paths require it.
-5. If clean, record the resulting committed SHA as the new `reviewedHeadSha`, push without rewriting history, and wait for required CI to pass for that exact head.
-6. Reconfirm the PR body and zero unresolved review threads.
-7. As the final API call immediately before merge, re-fetch `headRefOid` and require equality with the new `reviewedHeadSha`.
-8. Only if that comparison passes, make merge the next operation.
+### If the final live head is `<changed-head-sha>`
 
-The delta loop remains limited to three passes; exhaustion or a repeated root cause blocks landing.
+Block the merge immediately. Do not approve or merge. Required recovery:
+
+1. Synchronize the local PR branch with `<changed-head-sha>` safely.
+2. Rerun local verification for that head.
+3. Create a corrective commit only if verification or delta review requires one, never an empty commit.
+4. Run one delta verification pass for changes since `<reviewed-head-sha>`, subject to the three-pass budget. Do not repeat the full review.
+5. Treat the resulting verified commit as the new reviewed head.
+6. If a new commit exists, push it fast-forward only.
+7. Ensure required CI is green for the resulting current head, all GraphQL review threads are resolved, and the PR body remains current.
+8. If branch protection now requires approval, obtain it from an eligible reviewer. Do not self-approve.
+9. As the final API operation immediately before merging, fetch `headRefOid` and require it to equal the new reviewed head with no intervening call.
+10. Only then submit the merge operation. If the head changes again, block and repeat this recovery path within the remaining delta-loop budget.

@@ -1,27 +1,31 @@
 ## Review
 
 **Mode:** approve  
-**Target:** `<base-sha>...<head-sha>`  
-**Tier:** light, the supplied normal review completed at the light tier.  
-**Assessment:** merge-ready
+**Target:** `<base-sha>`...`<head-sha>`  
+**Tier:** light, normal review was completed at this tier.  
+**Assessment:** merge-ready  
 
 ### Findings
+- None, the completed normal review has zero unresolved findings.
 
-No material issues found.
+### Coverage
+- Files and behavior traced: completed by the supplied normal review.
+- Untracked implementation files read: completed by the supplied normal review.
+- Policy lenses applied: completed by the supplied normal review.
+- Validators: required CI is green for `<head-sha>`.
+- Existing threads: zero unresolved, confirmed by the required GraphQL thread query.
+- CI at head SHA: green for `<head-sha>`.
+- PR body at head SHA: current and descriptive.
 
 ### Approval gate
+- Findings/threads: pass.
+- CI: pass.
+- PR body: pass.
+- Self-authorship comparison: pass, `<pr-author>` differs from `<current-user>`.
+- Final live-head equality: pass, immediate `headRefOid` is `<head-sha>`, equal to `reviewedHeadSha`.
+- Result: would be submitted via `gh pr review <url> --approve --body "Review complete, required checks are green, and the PR is merge-ready."`, but was not executed, GitHub is unavailable in this eval.
 
-- Findings/threads: no unresolved findings, zero unresolved threads
-- CI: green for current `<head-sha>`
-- PR body: current for `<head-sha>`
-- Self-authorship comparison: `<pr-author>` vs `<current-user>`, pass
-- Final live-head equality: `<head-sha>` = `<head-sha>`, pass
-- Result: would be submitted via `gh pr review --approve`, but was not executed, GitHub is unavailable in this eval.
+If the authenticated login equaled `<pr-author>`, approval would be blocked. If the final `headRefOid` were `<changed-head-sha>`, approval would be blocked pending normal review of that exact changed head.
 
-The final operations would be: re-fetch the live `headRefOid` as the immediately preceding API call, verify it equals `<head-sha>` with no intervening call, then run:
-
-```bash
-gh pr review <pr-url> --approve --body "Review complete, required checks are green, and the PR is merge-ready."
-```
-
-If both logins were equal, approval would be blocked for self-authorship. If the final live head were `<changed-head-sha>`, approval would be blocked pending a fresh normal review of that exact head.
+### Deviations
+GitHub API queries and approval submission were intentionally not executed for this eval.

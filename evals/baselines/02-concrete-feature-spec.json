@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "02-concrete-feature-spec",
+  "taskVersion": 2,
+  "judgeVersion": 1,
+  "judgeModel": "claude-opus-4-8",
+  "judgeReasoningEffort": "xhigh",
+  "execModel": null,
+  "execReasoningEffort": null,
+  "contractSource": "plugins/practices/skills/spec/SKILL.md",
+  "contractSha": "82f44342cd2990d49b5a7f17b5946ced6f532e8da1eb7da301ae0a547b524b26",
+  "acceptedAt": "2026-07-26T22:07:12Z",
+  "runs": [
+    {
+      "runDir": "evals/runs/20260726T215624Z-02-concrete-feature-spec-accept1785102984-r1",
+      "verdict": "pass",
+      "transcript": "transcripts/02-concrete-feature-spec/run1.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T215624Z-02-concrete-feature-spec-accept1785102984-r2",
+      "verdict": "pass",
+      "transcript": "transcripts/02-concrete-feature-spec/run2.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T215624Z-02-concrete-feature-spec-accept1785102984-r3",
+      "verdict": "pass",
+      "transcript": "transcripts/02-concrete-feature-spec/run3.md"
+    }
+  ],
+  "passRate": 1.0,
+  "failCount": 0
+}

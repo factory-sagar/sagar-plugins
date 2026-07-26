@@ -1,56 +1,80 @@
-# Review
+## Review
 
-**Mode:** `ship`  
-**Target:** `<live-base-sha>...<committed-head-sha>`  
-**Tier:** `deep`, injected facts classify the change as broad and high-consequence.  
-**Assessment:** **blocked**, the third permitted delta pass found a distinct actionable in-scope issue.
+**Mode:** ship  
+**Target:** `<live-base-sha B0>`...`<committed-head H3>`  
+**Tier:** deep — broad, high-consequence change requires independent reviewer fan-out and delta verification.  
+**Assessment:** blocked  
 
-## Required execution trace
+### Findings
+- [P<reviewer-assigned>·<reviewer-assigned>] Initial reconciled in-scope finding (F1) — `<injected path:line>`
+  - Scope: in-scope fix
+  - Mechanism: Preserved in the reviewers’ native finding.
+  - Impact: Preserved in the reviewers’ native finding.
+  - Correction: Applied, targeted validation passed, committed as `H1`, then fresh targeted and integration validation passed on `H1`.
+- [P<reviewer-assigned>·<reviewer-assigned>] First delta finding (F2) — `<injected path:line>`
+  - Scope: in-scope fix
+  - Mechanism: Preserved in the delta-review finding.
+  - Impact: Preserved in the delta-review finding.
+  - Correction: Applied, validated, and committed as `H2`; fresh targeted and integration validation passed on `H2`.
+- [P<reviewer-assigned>·<reviewer-assigned>] Second delta finding (F3) — `<injected path:line>`
+  - Scope: in-scope fix
+  - Mechanism: Preserved in the delta-review finding.
+  - Impact: Preserved in the delta-review finding.
+  - Correction: Applied, validated, and committed as `H3`; fresh targeted and integration validation passed on `H3`.
+- [P<reviewer-assigned>·<reviewer-assigned>] Third delta finding (F4) — `<injected path:line>`
+  - Scope: in-scope fix
+  - Mechanism: Preserved in the third delta-review finding.
+  - Impact: Actionable defect remains in the candidate head.
+  - Correction: Not applied. This is delta pass three, so the contract blocks before a fourth edit or review call.
 
-1. Fetch the live base, calculate `origin/<base>...HEAD` behind/ahead, and record the exact SHAs.
-2. If behind, rebase using the authorized synchronization procedure, resolve conflicts safely, rerun full verification, commit only any real synchronization result, fetch again, and require zero behind.
-3. Use the existing clean, verified, committed `H0`; do **not** create an empty commit.
-4. Generate and retain the exact `B0...H0` diff, changed-file list, untracked-file accounting, selected-lens manifest, coverage ledger, and CI-parity matrix.
-5. Run two fresh parallel `change-review` contexts against `B0...H0`: primary full lens review and independent challenge review. Run fresh `security` in parallel if the selected lenses require it. Accept each only with native `Assessment` and complete native `Coverage`.
-6. Reconcile the injected pair outcome, apply its one in-scope fix, run targeted validation plus one fresh integration gate, then commit it as `H1`.
-7. Run the delta loop exactly as follows, always with the full base diff as context:
+### Coverage
+- Files and behavior traced: Full deep review over exact committed `B0...H0`; delta passes over `H0...H1`, `H1...H2`, and `H2...H3`. Both initial reviewers’ native `Assessment` and complete `Coverage` were retained before reconciliation.
+- Untracked implementation files read: None. The injected starting worktree is clean; confirm with `git status --porcelain` and `git ls-files --others --exclude-standard`.
+- Policy lenses applied: Every mandatory review-policy lens, plus responsibility-specific security, boundary, state-transition, async, persistence, compatibility, operations, and CI/release lenses identified from the diff.
+- Validators: Injected local verification passed for `H0`. Fresh targeted validation and one fresh integration gate passed for each changed committed head, `H1`, `H2`, and `H3`.
+- Existing threads: Fetch every thread through the GraphQL `reviewThreads` query, triage each against the current code, reply through the REST replies endpoint, and resolve only resolved, non-question threads through the GraphQL mutation before any push.
+- CI at head SHA: Not available for `H3`, because `H3` must not be pushed while F4 remains unresolved.
+- PR body at head SHA: Fetch and assess the body at live remote `H0`. Do not refresh or stamp it for local `H3`, because the push is blocked.
 
-```text
-Initial pair: B0...H0  -> one in-scope fix -> H1
-Delta 1:      H0...H1  -> new distinct fix -> H2
-Delta 2:      H1...H2  -> new distinct fix -> H3
-Delta 3:      H2...H3  -> new distinct actionable finding -> STOP
-```
+### Approval gate
+- Findings/threads: n/a — ship mode does not authorize approval, and F4 remains unresolved.
+- CI: n/a — no candidate-head push is permitted.
+- PR body: n/a — no candidate-head push is permitted.
+- Self-authorship comparison: n/a — approval was not authorized.
+- Final live-head equality: n/a — approval and landing were not authorized.
+- Result: n/a — blocked before push by the exhausted delta-loop budget.
 
-Each accepted delta pass must be a fresh `change-review` context with complete native `Assessment` and `Coverage`, must verify prior findings closed, and must trace the correction’s blast radius. Add `security` for any delta touching risk-selected paths.
-
-## Findings
-
-- Pair reconciliation: one injected actionable, in-scope finding, fixed and committed in `H1`.
-- Delta 1: one new distinct actionable, in-scope finding, fixed and committed in `H2`.
-- Delta 2: one new distinct actionable, in-scope finding, fixed and committed in `H3`.
-- Delta 3: one new distinct actionable, in-scope finding remains unresolved.
-
-The prompt does not supply finding titles, paths, lines, mechanisms, or reviewer text, so those cannot be truthfully reconstructed.
-
-## Coverage
-
-- Files read: `n/a`, no target diff or changed-file list was supplied.
-- Behavior traced: complete only to the extent stated by the injected reviewer `Coverage` outcomes.
-- Program units: `n/a`, no approved-program units were supplied.
-- Lens evidence: required from the selector output and each accepted reviewer’s complete native `Coverage`.
-- Governing metadata: `review-pr` contract and all source-relative references loaded.
-- CI-parity matrix: must be completed from target workflows before accepting the reviewer results.
-- Validators: initial local verification passed by injected fact; every `H1` through `H3` correction additionally requires targeted validation and a fresh integration gate.
-- Existing comments: `n/a`, no PR identifier or thread data was supplied.
-- Reviewer returns: pair is complete by injected fact; each delta must meet the same native-field acceptance rule.
-- CI at head SHA: not reached.
-- PR body at head SHA: not reached.
-
-## Ship result
-
-The three-pass delta budget is exhausted. Per the contract, stop **before** fixing the third-delta issue, spawning another reviewer, pushing, refreshing the PR body, resolving threads, or watching CI. No `reviewedHeadSha` can be recorded, and `git push` must not run.
-
-## Deviations
-
-No workflow deviation. Git and Task actions were intentionally described rather than executed, as required by the evaluation constraint.
+### Deviations
+- Evaluation constraint: Git and Task tools were unavailable, so the following are exact required actions, not executed commands. Supplied repository state and reviewer outcomes were treated as injected facts.
+- First resolve live PR metadata and remote state:
+  ```bash
+  gh pr view "<PR_URL>" \
+    --json number,title,author,headRefName,headRefOid,baseRefName,state,body
+  gh api graphql -f query='
+  query {
+    repository(owner: "<owner>", name: "<repo>") {
+      pullRequest(number: <number>) {
+        reviewThreads(first: 100) {
+          nodes {
+            id
+            isResolved
+            comments(first: 1) { nodes { databaseId body } }
+          }
+        }
+      }
+    }
+  }'
+  ```
+- Before reviewing or pushing, fetch the live base and calculate current divergence:
+  ```bash
+  git fetch origin "<baseRefName>"
+  git rev-parse "origin/<baseRefName>"   # record B0
+  git rev-parse HEAD                     # record H0
+  git rev-list --left-right --count "origin/<baseRefName>...HEAD"
+  ```
+  The injected result is `0 <ahead>`, so no base synchronization or initial empty commit occurs.
+- If the first count were nonzero, use only the repository-authorized synchronization procedure, rerun the repository’s targeted validator and integration gate, commit any resulting intended changes without creating an empty commit, then re-fetch and require a zero-behind count before beginning `B...H` review.
+- Run two independent `change-review` contexts over the identical `B0...H0` diff, changed-file list, untracked-file result, repository instructions, validators, and applicable policy concerns. The second reviewer must not receive the first reviewer’s findings. Reconcile their complete native outputs, apply only F1, and commit `H1`.
+- Perform the three allowed delta passes exactly as `H0...H1`, `H1...H2`, and `H2...H3`, applying and validating F2 and F3 only. F4 is distinct, so the repeated-root-cause stop does not apply, but the three-pass budget does.
+- Do not edit for F4, do not run a fourth review call, do not create an empty commit, and do not push `H3`. A new user instruction is required to reset the delta-loop budget.
+- After that future instruction resolves F4 and verification passes, re-fetch the live base, require zero behind, fast-forward push, refresh the PR body for the pushed SHA ending with `<!-- pr-body-head=<full-head-sha> -->`, re-query review threads, and watch required CI.

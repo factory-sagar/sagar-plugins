@@ -1,100 +1,104 @@
-# Plan: Soft-delete and Restore Notes
+# Plan: Soft-Delete and Restore Notes
 
 ## Summary
 
-Replace destructive note removal with an ownership-checked lifecycle state. Deleted notes remain stored, disappear from normal listings, and can be restored through `POST /notes/:id/restore`.
+Replace physical note removal with an ownership-checked lifecycle state. Deleted notes remain stored, disappear from normal listings, and can be restored through `POST /notes/:id/restore`.
 
 ## Decisions
 
-- **D1 — Store lifecycle metadata beside each note in the existing `Map`.** Represent entries internally as note plus deletion state, while returning only the note payload. Evidence: `src/store/notes.js:1-10`. Rejected: expose a tombstone field on note payloads, which changes API shapes / move deleted notes into a second map, which creates synchronization risk.
-- **D2 — Keep filtering, ownership checks, and delete/restore transitions in the store.** Evidence: repository policy assigns behavior and destructive ownership checks to the store (`docs/conventions.md:2-3`), matching current deletion (`src/store/notes.js:13-15`). Rejected: route-layer filtering or authorization, which violates the documented boundary.
-- **D3 — Make delete and restore idempotent, returning `204` without distinguishing missing, active, deleted, or foreign-owned IDs.** This preserves the existing non-disclosing delete contract (`src/routes/notes.js:6-9`). Rejected: `200` with the restored note, which adds an unrequested response contract / `403` or `404`, which exposes existence or ownership distinctions absent today.
+- **D1: Keep active and deleted notes in the existing `Map` using an internal `{ note, deleted }` envelope.** This preserves public note shapes while retaining restorable records. Evidence: `src/store/notes.js:1`, `src/store/notes.js:7-10`, `src/store/notes.js:13-15`. Rejected: adding `deleted` directly to public notes, because metadata could leak through API responses / using a separate archive map, because synchronization and ownership logic would be duplicated.
+- **D2: Own filtering, authorization, and lifecycle transitions in the store.** Routes only forward `userId` and `id`. Evidence: `docs/conventions.md:2-3`, `src/routes/notes.js:4-9`, `src/store/notes.js:13-15`. Rejected: route-layer ownership checks, because they violate the documented boundary / exposing raw deleted records to routes, because it spreads lifecycle policy across layers.
+- **D3: Make delete and restore idempotent opaque commands returning `204`.** Missing, foreign-owned, already-deleted, and already-active records remain no-ops. Evidence: `src/routes/notes.js:6-9`, `src/store/notes.js:13-15`. Rejected: `200` with a note body, because it creates an unnecessary response contract / distinguishable `403`, `404`, or `409` responses, because they could disclose note existence.
+- **D4: Establish dependency-free behavioral tests before implementation.** Existing modules use ESM (`src/routes/notes.js:1`, `src/store/notes.js:3`), while the tracked repository has no test configuration. Use Node’s built-in test runner. Rejected: adding a third-party framework, because this scope does not justify another dependency / implementing without regression tests, because lifecycle and ownership failures risk data loss or exposure.
 
 ## Goal / Non-goals
 
-- **Goal:** Owned notes can transition between active and deleted states without losing their ID or content.
-- **Non-goals:**
-  - Trash/archive listing, permanent purge, retention, or deletion timestamps.
-  - Durable persistence across process restarts.
-  - Changes to authentication, note-body validation, or existing response payloads.
+- **Goal:** An owner can delete, hide, and later restore a note without losing its ID or content.
+- **Settled constraints:** The endpoint is `POST /notes/:id/restore`; deleted notes remain stored and are excluded from normal listing.
+- **Non-goals:** Permanent purge, trash listing, retention expiry, durable cross-restart storage, authentication changes, or exposing deletion metadata.
 
 ## Acceptance Criteria
 
-- Deleting an owned active note returns `204`, removes it from `GET /notes`, but retains its record.
-- `POST /notes/:id/restore` returns `204` and makes an owned deleted note visible again with the same ID and content.
-- Repeated delete or restore requests are safe no-ops.
-- Missing and foreign-owned IDs cannot be deleted or restored and reveal no ownership information.
-- `GET /notes` returns only active notes belonging to the requesting user.
-- Existing create and list response shapes remain unchanged.
+- Deleting an owned note returns `204`, retains its record, and removes it from `GET /notes`.
+- Restoring that note returns `204` and restores the same ID and content to `GET /notes`.
+- Delete and restore are idempotent.
+- Missing and foreign-owned IDs cannot be deleted or restored.
+- `GET /notes` returns only active notes owned by the requester.
+- Internal lifecycle metadata never appears in note responses.
+- Existing create and active-list behavior remains unchanged.
+- Store, route, and complete repository validation pass.
 
 ## Territory
 
 | Constraint / convention / gate | Evidence | Bearing on the plan |
 | --- | --- | --- |
-| Notes are held in one process-local `Map`. | `src/store/notes.js:1` | Soft-delete must retain entries in this map; restart durability requires a separate persistence plan. |
-| Listing currently returns every note owned by the user. | `src/store/notes.js:3-4` | Active-state filtering belongs in `listNotes`. |
-| Creation stores and returns the public note object. | `src/store/notes.js:7-10` | Lifecycle metadata should not be added to that public object. |
-| Deletion currently checks ownership and removes the entry. | `src/store/notes.js:13-15` | Replace removal with an owned state transition and mirror it for restoration. |
-| Route handlers are deliberately thin. | `docs/conventions.md:2`; `src/routes/notes.js:3-10` | The restore handler should only delegate and translate the result to HTTP. |
-| No tracked test or package configuration exists. | Repository tree (`git ls-tree -r HEAD`) | The first implementation unit must establish a minimal executable test seam without introducing unnecessary dependencies. |
-| History contains only the baseline implementation. | Commit `5184874` | There are no prior restore attempts or compatibility constraints to preserve beyond current behavior. |
+| Notes live in one process-local `Map`. | `src/store/notes.js:1` | Soft deletion should retain records in this collection. |
+| Listing currently filters only by owner. | `src/store/notes.js:3-4` | Add active-state filtering beside ownership filtering. |
+| Creation stores and returns public note objects. | `src/store/notes.js:7-10` | Lifecycle metadata must remain internal. |
+| IDs derive from map size. | `src/store/notes.js:7-10` | Retaining deleted entries avoids ID reuse caused by shrinking the map. |
+| Delete checks ownership before physical removal. | `src/store/notes.js:13-15` | Replace removal with an owned state transition and mirror it for restore. |
+| HTTP handlers delegate identity and parameters to the store. | `src/routes/notes.js:4-9` | Restore should remain thin framework glue. |
+| Behavior and destructive ownership checks belong in the store. | `docs/conventions.md:2-3` | Both lifecycle transitions must enforce ownership below the route layer. |
 
 ## Units
 
-### U1 — Pin the lifecycle contract [executor: `test-engineer` (TDD RED)] [risk: low]
+### U1: Pin the lifecycle contract [executor: `test-engineer`] [risk: low]
 
-- **Scope:** Add a minimal no-dependency test harness and failing behavior tests through the public store and route-registration seams.
-- **Files:** `package.json` (new), `test/notes.test.js` (new).
-- **Acceptance:**
-  - Tests cover delete-hidden-restore, content/ID preservation, repeat operations, missing IDs, and cross-user isolation.
-  - Route tests require registration of `POST /notes/:id/restore` and assert its `204` response.
-  - The tests fail for the missing behavior rather than syntax or harness errors.
+- **Scope:** Establish an ESM test command and RED tests through exported store behavior.
+- **Files:** `package.json` (new), `test/notes-store.test.js` (new)
+- **Acceptance:** Tests cover delete-hide-restore, identity preservation, repeated transitions, missing IDs, ownership isolation, and unchanged create/list behavior; failures are behavioral rather than harness errors.
 - **Depends on:** None.
-- **Deviations contract:** minor contradiction → conservative option + log; premise contradiction → stop and report. Never deviate silently.
+- **Deviations contract:** Minor contradiction means choose the conservative option and log it; premise contradiction means stop and report. Never deviate silently.
 
-### U2 — Implement soft-delete and restore [executor: `implementer` (TDD GREEN)] [risk: high]
+### U2: Implement the store lifecycle [executor: `tdd-workflow`] [risk: high]
 
-- **Scope:** Refactor stored entries to own lifecycle state, filter deleted notes, replace hard deletion, add `restoreNote`, and register the restore route.
-- **Files:** `src/store/notes.js`, `src/routes/notes.js`.
-- **Acceptance:**
-  - No deletion path calls `Map.delete`.
-  - Both state transitions enforce ownership in the store.
-  - Restore uses `POST /notes/:id/restore` and returns `204`.
-  - All U1 tests pass without changing their behavioral expectations.
+- **Scope:** Introduce the internal envelope, replace hard deletion, filter deleted records, and add a new ownership-aware `restoreNote` export.
+- **Files:** `src/store/notes.js`, `test/notes-store.test.js` (new)
+- **Acceptance:** U1 tests pass; no deletion path calls `Map.delete`; public results contain only note data; unauthorized transitions cannot change visibility.
 - **Depends on:** U1.
-- **Deviations contract:** minor contradiction → conservative option + log; premise contradiction → stop and report. Never deviate silently.
+- **Deviations contract:** Minor contradiction means choose the conservative option and log it; premise contradiction means stop and report. Never deviate silently.
 
-### U3 — Run repository verification [executor: `verification-loop`] [risk: low]
+### U3: Add the restore endpoint test-first [executor: `tdd-workflow`] [risk: high]
 
-- **Scope:** Run the targeted lifecycle tests and every repository-defined lint, type, test, and build gate that exists after U1 establishes configuration.
-- **Files:** No planned production changes.
-- **Acceptance:** All applicable validators pass, with every changed lifecycle invariant mapped to observable test evidence.
+- **Scope:** Test and register `POST /notes/:id/restore` as a thin `restoreNote` caller.
+- **Files:** `src/routes/notes.js`, `test/notes-routes.test.js` (new)
+- **Acceptance:** The route forwards `req.user.id` and `req.params.id`, returns an empty `204`, supports repeated and unauthorized attempts safely, and preserves existing route behavior.
 - **Depends on:** U2.
-- **Deviations contract:** minor contradiction → conservative option + log; premise contradiction → stop and report. Never deviate silently.
+- **Deviations contract:** Minor contradiction means choose the conservative option and log it; premise contradiction means stop and report. Never deviate silently.
+
+### U4: Run repository verification [executor: `verification-loop`] [risk: low]
+
+- **Scope:** Run targeted tests followed by every repository-defined test, lint, type-check, and build gate.
+- **Files:** No planned production changes.
+- **Acceptance:** All applicable validators pass and the final diff contains only the planned store, route, and test-harness changes.
+- **Depends on:** U2, U3.
+- **Deviations contract:** Minor contradiction means choose the conservative option and log it; premise contradiction means stop and report. Never deviate silently.
 
 ## Sequencing
 
-- **Wave 1:** U1.
-- **Wave 2:** U2.
-- **Wave 3:** U3.
-- **First visible result:** After U2, the full delete-list-restore-list journey passes through the registered route seam.
-- Parallel work is not recommended because U1 and U2 share the same behavioral contract.
+- **Wave 1:** U1
+- **Wave 2:** U2
+- **Wave 3:** U3
+- **Wave 4:** U4
+- **First visible result:** U2 proves through the store seam that deleted notes remain restorable while hidden. U3 exposes the complete HTTP journey.
+- Parallel work is not recommended because each unit establishes the contract required by the next.
 
 ## Risks & Rollback
 
-- **Accidental data loss:** retaining a `Map.delete` path would defeat restoration. Mitigate with delete-restore identity tests.
-- **Authorization regression:** restoring another user’s note could expose data. Keep ownership checks in the store and test both active and deleted foreign records.
-- **API leakage:** returning different statuses could disclose note existence. Preserve uniform `204` behavior.
-- **Rollback:** Revert the route and store changes together. No migration or persistent-data cleanup is required for the current in-memory store.
+- **Accidental hard deletion:** Test identity-preserving restoration and prohibit `Map.delete` in the lifecycle path.
+- **Cross-user restoration:** Keep ownership checks in `restoreNote` and test foreign records.
+- **Metadata leakage:** Keep lifecycle state in the internal envelope and assert public response shapes.
+- **Rollback:** Revert route and store lifecycle changes together. The process-local store requires no data migration.
 
 ## Open Questions
 
-- **Q1: Must deleted notes survive process restarts?** Recommended: no, interpret “survive” as surviving deletion within the existing process-local store. If yes, this plan must expand to durable storage, migration, and persistence-adapter tests.
-- **Q2: Which test runtime should establish the missing harness?** Recommended: Node’s built-in `node:test` with ESM configuration, avoiding a new dependency. If an external harness exists outside the tracked repository, use that convention instead and log the deviation.
+- **Q1: Must deleted notes survive process restarts?** Recommended: no, interpret survival within the existing process-local store. If required, replace this plan with durable storage, migration, and persistence tests.
+- **Q2: Is permanent purge or retention required later?** Recommended: no for this feature. If accepted, deleted records remain for the process lifetime; purge policy can be designed separately.
 
 ## Evidence Log
 
 - Read `docs/conventions.md`, `src/store/notes.js`, and `src/routes/notes.js`.
-- Searched the repository for tests, restore behavior, ownership rules, TODOs, and validation configuration.
-- Inspected commit `5184874` and target-file history for prior attempts or reverts.
-- Confirmed the tracked tree contains only the two source modules and conventions document.
+- Inspected the complete tracked tree for test, package, and CI configuration.
+- Searched for existing soft-delete, restore, TODO, and ownership implementations; none were present.
+- Inspected target-file history; only the baseline notes implementation exists.
+- Verified the working tree remained unchanged.

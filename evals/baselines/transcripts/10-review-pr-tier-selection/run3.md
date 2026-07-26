@@ -1,27 +1,29 @@
-# Review
+## Review
 
 **Mode:** fix  
-**Target:** `0f957e2...fac2f56`  
-**Tier:** light, this is a two-file error-message contract update with no new authorization decision, persistence, or concurrent state.
+**Target:** `3d4e23e30bab1ec453c28b3ad7644d87f2ac47d1...ce74ed2989714668056340da54c9e9c260ce9ca2`  
+**Tier:** light, two-file message-only change with unchanged authorization logic; an otherwise small schema migration or concurrency-control change requires deep review due to durable-state or race risks.  
+**Assessment:** correct  
 
-## Fixed
+### Findings
+- None.
 
-- [P3·high] The updated test used a substring matcher, so a message with extra text would pass.
-  - Fixed in `src/auth-guard.test.ts` by asserting `new Error('Unauthorized: sign in required')`.
-  - Committed locally: `fac2f56 test(auth): assert exact unauthorized message`
+### Coverage
+- Files and behavior traced: `src/auth-guard.ts`, `src/auth-guard.test.ts`; null-user denial and authenticated-user pass-through.
+- Untracked implementation files read: none, working tree clean.
+- Policy lenses applied: intent, correctness, real-seam tests, failures, scope, authentication/authorization.
+- Validators: `git diff --check main...feature/guard-message`; Node runtime assertions for both guard paths, passed.
+- Existing threads: n/a, branch review.
+- CI at head SHA: n/a, no PR.
+- PR body at head SHA: n/a, no PR.
 
-## Coverage
+### Approval gate
+- Findings/threads: no findings; threads n/a.
+- CI: n/a.
+- PR body: n/a.
+- Self-authorship comparison: n/a.
+- Final live-head equality: n/a.
+- Result: n/a, approval not authorized.
 
-- **Selected lenses:** mandatory, authentication/authorization, public contracts. The persistence lens was selected only by the unified diff's `index` header; no durable-state behavior exists.
-- **Behavior traced:** `null` throws the exact error, a present user is returned unchanged.
-- **Validators passed:** TypeScript syntax checks, direct Node behavioral assertions, `git diff --check`.
-- **CI parity:** no manifest, workflow, or configured test runner exists in this repository.
-- **Worktree:** clean. No push performed.
-
-## Tier contrast
-
-An otherwise small schema migration or concurrency-control change is **deep**, because the contract classifies migrations and concurrency as high-consequence responsibilities. In `fix` mode, that would require the committed-head primary/challenge verification pair, plus security review when selected, before stopping.
-
-## Deviations
-
-No other skill or droid was substituted; the review was performed inline as requested.
+### Deviations
+none

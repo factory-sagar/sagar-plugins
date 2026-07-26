@@ -8,21 +8,21 @@
   "execModel": "gpt-5.6-sol",
   "execReasoningEffort": "xhigh",
   "contractSource": "plugins/practices/droids/planner.md",
-  "contractSha": "528173e63253db39d42d076a6dbbdc44758b6002c2d2317faf858eeb8a32ac50",
-  "acceptedAt": "2026-07-26T09:10:08Z",
+  "contractSha": "e0e3a2c9353f21d7416096d994b232d86d79c77ec8c27719f75bd2be8f76cdb7",
+  "acceptedAt": "2026-07-26T21:56:20Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260726T085321Z-22-planner-decomposition-accept1785056001-r1",
+      "runDir": "evals/runs/20260726T214310Z-22-planner-decomposition-accept1785102190-r1",
       "verdict": "pass",
       "transcript": "transcripts/22-planner-decomposition/run1.md"
     },
     {
-      "runDir": "evals/runs/20260726T085321Z-22-planner-decomposition-accept1785056001-r2",
+      "runDir": "evals/runs/20260726T214310Z-22-planner-decomposition-accept1785102190-r2",
       "verdict": "pass",
       "transcript": "transcripts/22-planner-decomposition/run2.md"
     },
     {
-      "runDir": "evals/runs/20260726T085321Z-22-planner-decomposition-accept1785056001-r3",
+      "runDir": "evals/runs/20260726T214310Z-22-planner-decomposition-accept1785102190-r3",
       "verdict": "pass",
       "transcript": "transcripts/22-planner-decomposition/run3.md"
     }

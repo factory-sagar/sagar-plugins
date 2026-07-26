@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "07-verification-loop",
+  "taskVersion": 2,
+  "judgeVersion": 1,
+  "judgeModel": "claude-opus-4-8",
+  "judgeReasoningEffort": "xhigh",
+  "execModel": null,
+  "execReasoningEffort": null,
+  "contractSource": "plugins/practices/skills/verification-loop/SKILL.md",
+  "contractSha": "d57486b5b9cc0c43e4e9c92abf276cd3f2ba9ac21f7053c53c0d6496e00c9176",
+  "acceptedAt": "2026-07-26T22:13:05Z",
+  "runs": [
+    {
+      "runDir": "evals/runs/20260726T220718Z-07-verification-loop-accept1785103638-r1",
+      "verdict": "partial",
+      "transcript": "transcripts/07-verification-loop/run1.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T220718Z-07-verification-loop-accept1785103638-r2",
+      "verdict": "pass",
+      "transcript": "transcripts/07-verification-loop/run2.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T220718Z-07-verification-loop-accept1785103638-r3",
+      "verdict": "partial",
+      "transcript": "transcripts/07-verification-loop/run3.md"
+    }
+  ],
+  "passRate": 0.6666666666666666,
+  "failCount": 0
+}

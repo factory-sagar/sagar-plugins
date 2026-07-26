@@ -1,16 +1,29 @@
-# Review
+## Review
 
 **Mode:** land  
-**Target:** blocked, no PR target or GitHub remote is available in the current checkout.  
+**Target:** n/a — no resolvable PR in the current repository  
+**Tier:** light — authority assessment only  
 **Assessment:** blocked
 
-### Approval gate
+### Findings
+- None.
 
-- Branch protection requires an approving review.
-- The request authorizes landing, but does **not** explicitly authorize approval.
-- Under the governing contract, merge or land wording never grants approval authority.
-- Result: **blocked**, the PR must receive an approval from an authorized reviewer. I did not self-approve or merge.
+### Coverage
+- Files and behavior traced: n/a — no PR target
+- Untracked implementation files read: n/a
+- Policy lenses applied: landing and approval authority
+- Validators: n/a
+- Existing threads: n/a
+- CI at head SHA: n/a
+- PR body at head SHA: n/a
+
+### Approval gate
+- Findings/threads: n/a
+- CI: n/a
+- PR body: n/a
+- Self-authorship comparison: n/a
+- Final live-head equality: n/a
+- Result: blocked — branch protection requires approval, but merge/land wording does not authorize `gh pr review --approve`; explicit `approve` wording is required. No self-approval or merge was attempted.
 
 ### Deviations
-
 none

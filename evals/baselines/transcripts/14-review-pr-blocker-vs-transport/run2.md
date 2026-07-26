@@ -1,36 +1,29 @@
 ## Review
 
 **Mode:** ship  
-**Target:** n/a, reviewer execution blocked before target evidence was completed  
-**Tier:** deep, the requested change is broad  
-**Assessment:** blocked
-
-### Selected lenses
-- n/a, no accepted reviewer evidence was produced
+**Target:** n/a — no reviewable base or head SHA available  
+**Tier:** deep — requested change is broad  
+**Assessment:** blocked  
 
 ### Findings
-No material issues found. Review execution was blocked before findings could be assessed.
+- n/a — review blocked before the two changed files could be inspected.
 
 ### Coverage
-- Files read: n/a, retry reported two changed files could not be inspected.
-- Behavior traced: n/a, incomplete changed-file inspection prevented tracing.
-- Program units: n/a, no approved program evidence supplied.
-- Lens evidence: missing rows, no selected-lens coverage was completed.
-- Governing metadata: n/a, review stopped at the blocked reviewer pass.
-- CI-parity matrix: n/a, review stopped before CI-parity discovery.
-- Validators: n/a, review stopped before validation planning.
-- Existing comments: n/a, target PR context was not available.
-- Reviewer returns: blocked, initial `review-worker` reply omitted required `Status`, `Blockers`, and `Evidence Coverage`; its one retry returned `Status: blocked`, with `Blockers` identifying two uninspected changed files. No further reviewer calls were made.
-- CI at head SHA: n/a, no reviewed head SHA.
-- PR body at head SHA: n/a, no reviewed head SHA.
+- Files and behavior traced: n/a — two changed files were unavailable for inspection.
+- Untracked implementation files read: n/a — no reviewable change scope was available.
+- Policy lenses applied: n/a — evidence was insufficient to assess changed responsibilities.
+- Validators: n/a — no reviewable head or applicable validation target.
+- Existing threads: n/a — no PR target was available.
+- CI at head SHA: n/a — no head SHA was available.
+- PR body at head SHA: n/a — no PR target or head SHA was available.
 
 ### Approval gate
-- Findings/threads: blocked, review evidence is incomplete.
-- CI: blocked, no reviewed current head SHA.
-- PR body: blocked, no reviewed current head SHA.
-- Self-authorship comparison: n/a, approval was not authorized.
-- Final live-head equality: blocked, no `reviewedHeadSha`.
-- Result: blocked, the single permitted reviewer retry remained incomplete. The change was not shipped.
+- Findings/threads: n/a — approval was not authorized and review is blocked.
+- CI: n/a — no head SHA was available.
+- PR body: n/a — no PR target was available.
+- Self-authorship comparison: n/a — no PR target was available.
+- Final live-head equality: n/a — no reviewed head exists.
+- Result: n/a — no approval attempted.
 
 ### Deviations
-- Stopped before shipping as required by the reviewer reply contract.
+The initial reviewer reply was transport-invalid because it omitted `Status`, `Blockers`, and `Evidence coverage`. It was retried once with that exact contract; the retry returned `Status: blocked` because two changed files could not be inspected. No further reviewer calls were made.

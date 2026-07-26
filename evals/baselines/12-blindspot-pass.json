@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "12-blindspot-pass",
+  "taskVersion": 1,
+  "judgeVersion": 1,
+  "judgeModel": "claude-opus-4-8",
+  "judgeReasoningEffort": "xhigh",
+  "execModel": null,
+  "execReasoningEffort": null,
+  "contractSource": "plugins/practices/skills/discovering-unknowns/SKILL.md",
+  "contractSha": "ac0c64bac07348f423a8e845f46f28508ae402d64c6af314dc5ef70ef3ffb4a7",
+  "acceptedAt": "2026-07-26T21:28:02Z",
+  "runs": [
+    {
+      "runDir": "evals/runs/20260726T212256Z-12-blindspot-pass-accept1785100976-r1",
+      "verdict": "pass",
+      "transcript": "transcripts/12-blindspot-pass/run1.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T212256Z-12-blindspot-pass-accept1785100976-r2",
+      "verdict": "pass",
+      "transcript": "transcripts/12-blindspot-pass/run2.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T212256Z-12-blindspot-pass-accept1785100976-r3",
+      "verdict": "pass",
+      "transcript": "transcripts/12-blindspot-pass/run3.md"
+    }
+  ],
+  "passRate": 1.0,
+  "failCount": 0
+}
