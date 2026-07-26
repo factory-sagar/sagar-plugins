@@ -1,10 +1,87 @@
 # Golden Task 03: Architecture Scan
 
-Version: 1
+Version: 2
 
 ## Target
 
 `architecture-scan`.
+
+## Setup
+
+```bash
+mkdir -p src/billing src/http src/jobs
+cat > src/billing/invoice.js <<'JS'
+const db = require('../db');
+const stripe = require('../vendor/stripe');
+const { sendEmail } = require('../mail');
+
+// Charges the card, writes the row, emails the customer, and formats the PDF filename.
+async function finalizeInvoice(rawRequest) {
+  const payload = JSON.parse(rawRequest.body);
+  const amount = payload.amount_cents;
+  const charge = await stripe.charge(payload.card_token, amount);
+  await db.query(
+    `INSERT INTO invoices (customer, cents, charge_id) VALUES ('${payload.customer}', ${amount}, '${charge.id}')`,
+  );
+  sendEmail(payload.email, `invoice-${payload.customer}-${Date.now()}.pdf`);
+  return { ok: true, charge };
+}
+
+function formatCents(cents) {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+module.exports = { finalizeInvoice, formatCents };
+JS
+cat > src/http/routes.js <<'JS'
+const { finalizeInvoice, formatCents } = require('../billing/invoice');
+const db = require('../db');
+
+// Route handlers reach into the database directly and re-implement formatting.
+async function handleInvoicePost(req, res) {
+  const result = await finalizeInvoice(req);
+  res.json(result);
+}
+
+async function handleInvoiceList(req, res) {
+  const rows = await db.query('SELECT * FROM invoices');
+  res.json(rows.map((r) => ({ ...r, total: `$${(r.cents / 100).toFixed(2)}` })));
+}
+
+module.exports = { handleInvoicePost, handleInvoiceList, formatCents };
+JS
+cat > src/jobs/retry.js <<'JS'
+const { finalizeInvoice } = require('../billing/invoice');
+
+// Fire-and-forget retries with no ownership of the resulting promise.
+function retryFailed(requests) {
+  for (const request of requests) {
+    finalizeInvoice(request).catch(() => {});
+  }
+  return 'scheduled';
+}
+
+module.exports = { retryFailed };
+JS
+cat > src/db.js <<'JS'
+module.exports = { query: async () => [] };
+JS
+mkdir -p src/vendor
+cat > src/vendor/stripe.js <<'JS'
+module.exports = { charge: async () => ({ id: 'ch_test' }) };
+JS
+cat > src/mail.js <<'JS'
+module.exports = { sendEmail: () => undefined };
+JS
+cat > package.json <<'JSON'
+{ "name": "billing-service", "version": "1.0.0", "scripts": { "test": "echo no tests" } }
+JSON
+cat > README.md <<'MD'
+# billing-service
+
+Charges invoices. No test suite yet.
+MD
+```
 
 ## Prompt
 

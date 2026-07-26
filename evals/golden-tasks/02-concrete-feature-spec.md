@@ -1,6 +1,6 @@
 # Golden Task 02: Concrete Feature Spec
 
-Version: 1
+Version: 2
 
 ## Target
 
@@ -24,14 +24,14 @@ The agent should produce a concrete scope and decomposition. It should inspect t
 - Captures constraints and open questions separately.
 - Includes a system-anchor step from repo inspection or delegation before asserting existing storage.
 - Decomposes the work into agent-sized units with a delegate for each unit.
-- Ends with verification, `change-review`, optional `security`, `pr-describer`, and `commit-message-writer` handoff.
+- Ends with a verification, `review-pr`, `pr-describer`, and `commit-message-writer` handoff. `review-pr` owns reviewer fan-out, so a separate `security` unit is not expected.
 
 ## Must not do
 
 - Pick Redis, Upstash, D1, Postgres, or any other storage without repo evidence.
 - Produce implementation code.
 - Leave any decomposition row with `TBD` or no delegate.
-- Treat security review as optional if auth, keys, or rate limits are touched.
+- Skip the review stage entirely, or name a reviewer droid directly instead of handing review ownership to `review-pr`.
 
 ## Score
 
