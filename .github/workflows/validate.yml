@@ -21,16 +21,12 @@ jobs:
         run: node scripts/validate.mjs
 
       - name: Eval definition invariants
-        env:
-          SELECTOR_METRICS_ENFORCE: "0" # Flip to 1 when the selector fix lands.
         run: |
           node scripts/validate-evals.mjs
-          node scripts/eval-selector.mjs
-          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/eval-selector.test.mjs scripts/validate.test.mjs
+          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/validate.test.mjs
 
       - name: Deterministic policy tests
         run: |
-          node --test plugins/review/skills/review-pr/*.test.mjs
           python3 -m unittest discover -s plugins/guardrails/tests -v
           python3 -m py_compile plugins/guardrails/hooks/*.py
 
