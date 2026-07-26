@@ -1,6 +1,6 @@
 ---
 name: review-pr
-version: 2.0.0
+version: 3.0.0
 description: |
   Review a PR, branch, commit, or staged change through the mandatory review policy and
   diff-selected risk lenses. Plain "review" is read-only; explicit approve, fix, comment,
@@ -141,35 +141,9 @@ its independent passes over the shared notes format, then reconcile them. For br
 high-consequence mutating reviews, the pre-push pair review supplies the independent broad
 mutating review on the committed head, without a preliminary deep pair for that same head.
 
-Every `change-review` Task description starts with exactly one stage tag. Construct every
-budgeted security Task atomically as `<review-stage tag ending in :security> [security:selected] <human
-label>`: the review-stage tag is always the first token and `[security:selected]` immediately
-follows it. This applies to standard, retry, deep, pair, and loop security tasks; never issue
-partial-token repairs, and before spawning, self-check that both required tokens are present. For example:
-`[review:standard:security] [security:selected] Security review change scope`.
-
-- `[review:standard]` for a single ordinary `change-review` pass;
-- `[review:standard:retry]` for its one evidence-completion retry;
-- `[review:standard:security]` for the `[security:selected]` risk-selected security pass, plus
-  `[review:standard:retry:security]` for its one evidence-completion retry;
-- `[review:deep:primary]` and `[review:deep:challenge]` for independent deep
-  `change-review` passes, plus `[review:deep:retry:primary]` and
-  `[review:deep:retry:challenge]` for exactly one evidence-completion retry after their
-  respective passes; `[review:deep:security]` is for `[security:selected]` deep security and
-  `[review:deep:retry:security]` is for its one evidence-completion retry;
-- `[review:pair:primary]` and `[review:pair:challenge]` for the two independent pre-push
-  reviewers of a broad or high-consequence mutating change, plus `[review:pair:security]` when
-  `[security:selected]` security is selected. The pair permits `[review:pair:retry:primary]`,
-  `[review:pair:retry:challenge]`, and `[review:pair:retry:security]` for exactly one
-  evidence-completion retry after their respective passes;
-- `[review:loop:<n>]` for the nth delta verification pass of the review-fix loop, plus
-  `[review:loop:<n>:retry]` for its one evidence-completion retry;
-  `[review:loop:<n>:security]` for the `[security:selected]` security pass over a correction
-  that touches risk-selected paths, plus `[review:loop:<n>:retry:security]` for its one
-  evidence-completion retry. `<n>` is `1`, `2`, or `3` and passes run in order.
-
-The guardrails plugin enforces these tags when installed. Never reuse a review stage slot; the
-delta verification loop is bounded to three passes per user request.
+Run reviewers in the roles this workflow describes. Reviewer fan-out is bounded per user
+request: the guardrails plugin denies calls past its cap, and a new user instruction resets the
+budget. The delta verification loop still runs at most three passes.
 
 ### Semantic task gate
 
@@ -195,10 +169,9 @@ rules below apply it, and on conflict that file wins:
   completed review outcome when those requirements are met; reconcile its blocking findings.
 
 Retry once only for a refusal, inability to complete the pass, missing required native fields, or
-incomplete evidence. A `[security:selected]` standard, deep, pair, or loop security pass uses
-its stage-specific security retry tag above. If the retry remains incomplete, stop the workflow
-and report it blocked; do not ship or land. The `review-worker` contract does not apply to
-`change-review` or `security`.
+incomplete evidence. If the retry remains incomplete, stop the workflow and report it blocked;
+do not ship or land. The `review-worker` contract does not apply to `change-review` or
+`security`.
 
 Every reviewer prompt must include the tracked diff scope and the explicit absolute path list
 for program-created untracked files. Require each untracked file to be read and entered in the
@@ -213,7 +186,7 @@ logic remains light only when no size/unit threshold or independently high-conse
 responsibility applies; overlapping selector signals from one small existing behavior are not
 distinct risk responsibilities. Deep
 review is mandatory in those cases for report and approve modes. In mutating modes, the pre-push
-verification loop's primary/challenge pair, plus stage-matched security when selected, supplies
+verification loop's primary/challenge pair, plus security when selected, supplies
 that independent broad review instead; do not also run a preliminary deep pair for the same
 head.
 
@@ -259,9 +232,9 @@ For every broad or high-consequence review in `fix`, `comments`, `ship`, or `lan
 this loop before any push. It requires a clean, verified, synchronized, committed current HEAD,
 but does not require initial findings to create a fix commit. Commit review fixes when they
 exist; if there are no changes, use the existing committed current HEAD. Never create an empty
-commit. A light mutating review may run delta verification passes under the same tags and
-budget after a correction it wants re-verified, with its completed `[review:standard]` review
-as the initial review; the pair is mandatory only for broad or high-consequence changes.
+commit. A light mutating review may run delta verification passes after a correction it wants
+re-verified, with its completed initial review; the pair is mandatory only for broad or
+high-consequence changes.
 
 1. Before the initial pair, fetch the live base ref and calculate
    `origin/<base>...HEAD` behind/ahead state. If behind, apply the active workflow's authorized
@@ -271,34 +244,31 @@ as the initial review; the pair is mandatory only for broad or high-consequence 
    Then record the exact `base SHA...head SHA` diff, complete changed-file list, and applicable
    untracked-file accounting.
 2. Spawn **two fresh `change-review` Task contexts in parallel** against that same exact
-   committed diff, prefixed `[review:pair:primary]` and `[review:pair:challenge]`. Do not use
-   `review-worker` for this loop. The primary performs the full selected-lens review. The
-   challenge focuses on ownership, transitions, rule interaction, completeness, tests,
-   metadata, and CI parity without seeing the first result. When security is selected, spawn
-   one fresh, independent `[review:pair:security] [security:selected]` context alongside them.
+   committed diff. Do not use `review-worker` for this loop. The primary performs the full
+   selected-lens review. The challenge focuses on ownership, transitions, rule interaction,
+   completeness, tests, metadata, and CI parity without seeing the first result. When security
+   is selected, spawn one fresh, independent `security` context alongside them.
    Give every reviewer the complete changed-file list and applicable untracked-file accounting,
    and require semantic acceptance with complete selected-lens evidence coverage.
 3. Reconcile the pair results into one finding set. The pair runs once per user request; every
    subsequent verification is a delta pass.
 4. If reconciliation leaves actionable in-scope findings, apply them; for each
    head-changing correction run fresh targeted validation plus one fresh integration gate for
-   the new head, and commit. Then run one **delta verification pass**: a single fresh `change-review`
-   context tagged `[review:loop:<n>]` (starting at `n` = 1) that reviews the correction delta
+   the new head, and commit. Then run one **delta verification pass**: a single fresh
+   `change-review` context (starting at `n` = 1) that reviews the correction delta
    `<last reviewed head>...HEAD` with the full `base...head` diff as context. It must confirm
    every prior finding is closed and trace the correction's blast radius for new defects.
    Evidence for paths the correction did not touch remains valid; a correction invalidates
-   coverage per changed path, not globally. Add a
-   `[review:loop:<n>:security] [security:selected]` context after the delta pass reserves its
-   slot when the correction touches risk-selected paths.
+   coverage per changed path, not globally. Add a `security` context when the correction touches
+   risk-selected paths.
 5. Repeat step 4, incrementing `n`, while the latest delta pass returns actionable in-scope
    findings.
 
 **Loop budget and convergence:** the loop allows at most three delta verification passes per
-user request; the guardrails plugin denies a fourth. When the loop budget is exhausted, or the
-same root-cause finding survives two consecutive delta passes, block before any further edit or
-review call, report the remaining findings, and state that a new user instruction resets the
-loop budget. Scope-expanding remedies stop for a user decision at any point regardless of
-remaining budget.
+user request. When the loop budget is exhausted, or the same root-cause finding survives two
+consecutive delta passes, block before any further edit or review call, report the remaining
+findings, and state that a new user instruction resets the loop budget. Scope-expanding remedies
+stop for a user decision at any point regardless of remaining budget.
 
 The loop passes when the pair (or, for a light review, the standard review) or the latest delta
 pass reconciles clean with complete evidence coverage. Record that committed head as

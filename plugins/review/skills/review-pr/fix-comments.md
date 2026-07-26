@@ -232,12 +232,11 @@ high-consequence comments review. It uses the clean, verified, synchronized, com
 HEAD whether or not initial findings created a fix commit. Commit fixes when they exist;
 otherwise use the existing committed head and never create an empty commit. The loop records
 the base and committed head SHAs, runs two fresh `change-review` contexts in parallel against
-that exact diff, tagged `[review:pair:primary]` and `[review:pair:challenge]`, plus a
-stage-matched security review when selected, and accepts only reconciled complete results. If
-reconciliation yields an in-scope fix, return to triage, run targeted verification plus one
-fresh integration gate, commit the fix, then run one delta verification pass tagged
-`[review:loop:<n>]` over the correction delta with the full diff as context. Repeat while a
-delta pass returns actionable in-scope findings. Record the clean committed head as
+that exact diff, plus a security review when selected, and accepts only reconciled complete
+results. If reconciliation yields an in-scope fix, return to triage, run targeted verification
+plus one fresh integration gate, commit the fix, then run one delta verification pass over the
+correction delta with the full diff as context. Repeat while a delta pass returns actionable
+in-scope findings. Record the clean committed head as
 `reviewedHeadSha` and carry it through the push and ship handoff. Do not push or finalize until
 the loop passes.
 
@@ -360,7 +359,7 @@ This blocks until all checks complete. If any check fails:
    - If the branch is behind base, a rebase (step 2) may clear staleness failures.
 3. If caused by your changes: fix the issue, run the local verification from Step 5, then create
    a new corrective commit. For a broad or high-consequence review, run one delta verification
-   pass (`[review:loop:<n>]`, subject to the loop budget) over that corrective commit and carry
+   pass (subject to the loop budget) over that corrective commit and carry
    the resulting `reviewedHeadSha` through the push. Only after the applicable pass reconciles
    clean may you plain-push and re-watch CI.
 4. If the cause is **not obvious from the logs** (test fails but the mechanism is unclear,

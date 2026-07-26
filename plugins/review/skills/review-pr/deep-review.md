@@ -110,13 +110,13 @@ Spawn the `change-review` droid once on the scope. If any risk-sensitive path is
 spawn `security` in parallel (same message, two `Task` calls).
 
 ```
-Task(subagent_type: "change-review", description: "[review:standard] Review change scope",
+Task(subagent_type: "change-review", description: "Review change scope",
   prompt: "Review <scope: PR URL / base..head / staged>. Return your standard label-list
   output (Summary, Assessment, What This Change Does, Coverage, Findings, Validation Notes).
   Every finding carries a [P<n>·<conf>] label and a path:line anchor. Read-only; do not edit.")
 
 # only if risk signals present:
-Task(subagent_type: "security", description: "[review:standard:security] [security:selected] Security review change scope",
+Task(subagent_type: "security", description: "Security review change scope",
   prompt: "Security-review <scope> through STRIDE/OWASP lenses. Return findings with severity,
   confidence, attack path, and path:line anchors. Read-only; do not edit.")
 ```
@@ -154,36 +154,36 @@ Filter Status coverage. A transport-success return with a blocked, refusal, inco
 missing-evidence, or absent contract is a failed pass. Retry once with the exact missing contract
 items; if the retry remains incomplete, stop as blocked and do not ship or land.
 
-Use these stage-tagged Task descriptions only for the fresh primary and independent challenge
-lifecycles and their one evidence-completion retries:
+Use these Task descriptions for the fresh primary and independent challenge lifecycles and their
+one evidence-completion retries:
 
 ```text
 Task(
   subagent_type: "review-worker",
-  description: "[review:deep:primary] Initialize deep primary review",
+  description: "Initialize deep primary review",
   prompt: "Use the Initial Review prompt from <WORKER_DOC> for <scope>; write <CONTEXT_PATH>."
 )
 Task(
   subagent_type: "review-worker",
-  description: "[review:deep:retry:primary] Complete missing primary evidence",
+  description: "Complete missing primary evidence",
   resume: <PRIMARY_TASK_ID>,
   prompt: "Complete only the missing contract items: <items>."
 )
 Task(
   subagent_type: "review-worker",
-  description: "[review:deep:challenge] Run independent deep challenge review",
+  description: "Run independent deep challenge review",
   prompt: "Review <scope> independently; do not read primary notes or findings."
 )
 Task(
   subagent_type: "review-worker",
-  description: "[review:deep:retry:challenge] Complete missing challenge evidence",
+  description: "Complete missing challenge evidence",
   resume: <CHALLENGE_TASK_ID>,
   prompt: "Complete only the missing contract items: <items>."
 )
 ```
 
-Use `[review:deep:resume]` for every ordinary resumed primary pass and the final filter;
-preserve the resumed-pass architecture below.
+Preserve the resumed-pass architecture below for every ordinary resumed primary pass and the
+final filter.
 
 - **`Discovery` subagent** (Step 3b-i only): a single `review-worker` `Task` call that follows
   `<DISCOVERY_DOC>` to crawl convention sources and append every applicable pattern-check to the
@@ -260,11 +260,11 @@ partial or timed-out zero-count return is incomplete and follows the retry-or-bl
 Read-only on the repo; only the notes doc is writable.
 ```
 
-Launch Discovery with this lifecycle tag:
+Launch Discovery:
 ```text
 Task(
   subagent_type: "review-worker",
-  description: "[review:deep:discovery] Discover deep-review conventions",
+  description: "Discover deep-review conventions",
   prompt: "<Discovery prompt above>"
 )
 ```
@@ -325,7 +325,7 @@ For each pass, in order:
    ```text
    Task(
      subagent_type: "review-worker",
-     description: "[review:deep:resume] Run resumed deep primary pass",
+     description: "Run resumed deep primary pass",
      resume: <REVIEW_TASK_ID>,
      prompt: "<matching pass prompt>"
    )
@@ -338,7 +338,7 @@ For each pass, in order:
    ```text
    Task(
      subagent_type: "security",
-     description: "[review:deep:security] [security:selected] Security review deep scope",
+     description: "Security review deep scope",
      prompt: "Security-review <scope>; fold findings into <NOTES_PATH>. Read-only; do not edit."
    )
    ```
@@ -377,7 +377,7 @@ For each pass, in order:
    ```text
    Task(
      subagent_type: "review-worker",
-     description: "[review:deep:resume] Run final deep-review filter",
+     description: "Run final deep-review filter",
      resume: <REVIEW_TASK_ID>,
      prompt: "<Final filter prompt>"
    )
@@ -506,11 +506,10 @@ Use a heredoc (`git commit -F -`) if the message contains special characters.
 Before any push, run the pre-push verification loop from `SKILL.md` for every broad or
 high-consequence mutating review. It uses the clean, verified, synchronized, committed current
 HEAD whether or not initial findings created a fix commit. It records the base and committed
-head SHAs, runs two fresh `change-review` contexts in parallel against that exact diff, tags
-them `[review:pair:primary]` and `[review:pair:challenge]`, and accepts only reconciled
-complete results. If reconciliation yields a fix, return to Step 5 and Step 6, then commit the
-fix in Step 7 and run one delta verification pass tagged `[review:loop:<n>]` over the
-correction delta with the full diff as context. Never create an empty commit.
+head SHAs, runs two fresh `change-review` contexts in parallel against that exact diff, and
+accepts only reconciled complete results. If reconciliation yields a fix, return to Step 5 and
+Step 6, then commit the fix in Step 7 and run one delta verification pass over the correction
+delta with the full diff as context. Never create an empty commit.
 Record the clean committed head as `reviewedHeadSha` and carry it through the push and ship
 handoff. Do not push, ship, or land until the loop passes.
 
@@ -577,8 +576,8 @@ In land mode, whether approval authority exists or not, after every other merge 
 the final API operation immediately before merge must re-fetch the live `headRefOid` and require
 it to equal `reviewedHeadSha`, with no intervening tool or API call. If it differs, block the
 merge, synchronize with the changed live head, rerun local verification, commit a new corrective
-commit if needed, and run one delta verification pass (`[review:loop:<n>]`, subject to the loop
-budget) over the delta since the last reviewed head. Carry the resulting `reviewedHeadSha`
+commit if needed, and run one delta verification pass (subject to the loop budget) over the delta
+since the last reviewed head. Carry the resulting `reviewedHeadSha`
 through the next push and repeat this live-head check. Only when this comparison passes may the
 next operation merge the PR. Never auto-merge without an explicit user instruction from this
 session.
