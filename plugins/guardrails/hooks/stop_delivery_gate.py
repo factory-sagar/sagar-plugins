@@ -26,9 +26,11 @@ import sys
 from dataclasses import dataclass
 
 from delivery_ledger import (
+    classify_delivery_host,
     clear_push_state,
     load_state,
     locked_state,
+    remote_host,
     state_directory,
     state_path,
 )
@@ -46,6 +48,13 @@ GH_UNAVAILABLE_OBLIGATION = (
     "Delivery gate could not verify PR, CI, or review-thread state via gh."
 )
 CI_RUNNING_OBLIGATION = "CI is still running for the current PR head."
+
+
+def host_skip_note(host: str) -> str:
+    return (
+        f"Delivery gate: PR, CI, and review-thread verification is unsupported for "
+        f"{host}; only git push integrity was checked."
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,6 +97,7 @@ def pending_obligations(
     snapshot: DeliverySnapshot,
     *,
     thread_authority: bool,
+    delivery_host: str = "github",
 ) -> list[str]:
     pushed_head = str(state.get("pushed_head") or "")
     obligations: list[str] = []
@@ -108,6 +118,8 @@ def pending_obligations(
     elif snapshot.local_head and snapshot.remote_head != snapshot.local_head:
         obligations.append("Remote branch does not contain the current local HEAD.")
 
+    if delivery_host != "github":
+        return obligations
     if snapshot.pr_state == PR_STATE_UNAVAILABLE:
         obligations.append(GH_UNAVAILABLE_OBLIGATION)
     elif snapshot.pr_state == PR_STATE_OK:
@@ -134,10 +146,17 @@ def pending_obligations(
     return obligations
 
 
-def next_step(state: dict[str, object], obligations: list[str]) -> str:
+def next_step(
+    state: dict[str, object],
+    obligations: list[str],
+    *,
+    delivery_host: str = "github",
+) -> str:
     raw_pr_number = state.get("pr_number")
     pr_target = f" {raw_pr_number}" if isinstance(raw_pr_number, int) else ""
-    if any("could not verify" in item for item in obligations):
+    if delivery_host == "github" and any(
+        "could not verify" in item for item in obligations
+    ):
         return "Next: run `gh auth status`, then retry delivery verification."
     if any(
         keyword in item
@@ -176,11 +195,13 @@ def delivery_gate_output(
     *,
     stop_hook_active: bool,
     thread_authority: bool,
+    delivery_host: str = "github",
 ) -> dict[str, object] | None:
     obligations = pending_obligations(
         state,
         snapshot,
         thread_authority=thread_authority,
+        delivery_host=delivery_host,
     )
     if not obligations:
         return None
@@ -211,7 +232,7 @@ def delivery_gate_output(
         "Delivery remains incomplete: "
         + "; ".join(obligations)
         + "\n"
-        + next_step(state, obligations)
+        + next_step(state, obligations, delivery_host=delivery_host)
     )
     return {"decision": "block", "reason": reason}
 
@@ -249,6 +270,24 @@ def run_json(command: list[str], cwd: str) -> object | None:
         return json.loads(raw)
     except json.JSONDecodeError:
         return None
+
+
+def detect_delivery_host(repo_root: str) -> tuple[str, str]:
+    remote_url = run_text(["git", "remote", "get-url", "origin"], repo_root)
+    if remote_url is None:
+        remote_url = run_text(
+            ["git", "config", "--get", "remote.origin.url"],
+            repo_root,
+        )
+    host = remote_host(remote_url)
+    if host is None:
+        return "none", "no origin remote"
+    enterprise_hosts = set()
+    if host != "github.com":
+        result = run(["gh", "auth", "status", "--hostname", host], repo_root)
+        if result is not None and result.returncode == 0:
+            enterprise_hosts.add(host)
+    return classify_delivery_host(remote_url, enterprise_hosts), host
 
 
 def fetch_pr(
@@ -357,6 +396,7 @@ def snapshot_delivery(
     state: dict[str, object],
     *,
     thread_authority: bool,
+    delivery_host: str = "github",
 ) -> tuple[DeliverySnapshot, int | None]:
     repo_root = str(state.get("repo_root") or "")
     branch = str(state.get("branch") or "")
@@ -375,12 +415,15 @@ def snapshot_delivery(
         baseline_untracked if isinstance(baseline_untracked, list) else [],
     )
 
-    pr, pr_state = fetch_pr(repo_root, pr_number)
+    pr: dict[str, object] | None = None
+    pr_state = PR_STATE_NONE
     pr_head: str | None = None
     checks_complete: bool | None = None
     checks_green: bool | None = None
     unresolved_threads: int | None = None
     body_fresh: bool | None = None
+    if delivery_host == "github":
+        pr, pr_state = fetch_pr(repo_root, pr_number)
     if pr_state == PR_STATE_OK and pr is not None:
         if isinstance(pr.get("number"), int):
             pr_number = int(pr["number"])
@@ -439,14 +482,28 @@ def main() -> int:
 
     intent = load_request_intent(intent_state_directory(), session_id)
     thread_authority = bool(intent and intent.get("merge_or_approve"))
-    snapshot, pr_number = snapshot_delivery(state, thread_authority=thread_authority)
+    delivery_host, host_name = detect_delivery_host(repo_root)
+    snapshot, pr_number = snapshot_delivery(
+        state,
+        thread_authority=thread_authority,
+        delivery_host=delivery_host,
+    )
     gate_state = {**state, "pr_number": pr_number}
     output = delivery_gate_output(
         gate_state,
         snapshot,
         stop_hook_active=bool(hook_input.get("stop_hook_active")),
         thread_authority=thread_authority,
+        delivery_host=delivery_host,
     )
+    if delivery_host != "github":
+        log_decision(
+            hook="stop_delivery_gate",
+            event="Stop",
+            decision="skip",
+            session_id=session_id,
+            detail=host_skip_note(host_name),
+        )
     if output is None:
         clear_push_state(path, state)
         return 0
@@ -455,6 +512,7 @@ def main() -> int:
         gate_state,
         snapshot,
         thread_authority=thread_authority,
+        delivery_host=delivery_host,
     )
     record_last_block(path, obligations)
     log_decision(

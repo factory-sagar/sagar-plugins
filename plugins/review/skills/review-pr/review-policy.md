@@ -1,7 +1,7 @@
 # Review Policy
 
-The selector chooses lenses from changed responsibilities and operations. Languages and
-frameworks are signals only; no language receives privileged review treatment.
+Choose lenses from changed responsibilities and operations. Languages and frameworks are signals
+only; no language receives privileged review treatment.
 
 ## Mandatory
 

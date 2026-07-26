@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "13-language-agnostic-review-selection",
+  "taskVersion": 1,
+  "judgeVersion": 1,
+  "judgeModel": "claude-opus-4-8",
+  "judgeReasoningEffort": "xhigh",
+  "execModel": null,
+  "execReasoningEffort": null,
+  "contractSource": "plugins/review/skills/review-pr/SKILL.md",
+  "contractSha": "e6acdc08bc567cd3b9f499a781b013b3053801067f087d27dddfcb4798ceb05a",
+  "acceptedAt": "2026-07-26T09:32:27Z",
+  "runs": [
+    {
+      "runDir": "evals/runs/20260726T083439Z-13-language-agnostic-review-selection-accept1785054879-r1",
+      "verdict": "fail",
+      "transcript": "transcripts/13-language-agnostic-review-selection/run1.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T083439Z-13-language-agnostic-review-selection-accept1785054879-r2",
+      "verdict": "pass",
+      "transcript": "transcripts/13-language-agnostic-review-selection/run2.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T083439Z-13-language-agnostic-review-selection-accept1785054879-r3",
+      "verdict": "fail",
+      "transcript": "transcripts/13-language-agnostic-review-selection/run3.md"
+    }
+  ],
+  "passRate": 0.3333333333333333,
+  "failCount": 2
+}

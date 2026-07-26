@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "06-tdd-workflow-plan",
+  "taskVersion": 1,
+  "judgeVersion": 1,
+  "judgeModel": "claude-opus-4-8",
+  "judgeReasoningEffort": "xhigh",
+  "execModel": null,
+  "execReasoningEffort": null,
+  "contractSource": "plugins/practices/skills/tdd-workflow/SKILL.md",
+  "contractSha": "6e09c21884f47aea90ac937008941716b642c9a03f866dada1df418af890c773",
+  "acceptedAt": "2026-07-26T08:37:24Z",
+  "runs": [
+    {
+      "runDir": "evals/runs/20260726T082014Z-06-tdd-workflow-plan-accept1785054014-r1",
+      "verdict": "pass",
+      "transcript": "transcripts/06-tdd-workflow-plan/run1.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T082014Z-06-tdd-workflow-plan-accept1785054014-r2",
+      "verdict": "pass",
+      "transcript": "transcripts/06-tdd-workflow-plan/run2.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T082014Z-06-tdd-workflow-plan-accept1785054014-r3",
+      "verdict": "pass",
+      "transcript": "transcripts/06-tdd-workflow-plan/run3.md"
+    }
+  ],
+  "passRate": 1.0,
+  "failCount": 0
+}

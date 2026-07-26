@@ -23,11 +23,10 @@ jobs:
       - name: Eval definition invariants
         run: |
           node scripts/validate-evals.mjs
-          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs
+          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/validate.test.mjs
 
       - name: Deterministic policy tests
         run: |
-          node --test plugins/review/skills/review-pr/*.test.mjs
           python3 -m unittest discover -s plugins/guardrails/tests -v
           python3 -m py_compile plugins/guardrails/hooks/*.py
 

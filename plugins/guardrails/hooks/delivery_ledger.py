@@ -19,6 +19,32 @@ STATE_VERSION = 2
 SHELL_SEPARATORS = {"&&", ";", "||", "|"}
 
 
+def remote_host(remote_url: str | None) -> str | None:
+    if not remote_url:
+        return None
+    value = remote_url.strip()
+    if not value:
+        return None
+    if "://" in value:
+        authority = value.split("://", 1)[1].split("/", 1)[0]
+        host = authority.rsplit("@", 1)[-1].split(":", 1)[0]
+    else:
+        host = value.rsplit("@", 1)[-1].split(":", 1)[0]
+    return host.lower() or None
+
+
+def classify_delivery_host(
+    remote_url: str | None,
+    github_enterprise_hosts: set[str] | None = None,
+) -> str:
+    host = remote_host(remote_url)
+    if host is None:
+        return "none"
+    if host == "github.com" or host in (github_enterprise_hosts or set()):
+        return "github"
+    return "unsupported"
+
+
 def parse_push_command(command: str, fallback_cwd: str = ".") -> str | None:
     try:
         tokens = shlex.split(command)

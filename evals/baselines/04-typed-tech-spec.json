@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "04-typed-tech-spec",
+  "taskVersion": 1,
+  "judgeVersion": 1,
+  "judgeModel": "claude-opus-4-8",
+  "judgeReasoningEffort": "xhigh",
+  "execModel": null,
+  "execReasoningEffort": null,
+  "contractSource": "plugins/practices/skills/tech-spec/SKILL.md",
+  "contractSha": "93f17355b4afb4a91e8209d1b38f5f0a053266c4c073db4f8fefabde554168fa",
+  "acceptedAt": "2026-07-26T08:24:23Z",
+  "runs": [
+    {
+      "runDir": "evals/runs/20260726T081514Z-04-typed-tech-spec-accept1785053714-r1",
+      "verdict": "pass",
+      "transcript": "transcripts/04-typed-tech-spec/run1.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T081514Z-04-typed-tech-spec-accept1785053714-r2",
+      "verdict": "pass",
+      "transcript": "transcripts/04-typed-tech-spec/run2.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T081514Z-04-typed-tech-spec-accept1785053714-r3",
+      "verdict": "pass",
+      "transcript": "transcripts/04-typed-tech-spec/run3.md"
+    }
+  ],
+  "passRate": 1.0,
+  "failCount": 0
+}

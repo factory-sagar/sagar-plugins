@@ -18,7 +18,6 @@ droid plugin install review@sagar-plugins
 | --- | --- | --- | --- | --- |
 | `change-review` | Static correctness and contract review of a scoped diff. | `gpt-5.6-sol` | `xhigh` | read-only + `Execute` |
 | `security` | STRIDE/OWASP security review with verified attack paths and CVEs. | `claude-opus-4-8` | `xhigh` | read-only + web |
-| `review-worker` | Deep-mode discovery and policy passes over a shared notes document. | `gpt-5.6-sol` | `xhigh` | read-only + notes-doc writes |
 
 ## Skills
 
@@ -29,9 +28,8 @@ droid plugin install review@sagar-plugins
 The public entry point is `/review-pr <target>`. Existing comment and deep-review procedures
 are internal references, not competing skills.
 
-The deep tier ships three supporting files in the skill directory: `review-notes-format.md` (shared notes-doc and finding format), `review-worker.md` (Review subagent prompt templates), and `discover-conventions.md` (convention enumeration procedure). When the `practices` plugin is installed, deep-tier discovery is backed by `coding-standards`; otherwise it falls back to the target repo's own docs.
-
-The deep tier treats the notes doc as the single source of truth: it verifies each pass by checking for new notes-doc entries, not the subagent reply, and if the resumed-session mechanism stops writing (or for very large diffs), it falls back to one comprehensive worker that walks every Discovery pattern-check in a single session. The escalation heuristic leans light.
+The deep tier uses a second independent `change-review` context for broad or high-consequence
+changes. The reviewing model chooses policy lenses from the changed responsibilities.
 
 A small, well-tested edit to existing risk-sensitive logic remains light only when no
 independently high-consequence responsibility applies.

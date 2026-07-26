@@ -101,6 +101,52 @@ const listDirs = (p) => existsSync(p)
 const listMd = (p) => existsSync(p)
   ? readdirSync(p).filter((f) => f.endsWith('.md')).map((f) => path.join(p, f))
   : [];
+const ROUTING_MARKER = '<!-- routing-table:' + 'canonical -->';
+const ROUTING_TOKENS = ['spec', 'implement', 'review-pr', 'ship'];
+
+export function routingDuplicationErrors(files) {
+  const errors = [];
+  const canonicalFiles = files.filter(({ text }) => text.includes(ROUTING_MARKER));
+  if (canonicalFiles.length !== 1) {
+    errors.push(
+      `routing-table marker must appear in exactly one tracked Markdown file; found ${canonicalFiles.length}: ${canonicalFiles.map(({ file }) => file).join(', ') || 'none'}`,
+    );
+  }
+  for (const { file, text } of files) {
+    if (text.includes(ROUTING_MARKER)) continue;
+    for (const [index, line] of text.split('\n').entries()) {
+      if (!line.startsWith('|')) continue;
+      const mentioned = new Set(
+        [...line.matchAll(/\/(spec|implement|review-pr|ship)\b|`(spec|implement|review-pr|ship)`/g)]
+          .map(([, slash, ticked]) => slash ?? ticked),
+      );
+      if (mentioned.size >= 3) {
+        errors.push(`${file}:${index + 1}: duplicate cross-plugin routing table row names ${ROUTING_TOKENS.filter((token) => mentioned.has(token)).join(', ')}`);
+      }
+    }
+  }
+  return errors;
+}
+
+// The review stage-tag vocabulary was retired: it asked the agent to self-declare a label
+// and then policed the label instead of the behavior. Bounds now come from counted calls,
+// so any reappearance of the vocabulary in prose is a regression toward a fake gate.
+const RETIRED_STAGE_TAG = /\[review:(?:standard|deep|pair|loop)\b|\[security:selected\]/;
+
+export function retiredVocabularyErrors(files) {
+  const errors = [];
+  for (const { file, text } of files) {
+    if (!file.startsWith('plugins/')) continue;
+    for (const [index, line] of text.split('\n').entries()) {
+      if (RETIRED_STAGE_TAG.test(line)) {
+        errors.push(
+          `${file}:${index + 1}: retired review stage-tag vocabulary; reviewer bounds are enforced by counted calls, not self-declared labels`,
+        );
+      }
+    }
+  }
+  return errors;
+}
 
 // ---------- collect fleet ----------
 const pluginsDir = path.join(ROOT, 'plugins');
@@ -259,51 +305,35 @@ if (guardrailHooks?.hooks) {
 }
 requireText(
   path.join(pluginsDir, 'review', 'skills', 'review-pr', 'SKILL.md'),
-  '[review:pair:primary]',
-  'pre-push pair review stage protocol',
+  'Reviewer fan-out is bounded per user',
+  'reviewer fan-out bound statement',
 );
 requireText(
   path.join(pluginsDir, 'review', 'skills', 'review-pr', 'SKILL.md'),
-  '[review:loop:<n>]',
-  'delta verification loop stage protocol',
+  'at most three delta verification passes',
+  'delta verification loop bound',
 );
 requireText(
   path.join(pluginsDir, 'review', 'droids', 'change-review.md'),
   'scope-expanding proposal',
   'review correction-scope quarantine',
 );
+// These three API facts were learned from defects: thread resolution state has no REST
+// equivalent, and the resolve mutation takes threadId (commit 7797d7b fixed exactly that).
+// Losing them silently breaks any gate that requires zero unresolved threads.
+for (const apiFact of ['isResolved', 'resolveReviewThread', 'threadId']) {
+  requireText(
+    path.join(pluginsDir, 'review', 'skills', 'review-pr', 'pr-mechanics.md'),
+    apiFact,
+    'non-inferable PR thread API fact',
+  );
+}
 requireText(
   path.join(pluginsDir, 'build', 'skills', 'ship', 'SKILL.md'),
   'Do not background it, poll a',
   'foreground CI watch contract',
 );
-// The reviewer reply contract has one normative home; every file that restates it
-// operationally must point back so policy edits cannot fork.
-requireText(
-  path.join(pluginsDir, 'review', 'skills', 'review-pr', 'reviewer-reply-contract.md'),
-  'Transport success is not review success',
-  'normative reviewer reply contract',
-);
-requireText(
-  path.join(pluginsDir, 'review', 'skills', 'review-pr', 'reviewer-reply-contract.md'),
-  'on conflict, this file\nwins',
-  'reviewer reply contract conflict rule',
-);
-for (const restatingFile of [
-  ['review', 'skills', 'review-pr', 'SKILL.md'],
-  ['review', 'skills', 'review-pr', 'deep-review.md'],
-  ['review', 'skills', 'review-pr', 'review-worker.md'],
-  ['review', 'skills', 'review-pr', 'discover-conventions.md'],
-  ['review', 'droids', 'review-worker.md'],
-  ['review', 'droids', 'change-review.md'],
-  ['review', 'droids', 'security.md'],
-]) {
-  requireText(
-    path.join(pluginsDir, ...restatingFile),
-    'reviewer-reply-contract.md',
-    'reviewer reply contract normative pointer',
-  );
-}
+
 
 // ---------- 6. README counts ----------
 // The README's "At a glance" line is the human-facing fleet inventory. It must state the
@@ -345,7 +375,19 @@ for (const file of [...walkMd(pluginsDir)]) {
   }
 }
 
-// ---------- 8. model pins: registry and README table match frontmatter ----------
+// ---------- 8. routing contract has one canonical table; retired vocabulary stays gone ----------
+const trackedMarkdownFiles = execFileSync('git', ['ls-files'], {
+  cwd: ROOT,
+  encoding: 'utf8',
+}).trim().split('\n').filter((file) => file.endsWith('.md'));
+const trackedMarkdown = trackedMarkdownFiles.map((file) => ({
+  file,
+  text: read(path.join(ROOT, file)),
+}));
+errors.push(...routingDuplicationErrors(trackedMarkdown));
+errors.push(...retiredVocabularyErrors(trackedMarkdown));
+
+// ---------- 9. model pins: registry and README table match frontmatter ----------
 // Droid frontmatter is the executable source of truth for model pins. The eval
 // registry and the README "Models" table must match it exactly so neither surface
 // can drift silently (commit-message-writer drifted once before this check).
@@ -417,7 +459,7 @@ for (const file of [...walkMd(pluginsDir), ...walkMd(path.join(ROOT, 'docs'))]) 
   }
 }
 
-// ---------- 9. version bumps vs a base ref ----------
+// ---------- 10. version bumps vs a base ref ----------
 const bumpIdx = process.argv.indexOf('--require-bumps');
 if (bumpIdx !== -1) {
   const baseRef = process.argv[bumpIdx + 1];
@@ -454,7 +496,9 @@ if (bumpIdx !== -1) {
 }
 
 // ---------- report ----------
-for (const w of warnings) console.log(`WARN  ${w}`);
-for (const e of errors) console.log(`ERROR ${e}`);
-console.log(`\n${droidFiles.length} droids, ${skillFiles.length} skills, ${commandFiles.length} commands — ${errors.length} error(s), ${warnings.length} warning(s)`);
-process.exit(errors.length > 0 ? 1 : 0);
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  for (const w of warnings) console.log(`WARN  ${w}`);
+  for (const e of errors) console.log(`ERROR ${e}`);
+  console.log(`\n${droidFiles.length} droids, ${skillFiles.length} skills, ${commandFiles.length} commands — ${errors.length} error(s), ${warnings.length} warning(s)`);
+  process.exit(errors.length > 0 ? 1 : 0);
+}
