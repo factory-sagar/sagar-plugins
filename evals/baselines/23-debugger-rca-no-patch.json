@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "23-debugger-rca-no-patch",
+  "taskVersion": 1,
+  "judgeVersion": 1,
+  "judgeModel": "claude-opus-4-8",
+  "judgeReasoningEffort": "xhigh",
+  "execModel": "gpt-5.6-sol",
+  "execReasoningEffort": "xhigh",
+  "contractSource": "plugins/investigation/droids/debugger.md",
+  "contractSha": "8cc1eba9c685157209186914cccaabeda577fd8744ef705fe65c8064815ca92a",
+  "acceptedAt": "2026-07-26T09:03:20Z",
+  "runs": [
+    {
+      "runDir": "evals/runs/20260726T085716Z-23-debugger-rca-no-patch-accept1785056236-r1",
+      "verdict": "pass",
+      "transcript": "transcripts/23-debugger-rca-no-patch/run1.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T085716Z-23-debugger-rca-no-patch-accept1785056236-r2",
+      "verdict": "pass",
+      "transcript": "transcripts/23-debugger-rca-no-patch/run2.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T085716Z-23-debugger-rca-no-patch-accept1785056236-r3",
+      "verdict": "pass",
+      "transcript": "transcripts/23-debugger-rca-no-patch/run3.md"
+    }
+  ],
+  "passRate": 1.0,
+  "failCount": 0
+}

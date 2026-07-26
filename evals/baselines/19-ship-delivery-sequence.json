@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "19-ship-delivery-sequence",
+  "taskVersion": 1,
+  "judgeVersion": 1,
+  "judgeModel": "claude-opus-4-8",
+  "judgeReasoningEffort": "xhigh",
+  "execModel": null,
+  "execReasoningEffort": null,
+  "contractSource": "plugins/build/skills/ship/SKILL.md",
+  "contractSha": "dea499a8b594e4eb3ab6ec9b3a9d627e357374cc2a0848cd4081a9de8960ecf9",
+  "acceptedAt": "2026-07-26T08:57:16Z",
+  "runs": [
+    {
+      "runDir": "evals/runs/20260726T085221Z-19-ship-delivery-sequence-accept1785055941-r1",
+      "verdict": "pass",
+      "transcript": "transcripts/19-ship-delivery-sequence/run1.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T085221Z-19-ship-delivery-sequence-accept1785055941-r2",
+      "verdict": "pass",
+      "transcript": "transcripts/19-ship-delivery-sequence/run2.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T085221Z-19-ship-delivery-sequence-accept1785055941-r3",
+      "verdict": "pass",
+      "transcript": "transcripts/19-ship-delivery-sequence/run3.md"
+    }
+  ],
+  "passRate": 1.0,
+  "failCount": 0
+}

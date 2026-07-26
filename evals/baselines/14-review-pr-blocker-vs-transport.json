@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "14-review-pr-blocker-vs-transport",
+  "taskVersion": 1,
+  "judgeVersion": 1,
+  "judgeModel": "claude-opus-4-8",
+  "judgeReasoningEffort": "xhigh",
+  "execModel": null,
+  "execReasoningEffort": null,
+  "contractSource": "plugins/review/skills/review-pr/SKILL.md",
+  "contractSha": "14c36715869c6cfe0606d6289d4643ca2f52cb64fa20d945acbfc0ef0141451a",
+  "acceptedAt": "2026-07-26T08:42:10Z",
+  "runs": [
+    {
+      "runDir": "evals/runs/20260726T083724Z-14-review-pr-blocker-vs-transport-accept1785055044-r1",
+      "verdict": "pass",
+      "transcript": "transcripts/14-review-pr-blocker-vs-transport/run1.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T083724Z-14-review-pr-blocker-vs-transport-accept1785055044-r2",
+      "verdict": "pass",
+      "transcript": "transcripts/14-review-pr-blocker-vs-transport/run2.md"
+    },
+    {
+      "runDir": "evals/runs/20260726T083724Z-14-review-pr-blocker-vs-transport-accept1785055044-r3",
+      "verdict": "pass",
+      "transcript": "transcripts/14-review-pr-blocker-vs-transport/run3.md"
+    }
+  ],
+  "passRate": 1.0,
+  "failCount": 0
+}
