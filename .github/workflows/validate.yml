@@ -26,7 +26,7 @@ jobs:
         run: |
           node scripts/validate-evals.mjs
           node scripts/eval-selector.mjs
-          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/eval-selector.test.mjs
+          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/eval-selector.test.mjs scripts/validate.test.mjs
 
       - name: Deterministic policy tests
         run: |
