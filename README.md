@@ -13,7 +13,7 @@ Behind them are specialist droids for investigation, planning, implementation, t
 review, security, prompt work, and release prose. Deterministic hooks enforce safe pushes
 and complete delivery.
 
-**At a glance:** 7 plugins, 14 droids, 13 skills, 4 public workflows, and 1 guarded
+**At a glance:** 7 plugins, 13 droids, 13 skills, 4 public workflows, and 1 guarded
 idea-to-merge path.
 
 ## Quick start
@@ -58,7 +58,7 @@ Each droid pins a model and reasoning effort suited to its job.
 
 | Model | Role | Used by |
 | --- | --- | --- |
-| `gpt-5.6-sol` (xhigh) | Planning, repository investigation, root cause, and correctness review | `planner`, `deep-understanding`, `debugger`, `change-review`, `review-worker` |
+| `gpt-5.6-sol` (xhigh) | Planning, repository investigation, root cause, and correctness review | `planner`, `deep-understanding`, `debugger`, `change-review` |
 | `gpt-5.6-terra` (high) | Implementation, testing, and precise config edits | `implementer`, `test-engineer`, `doc-generator` |
 | `gpt-5.6-luna` (high) | Triage | `quick-analysis` |
 | `glm-5.2` (high) | Format-mechanical commit prose | `commit-message-writer` |
