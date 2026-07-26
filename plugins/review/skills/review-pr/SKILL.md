@@ -56,7 +56,9 @@ that mode reaches merge-ready.
    Each candidate is an **in-scope fix**, **scope-expanding proposal**, or
    **invalid/pre-existing**. Apply only in-scope fixes. A valid defect with only
    scope-expanding remedies stops for a new user decision; the finding does not authorize the
-   remedy.
+   remedy. Order surviving findings by consequence: data loss, authorization, secret exposure,
+   or common-path failure first, then broken contracts, state corruption, races, and migration
+   hazards, then missing regression protection, then maintainability regressions.
 6. In a mutating mode, validate fixes, commit them when needed, and stop or continue only to the
    authorized mode. Do not create an empty commit. For each head-changing correction, run
    fresh targeted validation plus one fresh integration gate for the new head; validation
@@ -102,9 +104,20 @@ Approval never implies push or merge authority.
 Merge only with explicit instruction. Before merging, verify against the live API that required
 CI is green for the current head SHA and zero unresolved review threads remain. Re-fetch the
 live head immediately before merging and require it to equal the reviewed head, with no
-intervening call. If any gate fails or the head changed, report blocked rather than merging.
+intervening call. If a gate fails, report blocked rather than merging.
+
+If the live head differs at that final comparison, block the merge, synchronize with the changed
+live head, rerun local verification, commit a corrective commit when one is needed, and run one
+delta verification pass over the delta since the last reviewed head, subject to the loop budget.
+Do not repeat the full review for the new head. Carry the resulting reviewed head through the
+next fast-forward push and repeat this live-head check; only when it passes may the next
+operation merge. Never auto-merge without an explicit user instruction from this session.
 
 ## Output
+
+Emit this template exactly, including heading levels and row labels. A blocked assessment still
+emits the full template and every row; use `n/a — <reason>` rather than omitting an inapplicable
+row. Never invent a nit to prove that review happened.
 
 ```markdown
 ## Review
