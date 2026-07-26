@@ -13,9 +13,10 @@ user-invocable: false
 
 Use for new or changed behavior, bug fixes, public surfaces, and refactors without adequate
 coverage. Do not use it for prose, mechanical changes with verified coverage, or throwaway
-experiments. Load `../coding-standards/SKILL.md` and
-`../coding-standards/TESTING_AND_VERIFICATION.md`; load the relevant standards topic when
-modules, async ownership, contracts, or observability change.
+experiments. Always load `../coding-standards/SKILL.md`,
+`../coding-standards/TESTING_AND_VERIFICATION.md`, `../coding-standards/DESIGNING_MODULES.md`,
+and `../coding-standards/TYPE_CONTRACTS.md`, because new behavior means a new module boundary and
+a new contract. Add the async or observability topic when those change.
 
 ## Loop
 
@@ -48,11 +49,23 @@ The implementation prompt must require the deviations contract: a minor territor
 takes the conservative, reversible option and is logged with plan, repository evidence, choice,
 and impact; a premise contradiction stops and reports. Never deviate silently.
 
-Record RED before the implementation exists. Commit the failing test, or otherwise capture the
-failing run, before writing production code: a single diff containing both a test and the code
-that satisfies it is not RED evidence, because it cannot show implementation was absent.
-Checkpoint commits identify the behavior and contain `RED: <N> failing as expected` or
-`GREEN: targeted test or validator passing`. Do not treat unrelated commits as proof.
+In a git repository, RED and GREEN land as separate commits. The boundary is the evidence that
+implementation was absent when the test failed; a single diff containing both a test and the code
+that satisfies it is not RED evidence, whatever the summary claims.
+
+```bash
+git add <test-file>
+git commit -m "test(<scope>): add failing test for <behavior>
+
+RED: <N> failing as expected"
+# implement only after that commit exists
+git add <source-file>
+git commit -m "feat(<scope>): minimal implementation for <behavior>
+
+GREEN: targeted test or validator passing"
+```
+
+Do not treat unrelated commits as proof.
 
 ## Completion
 

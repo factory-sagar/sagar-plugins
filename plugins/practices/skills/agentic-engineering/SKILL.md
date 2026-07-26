@@ -1,6 +1,6 @@
 ---
 name: agentic-engineering
-version: 1.3.4
+version: 1.4.0
 description: |
   Route AI-assisted engineering work by risk and complexity to the workflow that owns its
   completion, delegation, model, evaluation, or review policy.
