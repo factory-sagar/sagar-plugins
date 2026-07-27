@@ -1,45 +1,48 @@
-# sagar-plugins
+# Repository Guidelines
 
-A Factory plugin marketplace. The shipped artifact is prompts: 13 skills, 13 droids, and five
-deterministic hooks. The markdown is the product, so treat prose edits as behavior changes.
+## Project Structure & Module Organization
 
-## Gotchas
+This repository ships a Factory plugin marketplace. The product is prompt and configuration
+content, so treat Markdown edits as behavior changes. Plugins live in `plugins/<name>/`; skills use
+`skills/<skill>/SKILL.md`, droids use `droids/*.md`, and manifests are in
+`.factory-plugin/plugin.json`. Deterministic hooks and their Python tests live under
+`plugins/guardrails/`. Marketplace metadata is in `.factory-plugin/`, workflow policy is in
+`docs/WORKFLOW.md`, and golden-task definitions and accepted verdicts are in `evals/`.
 
-**Editing a skill or droid costs an eval re-baseline.** CI runs
-`node scripts/validate-evals.mjs --require-fresh-baselines origin/<base>`, which fails when a file
-a golden task targets changed without that task's baseline being re-accepted. Fix it with:
+## Build, Test, and Development Commands
+
+There is no build step or package installation. Run these checks from the repository root:
 
 ```bash
-scripts/accept-baseline.sh evals/golden-tasks/<task>.md
+node scripts/validate.mjs
+node scripts/validate-evals.mjs
+node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/validate-evals.test.mjs scripts/validate.test.mjs
+python3 -m unittest discover -s plugins/guardrails/tests -v
+python3 -m py_compile plugins/guardrails/hooks/*.py
 ```
 
-That is three judged runs per touched task, so a few minutes and real spend. Before paying it, run
-the free check: `python3 -m unittest discover -s plugins/guardrails/tests`. Its
-`WorkflowPolicyContractTests` asserts that named rules still exist in named prose files and catches
-most accidental deletions instantly. Note the gate compares committed HEAD against the base ref, so
-an uncommitted prose edit will not trip it locally.
+CI also enforces 87% hook coverage. For a pull-request comparison, run
+`node scripts/validate.mjs --require-bumps origin/main`. Changing a skill or droid requires
+re-accepting each affected golden task with
+`scripts/accept-baseline.sh evals/golden-tasks/<task>.md`.
 
-**Version bumps are enforced on PRs.** Any changed `plugin.json`, `SKILL.md`, or droid file needs
-its version bumped. Check with `node scripts/validate.mjs --require-bumps origin/main`.
+## Coding Style & Naming Conventions
 
-**Two vocabularies are permanently retired.** The `[review:*]` stage tags and
-`[security:selected]` marker are gone. Reviewer fan-out is bounded by counted Task calls in
-`plugins/guardrails/hooks/review_budget.py`, not by self-declared labels. `scripts/validate.mjs`
-fails the build if either string reappears in tracked plugin markdown.
+Preserve existing frontmatter, JSON formatting, and directory naming. Write prompt instructions
+directly and keep policy terminology consistent with nearby files. Keep cross-plugin routing only
+in `docs/WORKFLOW.md`; do not add another routing table. `coding-standards/` topic files are
+reference knowledge, not process prose, so do not compress them mechanically. When adding a hook
+control, prefer independently verifiable evidence such as an exit status or file hash.
 
-**Routing has exactly one canonical home:** `docs/WORKFLOW.md`, marked
-`<!-- routing-table:canonical -->`. A second routing table in tracked markdown fails the build.
+## Testing Guidelines
 
-**`coding-standards/` topic files are knowledge, not process.** They carry engineering opinion and
-are exempt from prose compression. Do not shorten them to hit a line target.
+Use `test_*.py` for guardrail tests and `*.test.mjs` for Node validators. Add or update tests with
+hook and validator changes, then run the full command set above. Generated runs, results, and
+baseline transcripts are local artifacts; commit accepted verdict JSON only.
 
-**Transcripts under `evals/baselines/transcripts/` are local only.** This repository is public and
-transcripts are model output from one machine. Only the verdict JSON is committed.
+## Commit & Pull Request Guidelines
 
-**Hook coverage floor is 87%** over `plugins/guardrails/hooks`, enforced in CI.
-
-## Adding a control
-
-Prefer a control that verifies a fact outside the agent's own output: a file hash, a git revision,
-a live API response, an exit status. Controls that police a label the agent writes, or that predict
-which risks a diff carries, have failed here before and were removed.
+Follow the established Conventional Commit style, for example
+`feat(guardrails): add policy check`, `fix(review): handle empty diff`, or `chore: refresh
+metadata`. Bump the owning plugin version when changing its manifest, skill, or droid. PRs should
+state the behavior change, rationale, validation performed, and any required eval baseline updates.
