@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 1.6.0
+version: 1.7.0
 description: |
   Land finished work. Commits and pushes, writes the repository-template PR body, watches
   current-head CI, closes review threads, and reports merge-ready; merges only when the user
@@ -70,7 +70,7 @@ the loop budget.
 ### 4. PR create or update
 
 - **No PR yet**: create it with a Conventional Commits title and link a ticket when one
-  exists. Follow the `create-pr` skill when installed.
+  exists.
 - **PR exists**: if this push meaningfully changed scope, regenerate the body.
 
 In both cases the body comes from the `pr-describer` droid and must conform to the repo's

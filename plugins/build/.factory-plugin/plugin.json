@@ -1,6 +1,6 @@
 {
   "name": "build",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "The public implement and ship workflows plus focused implementation and test droids. Review-comment handling is unified under review-pr so build owns only code execution and delivery.",
   "author": {
     "name": "Sagar",
