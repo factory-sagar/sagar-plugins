@@ -6,10 +6,10 @@
 #
 # Runs the task N times (default: evals/policy.json repetitions.promptChange)
 # with --judge, requires every verdict to parse, then writes:
-#   evals/baselines/<task>.json                  the accepted verdict baseline
-#   evals/baselines/transcripts/<task>/runN.md   the accepted transcripts
-#     (committed: they are the judge-recalibration corpus when JUDGE.md or the
-#      judge model changes)
+#   evals/baselines/<task>.json                  the accepted verdict baseline (committed)
+#   evals/baselines/transcripts/<task>/runN.md   the accepted transcripts (LOCAL ONLY,
+#     gitignored: they are model output produced on this machine and the repository is
+#     public. They remain the judge-recalibration corpus for whoever accepted them.)
 #
 # A baseline is only comparable at the same task version, judge version, judge
 # model, and contract hash; scripts/compare-baseline.mjs enforces that.
@@ -109,5 +109,5 @@ with open(baseline_path, "w", encoding="utf-8") as stream:
     json.dump(baseline, stream, indent=2)
     stream.write("\n")
 print(f"accepted baseline: {baseline_path} (passRate {pass_rate:.2f} over {len(runs)} runs)")
-print("commit the baseline JSON and transcripts to make the acceptance reviewable")
+print("commit the baseline JSON; transcripts stay local (gitignored)")
 PYEOF

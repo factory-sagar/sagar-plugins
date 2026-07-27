@@ -328,8 +328,10 @@ if (existsSync(baselinesDir)) {
       if (!['pass', 'partial', 'fail'].includes(run.verdict)) {
         fail(file, `run verdict "${run.verdict}" must be pass, partial, or fail`);
       }
-      if (!run.transcript || !existsSync(path.join(baselinesDir, run.transcript))) {
-        fail(file, `accepted transcript missing: ${run.transcript}`);
+      // Transcripts are local artifacts, not committed: they are model output produced on a
+      // developer machine and this repository is public. Validate the pointer's shape only.
+      if (typeof run.transcript !== 'string' || !/^transcripts\/[\w.-]+\/run\d+\.md$/.test(run.transcript)) {
+        fail(file, `run transcript must be a "transcripts/<task>/runN.md" path, got ${JSON.stringify(run.transcript)}`);
       }
     }
   }
