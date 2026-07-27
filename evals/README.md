@@ -20,7 +20,9 @@ compared. The comparable unit is the judged verdict:
 2. `scripts/accept-baseline.sh <task>` runs the task N times (default:
    `policy.json` `repetitions.promptChange`), requires every verdict to parse, and writes
    `baselines/<task>.json` plus the accepted transcripts under `baselines/transcripts/`.
-   Commit both: the JSON is the floor, the transcripts are the judge-recalibration corpus.
+   Commit the JSON, which is the floor. The transcripts stay local and gitignored: they are
+   model output produced on one machine and this repository is public. They remain the
+   judge-recalibration corpus for whoever accepted them.
 3. `scripts/compare-baseline.mjs <task> <verdict.json>...` exits nonzero on regression:
    candidate pass rate below the baseline pass rate, or a new `fail` against a zero-fail
    baseline.
@@ -34,7 +36,8 @@ the baseline:
 - **Task version** — any golden-task edit bumps its `Version:` line (CI enforces this on
   PRs). Re-accept the baseline after the change.
 - **Judge version or judge model** — after changing `JUDGE.md` or the judge pin, first
-  re-judge the committed baseline transcripts to recalibrate, then re-accept.
+  re-judge your local baseline transcripts to recalibrate, then re-accept. Without a local
+  corpus, re-accept from scratch instead.
 - **Contract hash** — the target droid/skill file changed. Rerun only the tasks whose
   `## Target` maps to the changed file, then re-accept the ones that moved intentionally.
 
@@ -56,7 +59,7 @@ N repeats, and `repetitions.modelChange` governs model comparisons.
 ## Layout
 
 - `golden-tasks/` — versioned task rubrics plus `JUDGE.md` (the scoring contract)
-- `baselines/` — accepted verdict baselines and their transcripts (committed)
+- `baselines/` — accepted verdict baselines (committed); `baselines/transcripts/` (local only)
 - `routing/cases.json` — intent-routing cases (also asserted deterministically by the
   guardrails test suite)
 - `policy.json` — thresholds: routing gates, repetition counts, model-decision rules

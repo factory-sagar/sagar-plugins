@@ -25,3 +25,7 @@ __pycache__/
 # Prompt evaluation harness: definitions are versioned; generated run output is not.
 /evals/runs/
 /evals/results/
+
+# Judged-run transcripts are model output produced locally; this repo is public.
+# The committed comparable unit is the verdict JSON, not the prose.
+/evals/baselines/transcripts/
