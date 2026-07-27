@@ -25,6 +25,16 @@ test('reports duplicate cross-plugin routing tables with file and line', () => {
   ]);
 });
 
+test('prose documenting the marker inline does not claim it', () => {
+  assert.deepEqual(routingDuplicationErrors([
+    canonical,
+    {
+      file: 'AGENTS.md',
+      text: `Routing lives in one place, marked \`${marker}\`. A second copy fails the build.`,
+    },
+  ]), []);
+});
+
 test('reports every file with a duplicate canonical marker', () => {
   assert.deepEqual(routingDuplicationErrors([
     canonical,

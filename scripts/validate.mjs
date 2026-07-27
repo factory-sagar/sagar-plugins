@@ -106,14 +106,17 @@ const ROUTING_TOKENS = ['spec', 'implement', 'review-pr', 'ship'];
 
 export function routingDuplicationErrors(files) {
   const errors = [];
-  const canonicalFiles = files.filter(({ text }) => text.includes(ROUTING_MARKER));
+  // A file carries the marker only when a line IS the marker. Prose that documents the marker
+  // inline, such as a repository AGENTS.md explaining the convention, does not claim it.
+  const carriesMarker = (text) => text.split('\n').some((line) => line.trim() === ROUTING_MARKER);
+  const canonicalFiles = files.filter(({ text }) => carriesMarker(text));
   if (canonicalFiles.length !== 1) {
     errors.push(
       `routing-table marker must appear in exactly one tracked Markdown file; found ${canonicalFiles.length}: ${canonicalFiles.map(({ file }) => file).join(', ') || 'none'}`,
     );
   }
   for (const { file, text } of files) {
-    if (text.includes(ROUTING_MARKER)) continue;
+    if (carriesMarker(text)) continue;
     for (const [index, line] of text.split('\n').entries()) {
       if (!line.startsWith('|')) continue;
       const mentioned = new Set(
