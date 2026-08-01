@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "investigation",
-      "description": "Investigation droids: fast triage (quick-analysis), thorough repo investigation (deep-understanding), external web research (deep-research), and root-cause debugging (debugger).",
+      "description": "Investigation droids: thorough repo investigation (deep-understanding), external web research (deep-research), and root-cause debugging (debugger).",
       "source": "./plugins/investigation",
       "category": "research"
     },
@@ -26,7 +26,7 @@
     },
     {
       "name": "meta",
-      "description": "Meta droids and skills for working on agentic configs themselves: prompt audit (prompt-optimizer), apply (doc-generator), and the audit-and-apply-loop methodology skill.",
+      "description": "Meta droids and skills for working on agentic configs themselves: apply approved edits (doc-generator) with the audit-and-apply-loop methodology skill.",
       "source": "./plugins/meta",
       "category": "productivity"
     },

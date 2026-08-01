@@ -44,10 +44,10 @@ For the canonical cross-plugin routing contract, see [`docs/WORKFLOW.md`](../../
 
 ## Related plugins
 
-- **[`investigation`](../investigation/)**: `spec`, `architecture-scan`, and `tech-spec` recommend `quick-analysis`, `deep-understanding`, and `deep-research` for investigation-shaped work.
+- **[`investigation`](../investigation/)**: `spec`, `architecture-scan`, and `tech-spec` recommend `deep-understanding` and `deep-research` for investigation-shaped work.
 - **[`review`](../review/)**: `verification-loop` and `tdd-workflow` hand review ownership to `review-pr`.
 - **[`synthesis`](../synthesis/)**: once review passes, `pr-describer` and `commit-message-writer` complete the cycle.
-- **[`meta`](../meta/)**: `agentic-engineering` recommends `prompt-optimizer` and `doc-generator` for evolving the prompts of the agents you delegate to.
+- **[`meta`](../meta/)**: `agentic-engineering` recommends the `audit-and-apply-loop` skill and `doc-generator` for evolving the prompts of the agents you delegate to.
 - **[`build`](../build/)**: `tdd-workflow` delegates RED to `test-engineer` and GREEN or REFACTOR to `implementer`.
 
 Cross-plugin hand-offs are naming suggestions. If you haven't installed the companion plugin, the hand-off is a no-op recommendation, not an error.

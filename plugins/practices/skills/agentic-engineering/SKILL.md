@@ -1,6 +1,6 @@
 ---
 name: agentic-engineering
-version: 1.4.0
+version: 1.4.1
 description: |
   Route AI-assisted engineering work by risk and complexity to the workflow that owns its
   completion, delegation, model, evaluation, or review policy.
@@ -22,7 +22,7 @@ authority routing table is [`docs/WORKFLOW.md`](../../../../docs/WORKFLOW.md).
 | New or changed behavior | [`tdd-workflow`](../tdd-workflow/SKILL.md) | It owns RED, GREEN, and refactor discipline. |
 | Verification or delivery gate | [`verification-loop`](../verification-loop/SKILL.md) | It owns the capability and regression gate. |
 | Diff review | [`review-pr`](../../../review/skills/review-pr/SKILL.md) | It owns review authority and risk-matched review fan-out. |
-| Prompt or droid iteration | [`audit-and-apply-loop`](../../../meta/skills/audit-and-apply-loop/SKILL.md) | It routes audit to `prompt-optimizer` and application to `doc-generator`. |
+| Prompt or droid iteration | [`audit-and-apply-loop`](../../../meta/skills/audit-and-apply-loop/SKILL.md) | It audits in-session and routes application to `doc-generator`. |
 
 ## Decisions this router makes
 
