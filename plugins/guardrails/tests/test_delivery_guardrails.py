@@ -722,6 +722,52 @@ class StopGateTests(unittest.TestCase):
                 self.assertIn("`", lines[1], "next step must name a command")
 
 
+class StopGateMergedDeliveryTests(unittest.TestCase):
+    def setUp(self):
+        self.state = {"pushed_head": "pushed-head", "pr_number": 42}
+
+    def test_closes_when_merged_pr_head_is_on_default_branch(self):
+        result = subprocess.CompletedProcess(args=["git"], returncode=0)
+        with (
+            mock.patch.object(stop_delivery_gate, "run_text", return_value="MERGED"),
+            mock.patch.object(stop_delivery_gate, "default_branch", return_value="main"),
+            mock.patch.object(stop_delivery_gate, "run", return_value=result),
+        ):
+            self.assertTrue(stop_delivery_gate.merged_delivery_closed(self.state, "/repo"))
+
+    def test_does_not_close_when_pr_is_closed(self):
+        with mock.patch.object(stop_delivery_gate, "run_text", return_value="CLOSED"):
+            self.assertFalse(stop_delivery_gate.merged_delivery_closed(self.state, "/repo"))
+
+    def test_does_not_close_without_pr_number(self):
+        self.assertFalse(
+            stop_delivery_gate.merged_delivery_closed(
+                {"pushed_head": "pushed-head", "pr_number": None},
+                "/repo",
+            )
+        )
+
+    def test_does_not_close_when_pr_lookup_fails(self):
+        with mock.patch.object(stop_delivery_gate, "run_text", return_value=None):
+            self.assertFalse(stop_delivery_gate.merged_delivery_closed(self.state, "/repo"))
+
+    def test_does_not_close_without_default_branch(self):
+        with (
+            mock.patch.object(stop_delivery_gate, "run_text", return_value="MERGED"),
+            mock.patch.object(stop_delivery_gate, "default_branch", return_value=None),
+        ):
+            self.assertFalse(stop_delivery_gate.merged_delivery_closed(self.state, "/repo"))
+
+    def test_does_not_close_when_head_is_not_contained_in_default_branch(self):
+        result = subprocess.CompletedProcess(args=["git"], returncode=1)
+        with (
+            mock.patch.object(stop_delivery_gate, "run_text", return_value="MERGED"),
+            mock.patch.object(stop_delivery_gate, "default_branch", return_value="main"),
+            mock.patch.object(stop_delivery_gate, "run", return_value=result),
+        ):
+            self.assertFalse(stop_delivery_gate.merged_delivery_closed(self.state, "/repo"))
+
+
 class StopGateFetchPrTests(unittest.TestCase):
     def fake_result(self, returncode, stdout="", stderr=""):
         return subprocess.CompletedProcess(
@@ -1015,6 +1061,38 @@ class StopGateMainTests(unittest.TestCase):
         state_file = state_path(
             Path(os.environ["DROID_DELIVERY_LEDGER_DIR"]),
             "gate-clean",
+            self.repo_root,
+        )
+        self.assertIsNone(load_state(state_file)["pushed_head"])
+
+    def test_main_clears_state_for_a_merged_delivery(self):
+        record_push(
+            state_dir=Path(os.environ["DROID_DELIVERY_LEDGER_DIR"]),
+            session_id="gate-merged",
+            repo_root=self.repo_root,
+            branch="feature",
+            pushed_head="pushed-head",
+            pr_number=42,
+        )
+        result = subprocess.CompletedProcess(args=["git"], returncode=0)
+        with (
+            mock.patch.object(
+                stop_delivery_gate,
+                "run_text",
+                side_effect=[self.repo_root, "MERGED"],
+            ),
+            mock.patch.object(stop_delivery_gate, "default_branch", return_value="main"),
+            mock.patch.object(stop_delivery_gate, "run", return_value=result),
+            mock.patch.object(stop_delivery_gate, "snapshot_delivery") as snapshot,
+        ):
+            code, out = self.run_main(
+                {"session_id": "gate-merged", "cwd": self.repo_root}
+            )
+        self.assertEqual((code, out), (0, ""))
+        snapshot.assert_not_called()
+        state_file = state_path(
+            Path(os.environ["DROID_DELIVERY_LEDGER_DIR"]),
+            "gate-merged",
             self.repo_root,
         )
         self.assertIsNone(load_state(state_file)["pushed_head"])

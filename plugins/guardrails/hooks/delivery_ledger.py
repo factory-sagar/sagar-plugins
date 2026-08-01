@@ -245,6 +245,20 @@ def run(command: list[str], cwd: str) -> str | None:
     return result.stdout.strip()
 
 
+def default_branch(cwd: str) -> str | None:
+    symbolic = run(["git", "symbolic-ref", "refs/remotes/origin/HEAD"], cwd)
+    if symbolic and symbolic.startswith("refs/remotes/origin/"):
+        return symbolic.removeprefix("refs/remotes/origin/")
+    for candidate in ("main", "master"):
+        found = run(
+            ["git", "show-ref", "--verify", f"refs/remotes/origin/{candidate}"],
+            cwd,
+        )
+        if found is not None:
+            return candidate
+    return None
+
+
 def resolve_push_state(cwd: str) -> tuple[str, str, str, int | None, list[str]] | None:
     repo_root = run(["git", "rev-parse", "--show-toplevel"], cwd)
     branch = run(["git", "branch", "--show-current"], cwd)
