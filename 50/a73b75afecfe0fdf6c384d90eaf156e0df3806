@@ -1,0 +1,55 @@
+plugins/investigation/.factory-plugin/plugin.json
+  c9d649e61754aff1 3-4
+plugins/meta/.factory-plugin/plugin.json
+  c9d649e61754aff1 3-4
+plugins/guardrails/tests/test_delivery_guardrails.py
+  c9d649e61754aff1 1175
+plugins/meta/README.md
+  c9d649e61754aff1 3,5,23,28,38,44
+plugins/meta/skills/audit-and-apply-loop/SKILL.md
+  c9d649e61754aff1 14,122,126,128,133-137,142,144,221,243
+README.md
+  c9d649e61754aff1 16,64
+plugins/review/.factory-plugin/plugin.json
+  c9d649e61754aff1 3
+plugins/practices/.factory-plugin/plugin.json
+  c9d649e61754aff1 3
+plugins/review/droids/security.md
+  c9d649e61754aff1 28,98
+.factory-plugin/marketplace.json
+  c9d649e61754aff1 11,29
+plugins/investigation/droids/deep-understanding.md
+  c9d649e61754aff1 32,189
+plugins/practices/skills/spec/SKILL.md
+  c9d649e61754aff1 96,108
+plugins/meta/droids/doc-generator.md
+  c9d649e61754aff1 37,148
+plugins/practices/README.md
+  c9d649e61754aff1 47,50
+plugins/investigation/droids/deep-research.md
+  c9d649e61754aff1 30
+plugins/investigation/README.md
+  c9d649e61754aff1 3,5,23-24,30-31
+plugins/practices/skills/agentic-engineering/SKILL.md
+  c9d649e61754aff1 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "50a73b75afecfe0fdf6c384d90eaf156e0df3806",
+  "prompts": {
+    "c9d649e61754aff1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "eddb4952-bd50-4211-a972-1856038f692b",
+        "model": "kimi-k3"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 48,
+      "total_deletions": 61,
+      "accepted_lines": 48,
+      "overriden_lines": 0
+    }
+  }
+}
