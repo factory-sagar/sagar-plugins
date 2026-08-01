@@ -146,7 +146,8 @@ run_once() { # $1=run index
   STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   # `-o json` returns one final result object: `.result` is the same final-message text that
   # `-o text` prints, and `.usage`/`.duration_ms` carry cost and latency for model decisions.
-  droid exec "${EXEC_ARGS[@]}" -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto high -o json \
+  # ${arr[@]+"${arr[@]}"} keeps an empty EXEC_ARGS legal under `set -u` on bash 3.2 (macOS).
+  droid exec ${EXEC_ARGS[@]+"${EXEC_ARGS[@]}"} -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto high -o json \
     > "$RUN_DIR/exec-result.json"
   FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

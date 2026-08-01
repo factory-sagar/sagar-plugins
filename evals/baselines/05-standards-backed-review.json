@@ -8,21 +8,21 @@
   "execModel": "kimi-k3",
   "execReasoningEffort": "max",
   "contractSource": "plugins/review/droids/change-review.md",
-  "contractSha": "5c83d0ea4617eac1564c6af3b089d93ad466a10fbeff88902551cc24fdf900ea",
-  "acceptedAt": "2026-08-01T06:49:16Z",
+  "contractSha": "7c32e4cb02abb0f12d0ace5b45e48f62d3bfea539baecc344315bde79733d2d5",
+  "acceptedAt": "2026-08-01T17:49:12Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260801T064321Z-05-standards-backed-review-accept1785566600-r1",
+      "runDir": "evals/runs/20260801T174400Z-05-standards-backed-review-accept1785606240-r1",
       "verdict": "pass",
       "transcript": "transcripts/05-standards-backed-review/run1.md"
     },
     {
-      "runDir": "evals/runs/20260801T064321Z-05-standards-backed-review-accept1785566600-r2",
+      "runDir": "evals/runs/20260801T174400Z-05-standards-backed-review-accept1785606240-r2",
       "verdict": "pass",
       "transcript": "transcripts/05-standards-backed-review/run2.md"
     },
     {
-      "runDir": "evals/runs/20260801T064321Z-05-standards-backed-review-accept1785566600-r3",
+      "runDir": "evals/runs/20260801T174400Z-05-standards-backed-review-accept1785606240-r3",
       "verdict": "pass",
       "transcript": "transcripts/05-standards-backed-review/run3.md"
     }

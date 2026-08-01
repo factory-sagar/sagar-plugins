@@ -1,6 +1,6 @@
 ---
 name: spec
-version: 1.5.1
+version: 1.5.3
 description: |
   Plan non-trivial features, refactors, and migrations. Converts short or detailed requests
   into evidence-backed decisions, testable acceptance criteria, and executable units; adds
@@ -60,6 +60,9 @@ reasonable reader's likely assumption that you explicitly decline, not an absurd
 - <unresolved decision or unstated constraint>
 ```
 
+Emit the complete spec and decomposition as your final message. In headless runs the reader
+sees only the final message; a summary of content "delivered above" scores as missing.
+
 ## Decomposition
 
 Apply the **15-minute unit rule**. Every unit is independently verifiable, has one dominant risk,
@@ -86,7 +89,8 @@ consolidate shared work or split the spec.
 - **Verification gate:** `verification-loop`, then `review-pr`, before PR shaping.
 
 ## Hand-off after spec
-<concrete next action and delegate>
+<concrete next action and delegate — name the full closing chain: `pr-describer` for the PR
+body and `commit-message-writer` for the commit, after `verification-loop` and `review-pr` pass>
 ```
 
 ## Delegation Map
