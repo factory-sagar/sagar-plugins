@@ -1,6 +1,6 @@
 ---
 name: spec
-version: 1.5.0
+version: 1.5.3
 description: |
   Plan non-trivial features, refactors, and migrations. Converts short or detailed requests
   into evidence-backed decisions, testable acceptance criteria, and executable units; adds
@@ -24,9 +24,9 @@ material decision lacks context.
 1. Restate the outcome, non-goals, stated constraints, and ambiguity. Ask one focused question
    only when an answer cannot be established from supplied context or repository evidence.
 2. Establish a system anchor for non-trivial or unfamiliar work. Use `planner` by default for
-   multi-file, multi-unit, or unfamiliar scope; use `quick-analysis` for small unfamiliar scope,
-   `deep-understanding` for subsystem questions, and `deep-research` for external facts. Cite
-   the resulting paths and source. Do not redo delegated evidence gathering.
+   multi-file, multi-unit, or unfamiliar scope; use the built-in `explorer` for small unfamiliar
+   scope, `deep-understanding` for subsystem questions, and `deep-research` for external facts.
+   Cite the resulting paths and source. Do not redo delegated evidence gathering.
 3. Write the spec, preserving user constraints. Put a constraint the user did not state in Open
    Questions rather than inventing it.
 4. Decompose, sequence dependencies, identify independent work, and name one delegate per unit.
@@ -60,6 +60,9 @@ reasonable reader's likely assumption that you explicitly decline, not an absurd
 - <unresolved decision or unstated constraint>
 ```
 
+Emit the complete spec and decomposition as your final message. In headless runs the reader
+sees only the final message; a summary of content "delivered above" scores as missing.
+
 ## Decomposition
 
 Apply the **15-minute unit rule**. Every unit is independently verifiable, has one dominant risk,
@@ -86,14 +89,15 @@ consolidate shared work or split the spec.
 - **Verification gate:** `verification-loop`, then `review-pr`, before PR shaping.
 
 ## Hand-off after spec
-<concrete next action and delegate>
+<concrete next action and delegate — name the full closing chain: `pr-describer` for the PR
+body and `commit-message-writer` for the commit, after `verification-loop` and `review-pr` pass>
 ```
 
 ## Delegation Map
 
 | Unit shape | Delegate | Why |
 |---|---|---|
-| Unfamiliar repository shape or entry points | `quick-analysis` | Fast repo triage |
+| Unfamiliar repository shape or entry points | `explorer` | Fast repo triage |
 | Architecture or agentic-config understanding | `deep-understanding` | Evidence-anchored investigation |
 | External library, CVE, or best-practice research | `deep-research` | Source-backed external research |
 | Approved change set or debugger fix plan | `implementer` | Minimal changes with targeted verification |
@@ -105,7 +109,7 @@ consolidate shared work or split the spec.
 | Pre-merge review and security depth | `review-pr` | Owns review fan-out and stage selection |
 | PR description | `pr-describer` | Structured PR body |
 | Conventional Commit message | `commit-message-writer` | Format-mechanical synthesis |
-| Droid or skill prompt audit | `prompt-optimizer` | Prompt-local analysis |
+| Droid or skill prompt iteration | `audit-and-apply-loop` | Audit-apply-verify cycle |
 | Apply agentic-config audit findings | `doc-generator` | Marketplace editing owner |
 | Procedural planning step | `<self>` | No delegation needed |
 

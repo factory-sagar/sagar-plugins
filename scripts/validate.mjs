@@ -299,20 +299,8 @@ const guardrailHooksFile = path.join(pluginsDir, 'guardrails', 'hooks', 'hooks.j
 const guardrailHooks = readJson(guardrailHooksFile);
 if (guardrailHooks?.hooks) {
   const promptCommands = collectHookCommands(guardrailHooks.hooks.UserPromptSubmit ?? []);
-  const taskCommands = collectHookCommands(
-    (guardrailHooks.hooks.PreToolUse ?? []).filter(({ matcher }) => matcher === 'Task'),
-  );
-  // Review budget initializes either as a direct hook command or inside the merged
-  // prompt_submit dispatcher; a dispatcher that no longer runs review_budget fails here.
-  const dispatcherFile = path.join(pluginsDir, 'guardrails', 'hooks', 'prompt_submit.py');
-  const budgetViaDispatcher =
-    promptCommands.some((command) => command.includes('/prompt_submit.py'))
-    && read(dispatcherFile).includes('review_budget');
-  if (!promptCommands.some((command) => command.includes('/review_budget.py')) && !budgetViaDispatcher) {
-    fail(guardrailHooksFile, 'review budget must initialize on UserPromptSubmit');
-  }
-  if (!taskCommands.some((command) => command.includes('/review_budget.py'))) {
-    fail(guardrailHooksFile, 'review budget must guard PreToolUse Task calls');
+  if (!promptCommands.some((command) => command.includes('/intent_router.py'))) {
+    fail(guardrailHooksFile, 'intent router must run on UserPromptSubmit');
   }
 }
 requireText(

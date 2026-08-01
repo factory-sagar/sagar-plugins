@@ -48,9 +48,7 @@ is expensive has one. `scripts/validate-evals.mjs` warns on droids with zero tas
 | [`21-pr-describer-self-contained.md`](./21-pr-describer-self-contained.md) | `pr-describer` | no |
 | [`22-planner-decomposition.md`](./22-planner-decomposition.md) | `planner` | yes |
 | [`23-debugger-rca-no-patch.md`](./23-debugger-rca-no-patch.md) | `debugger` | yes |
-| [`24-quick-analysis-triage.md`](./24-quick-analysis-triage.md) | `quick-analysis` | no |
 | [`25-doc-generator-minimal-edit.md`](./25-doc-generator-minimal-edit.md) | `doc-generator` | no |
-| [`26-prompt-optimizer-audit.md`](./26-prompt-optimizer-audit.md) | `prompt-optimizer` | no |
 
 ## Scoring
 

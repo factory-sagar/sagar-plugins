@@ -8,21 +8,21 @@
   "execModel": "claude-opus-4-8",
   "execReasoningEffort": "xhigh",
   "contractSource": "plugins/review/droids/security.md",
-  "contractSha": "4105cf39b219fe64e647321fdbbb976a0c8345dbfb7f75043c285c7c9f1d3bb1",
-  "acceptedAt": "2026-07-26T21:08:50Z",
+  "contractSha": "9b9b7b3d9564467e0b387d55436530fa2c9887c948e2b280022052bd33254192",
+  "acceptedAt": "2026-08-01T18:00:10Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260726T205611Z-09-security-seeded-vuln-accept1785099371-r1",
+      "runDir": "evals/runs/20260801T174912Z-09-security-seeded-vuln-accept1785606552-r1",
       "verdict": "pass",
       "transcript": "transcripts/09-security-seeded-vuln/run1.md"
     },
     {
-      "runDir": "evals/runs/20260726T205611Z-09-security-seeded-vuln-accept1785099371-r2",
+      "runDir": "evals/runs/20260801T174912Z-09-security-seeded-vuln-accept1785606552-r2",
       "verdict": "pass",
       "transcript": "transcripts/09-security-seeded-vuln/run2.md"
     },
     {
-      "runDir": "evals/runs/20260726T205611Z-09-security-seeded-vuln-accept1785099371-r3",
+      "runDir": "evals/runs/20260801T174912Z-09-security-seeded-vuln-accept1785606552-r3",
       "verdict": "pass",
       "transcript": "transcripts/09-security-seeded-vuln/run3.md"
     }

@@ -22,8 +22,6 @@ sys.path.insert(0, str(HOOKS))
 import delivery_ledger  # noqa: E402
 import intent_router  # noqa: E402
 import pre_push_policy  # noqa: E402
-import prompt_submit  # noqa: E402
-import review_budget  # noqa: E402
 import stop_delivery_gate  # noqa: E402
 
 
@@ -34,7 +32,6 @@ class EmissionContractTests(unittest.TestCase):
         root = Path(self.scratch.name)
         self.log_dir = root / "log"
         env = {
-            "DROID_REVIEW_BUDGET_DIR": str(root / "budget"),
             "DROID_DELIVERY_LEDGER_DIR": str(root / "ledger"),
             "DROID_INTENT_STATE_DIR": str(root / "intent"),
             "DROID_GUARDRAILS_LOG_DIR": str(self.log_dir),
@@ -74,9 +71,7 @@ class EmissionContractTests(unittest.TestCase):
 
     def test_every_hook_ignores_malformed_stdin_silently(self):
         for module in (
-            prompt_submit,
             intent_router,
-            review_budget,
             delivery_ledger,
             pre_push_policy,
             stop_delivery_gate,
@@ -142,73 +137,6 @@ class EmissionContractTests(unittest.TestCase):
             intent_router.intent_state_directory(), "emit-5"
         )
         self.assertTrue(state["merge_or_approve"])
-
-    def test_review_budget_is_silent_on_prompt_and_non_review_tasks(self):
-        payloads = (
-            {
-                "hook_event_name": "UserPromptSubmit",
-                "session_id": "emit-6",
-                "prompt": "Review and fix the change.",
-            },
-            {
-                "hook_event_name": "PreToolUse",
-                "session_id": "emit-6",
-                "tool_name": "Execute",
-                "tool_input": {"command": "ls"},
-            },
-            {
-                "hook_event_name": "PreToolUse",
-                "session_id": "emit-6",
-                "tool_name": "Task",
-                "tool_input": {"subagent_type": "worker", "description": "explore"},
-            },
-        )
-        for payload in payloads:
-            with self.subTest(payload=payload):
-                code, out, err = self.run_main(review_budget, payload)
-                self.assertEqual((code, out, err), (0, "", ""))
-        self.assertEqual(self.logged_decisions(), [])
-
-    def test_review_budget_denies_are_emitted_and_logged(self):
-        self.run_main(
-            review_budget,
-            {
-                "hook_event_name": "UserPromptSubmit",
-                "session_id": "emit-7",
-                "prompt": "Review the change.",
-            },
-        )
-        for _ in range(6):
-            self.assertEqual(
-                self.run_main(
-                    review_budget,
-                    {
-                        "hook_event_name": "PreToolUse",
-                        "session_id": "emit-7",
-                        "tool_name": "Task",
-                        "tool_input": {"subagent_type": "change-review"},
-                    },
-                ),
-                (0, "", ""),
-            )
-        code, out, err = self.run_main(
-            review_budget,
-            {
-                "hook_event_name": "PreToolUse",
-                "session_id": "emit-7",
-                "tool_name": "Task",
-                "tool_input": {"subagent_type": "change-review"},
-            },
-        )
-        self.assertEqual((code, err), (0, ""))
-        response = json.loads(out)
-        self.assertEqual(
-            response["hookSpecificOutput"]["permissionDecision"], "deny"
-        )
-        decisions = self.logged_decisions()
-        self.assertEqual(len(decisions), 1)
-        self.assertEqual(decisions[0]["hook"], "review_budget")
-        self.assertEqual(decisions[0]["decision"], "deny")
 
     def test_delivery_ledger_is_silent_on_session_start_and_non_push_commands(self):
         repo = self.make_git_repo()
@@ -278,9 +206,7 @@ class EmissionContractTests(unittest.TestCase):
 
     def test_hook_print_sites_are_exactly_the_decision_paths(self):
         expected_print_sites = {
-            "prompt_submit.py": 0,
             "intent_router.py": 1,
-            "review_budget.py": 1,
             "delivery_ledger.py": 0,
             "pre_push_policy.py": 1,
             "stop_delivery_gate.py": 1,

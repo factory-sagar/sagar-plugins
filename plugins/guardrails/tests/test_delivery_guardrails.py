@@ -1143,7 +1143,6 @@ class WorkflowPolicyContractTests(unittest.TestCase):
 
     def test_investigation_and_synthesis_droids_route_review_handoffs_through_review_pr(self):
         for relative_path in (
-            "plugins/investigation/droids/quick-analysis.md",
             "plugins/investigation/droids/deep-understanding.md",
             "plugins/investigation/droids/deep-research.md",
             "plugins/synthesis/droids/pr-describer.md",
@@ -1173,10 +1172,9 @@ class WorkflowPolicyContractTests(unittest.TestCase):
                     ),
                 )
 
-    def test_debugger_and_prompt_optimizer_route_security_review_followups_through_review_pr(self):
+    def test_debugger_routes_security_review_followups_through_review_pr(self):
         for relative_path in (
             "plugins/investigation/droids/debugger.md",
-            "plugins/meta/droids/prompt-optimizer.md",
         ):
             with self.subTest(relative_path=relative_path):
                 policy = self.policy_text(relative_path)

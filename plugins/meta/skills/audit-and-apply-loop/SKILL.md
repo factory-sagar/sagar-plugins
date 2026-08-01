@@ -1,6 +1,6 @@
 ---
 name: audit-and-apply-loop
-version: 1.1.0
+version: 1.2.0
 description: |
   Prompt evolution policy: capture observed behavior, audit the prompt, apply the smallest
   justified change, rerun the same case, and keep only measured improvement. Invoke for prompt,
@@ -11,7 +11,7 @@ user-invocable: false
 
 # Audit-and-Apply Loop
 
-A repeatable six-step cycle for evolving droid and skill prompts. Audit with `prompt-optimizer`, apply minimal-edit fixes with `doc-generator`, re-test against a real target, re-audit to confirm. The loop converges when no new findings appear or when remaining findings are intentionally accepted.
+A repeatable six-step cycle for evolving droid and skill prompts. Audit in-session against observed behavior, apply minimal-edit fixes with `doc-generator`, re-test against a real target, re-audit to confirm. The loop converges when no new findings appear or when remaining findings are intentionally accepted.
 
 This skill describes how to audit and revise droid or skill prompts, including prompts in
 the meta plugin.
@@ -28,7 +28,7 @@ the meta plugin.
 ## When NOT to Activate
 
 - The prompt is fine and the parent task is unrelated.
-- The audit target is **structural** — questions about which droid owns which role, plugin granularity decisions, model strategy across the whole set. That's `deep-understanding`'s remit (in the `investigation` plugin), not `prompt-optimizer`'s.
+- The audit target is **structural** — questions about which droid owns which role, plugin granularity decisions, model strategy across the whole set. That's `deep-understanding`'s remit (in the `investigation` plugin), not this loop's.
 - Single trivial edit (fixing a typo in a description, adding a missing comma). Just edit it directly with `doc-generator` or by hand.
 - The droid hasn't been invoked yet — start with running it once on a real target, then audit. Audits without observed output are inference-only and converge slowly.
 
@@ -52,11 +52,11 @@ the meta plugin.
                    │
                    ▼
 ┌──────────────────────────────────────────┐
-│ 3. prompt-optimizer audits the prompt    │
-│    + observed output.                    │
-│    Returns findings with severity,       │
-│    confidence, and Risk-of-edit.         │
-│    Delegate: prompt-optimizer droid      │
+│ 3. Audit the prompt + observed output    │
+│    in-session. Record findings with      │
+│    severity, confidence, and             │
+│    Risk-of-edit.                         │
+│    Delegate: <self>                      │
 └──────────────────┬───────────────────────┘
                    │
                    ▼
@@ -113,32 +113,35 @@ Do this **before** auditing. Without observed output:
 - The audit can't tell which content surprises the model into producing junk.
 
 **Pick a real target** that exercises the droid's typical use case. For:
-- `quick-analysis` → a repo you've never triaged before
 - `deep-understanding` → a repo with non-trivial architecture
 - `change-review` → a real commit with non-trivial diff
 - `security` → a commit touching auth or secrets
 - `pr-describer` → a recent multi-file commit
 - `deep-research` → a focused external question
 
-Save the output verbatim. You'll feed it back into prompt-optimizer in Step 3.
+Save the output verbatim. You'll feed it back into the Step 3 audit.
 
 **Delegation:** invoke the target droid itself.
 
-### Step 3 — Run prompt-optimizer
+### Step 3 — Audit the prompt
 
-Pass:
+Audit in-session with:
 - The prompt file path
 - The observed output from Step 2
 - The audit type (`new-droid review` | `adherence diagnosis` | `version comparison` | `cross-reference sweep`)
 
-`prompt-optimizer` returns findings with:
+The audit lens is prompt-local: identity, hard constraints, anti-pattern coverage,
+output-template adherence, and verbosity. Compare what the prompt directs against what the
+observed output actually did.
+
+Record each finding with:
 - **Priority** (P0–P3)
 - **Confidence** (high/medium/low) — high when grounded in observed output
 - **Risk-of-edit** (high/medium/low) — high when the edit may fight a model prior
 
-It will also flag findings that require **structural** decisions (which droid owns what, model swaps, plugin granularity) under Hand-off → `deep-understanding`. Those are not for this loop.
+Mark findings that require **structural** decisions (which droid owns what, model swaps, plugin granularity) as Hand-off → `deep-understanding`. Those are not for this loop.
 
-**Delegation:** `prompt-optimizer` droid.
+**Delegation:** `<self>` — the audit is a judgment pass over observed output, not a delegable task.
 
 ### Step 4 — Decide which findings to apply
 
@@ -188,7 +191,7 @@ Three outcomes:
 |---|---|---|
 | 1. Author / modify prompt | `<self>` or `worker` | Drafting; either works |
 | 2. Invoke target droid | the target droid | This is the data we audit against |
-| 3. Audit | `prompt-optimizer` | Specialized for prompt-local quality |
+| 3. Audit | `<self>` | Prompt-local judgment over observed output |
 | 4. Decide which to apply | `<self>` | Judgment, not delegable |
 | 5. Apply | `doc-generator` | Only droid in marketplace with edit tools |
 | 6. Re-invoke and compare | the target droid + `<self>` for comparison | Re-run + manual diff of behavior |
@@ -203,11 +206,10 @@ Some findings or audit-shaped questions are structural, not prompt-local. Hand o
 - The question is "is the cross-droid hand-off graph coherent" across many droids — that's structural.
 - The audit's findings cluster around "the prompt is fine but the role is wrong" — re-architect, don't tweak.
 
-`prompt-optimizer` will flag these under Hand-off and stop; the loop continues with `deep-understanding` instead.
+Mark these as Hand-off; the loop continues with `deep-understanding` instead.
 
 ## Companion Droids
 
-- `prompt-optimizer` (in `meta`) — the auditor for steps 3+.
 - `doc-generator` (in `meta`) — the applier for step 5.
 - `deep-understanding` (in `investigation`) — for structural decisions that aren't prompt-local.
 - target droid being evolved — used in steps 2 and 6.
@@ -216,7 +218,7 @@ Some findings or audit-shaped questions are structural, not prompt-local. Hand o
 
 - **Auditing without observed output.** All findings are `inference`; the loop can't converge cleanly. Run the droid first.
 - **Applying high-Risk-of-edit findings blindly without re-test.** Those exist because the model may fight the directive; you need to verify the fight didn't backfire.
-- **Letting `prompt-optimizer` make structural calls.** It's prompt-local. Structural goes to `deep-understanding`.
+- **Letting the audit make structural calls.** The audit is prompt-local. Structural goes to `deep-understanding`.
 - **Skipping the re-test in step 6.** Without re-test, you don't know if the apply actually worked or just looked clean in the diff.
 - **Flip-flopping** — applying a finding, then undoing it next loop, then re-applying. Root-cause why the finding keeps coming back before applying again.
 - **Letting the prompt grow indefinitely.** Every loop iteration tends to add directives. Periodically run a "trim" pass — what can be removed without quality loss?
@@ -228,7 +230,7 @@ Some findings or audit-shaped questions are structural, not prompt-local. Hand o
 
 - **Brand-new droid, no observed output yet:** run it once on a representative target before the first audit. If you literally cannot (e.g., the droid requires elaborate setup), audit anyway with `inference` confidence and accept the loop will need extra iterations.
 - **Audit finds nothing:** great, the prompt is in a good state. Lock it and move on. Skip Step 5 entirely.
-- **Audit recommends a model swap:** that's a structural decision; hand off to `deep-understanding`. Do NOT let `doc-generator` change the frontmatter `model` field based on a `prompt-optimizer` finding alone.
+- **Audit recommends a model swap:** that's a structural decision; hand off to `deep-understanding`. Do NOT let `doc-generator` change the frontmatter `model` field based on an audit finding alone.
 - **Audit finds the prompt is fundamentally wrong** (wrong identity, wrong scope, wrong model class): this is full rewrite territory, not minimal-edit. Author manually (back to Step 1 with a clean slate); then loop.
 - **Findings disagree across two prompts being audited together:** resolve the conflict before applying. `doc-generator` will refuse to apply contradictory edits.
 - **Same finding keeps appearing every loop iteration despite being "applied":** the model is fighting the directive. Either remove the directive (give up; embrace the model's natural behavior), or rephrase entirely (try a worked example instead of a rule, or rename a section to avoid the trigger).
@@ -238,7 +240,7 @@ Some findings or audit-shaped questions are structural, not prompt-local. Hand o
 ## Self-Check (before declaring a prompt locked)
 
 1. Did I run the droid against a real target (not just lint the prompt)?
-2. Did I run `prompt-optimizer` with observed output, not just the prompt?
+2. Did I audit with observed output, not just the prompt?
 3. For each high-Risk-of-edit finding I applied, did I re-test?
 4. Did I hand off structural findings to `deep-understanding`, not let `doc-generator` apply them?
 5. After applying, did I re-invoke the droid and verify behavior improved?

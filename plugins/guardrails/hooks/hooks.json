@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${DROID_PLUGIN_ROOT}/hooks/prompt_submit.py\"",
+            "command": "python3 \"${DROID_PLUGIN_ROOT}/hooks/intent_router.py\"",
             "timeout": 10
           }
         ]
@@ -32,16 +32,6 @@
             "type": "command",
             "command": "python3 \"${DROID_PLUGIN_ROOT}/hooks/pre_push_policy.py\"",
             "timeout": 15
-          }
-        ]
-      },
-      {
-        "matcher": "Task",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${DROID_PLUGIN_ROOT}/hooks/review_budget.py\"",
-            "timeout": 10
           }
         ]
       }
