@@ -56,12 +56,13 @@
       ]
     },
     "change-review": {
-      "model": "gpt-5.6-sol",
-      "reasoningEffort": "xhigh",
+      "model": "kimi-k3",
+      "reasoningEffort": "max",
       "status": "provisional",
       "evidence": [
         "2026-07-11-role-routing",
-        "2026-07-11-real-world-review"
+        "2026-07-11-real-world-review",
+        "2026-07-31-change-review-repin"
       ]
     },
     "security": {
