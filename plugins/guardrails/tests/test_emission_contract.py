@@ -22,6 +22,7 @@ sys.path.insert(0, str(HOOKS))
 import delivery_ledger  # noqa: E402
 import intent_router  # noqa: E402
 import pre_push_policy  # noqa: E402
+import prompt_submit  # noqa: E402
 import review_budget  # noqa: E402
 import stop_delivery_gate  # noqa: E402
 
@@ -73,6 +74,7 @@ class EmissionContractTests(unittest.TestCase):
 
     def test_every_hook_ignores_malformed_stdin_silently(self):
         for module in (
+            prompt_submit,
             intent_router,
             review_budget,
             delivery_ledger,
@@ -276,6 +278,7 @@ class EmissionContractTests(unittest.TestCase):
 
     def test_hook_print_sites_are_exactly_the_decision_paths(self):
         expected_print_sites = {
+            "prompt_submit.py": 0,
             "intent_router.py": 1,
             "review_budget.py": 1,
             "delivery_ledger.py": 0,

@@ -34,6 +34,40 @@ from stop_delivery_gate import (  # noqa: E402
 
 
 class DeliveryLedgerTests(unittest.TestCase):
+    def test_execute_command_regex_covers_every_supported_push_shape(self):
+        hooks = json.loads((HOOKS / "hooks.json").read_text(encoding="utf-8"))
+        groups = (
+            hooks["hooks"]["PreToolUse"][0],
+            hooks["hooks"]["PostToolUse"][0],
+        )
+        regexes = {group["commandRegex"] for group in groups}
+        self.assertEqual(len(regexes), 1)
+        command_regex = re.compile(regexes.pop())
+        push_commands = (
+            "git push -u origin HEAD",
+            "git -C /repo push origin feature",
+            "git -C/repo push origin feature",
+            "git -c user.name=bot push origin feature",
+            "git --git-dir .git --work-tree . push origin feature",
+            "git status && git push origin feature",
+            "cd /repo && git -C /repo push origin branch",
+            "set -o pipefail; git push origin feature | tee /tmp/push.log",
+            "git status || git push origin feature",
+        )
+        for command in push_commands:
+            with self.subTest(command=command):
+                self.assertIsNotNone(parse_push_command(command))
+                self.assertRegex(command, command_regex)
+
+        for command in (
+            "git checkout push",
+            'echo "run git push later"',
+            "printf 'git push'",
+            "git status && echo git push",
+        ):
+            with self.subTest(command=command):
+                self.assertIsNone(command_regex.search(command))
+
     def test_detects_real_push_commands_without_matching_prose(self):
         self.assertTrue(is_push_command("git push -u origin HEAD"))
         self.assertTrue(is_push_command("git status && git push origin feature"))
