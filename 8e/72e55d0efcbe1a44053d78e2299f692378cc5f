@@ -1,0 +1,31 @@
+plugins/guardrails/.factory-plugin/plugin.json
+  11e46baf96e40720 3
+plugins/guardrails/hooks/delivery_ledger.py
+  11e46baf96e40720 248-261
+plugins/guardrails/hooks/pre_push_policy.py
+  11e46baf96e40720 13
+plugins/guardrails/hooks/stop_delivery_gate.py
+  11e46baf96e40720 15-16,33,278-297,505-506
+plugins/guardrails/tests/test_delivery_guardrails.py
+  11e46baf96e40720 725-770,1068-1099
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "8e72e55d0efcbe1a44053d78e2299f692378cc5f",
+  "prompts": {
+    "11e46baf96e40720": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "72c836a6-6842-4120-ae4f-688eefd24d7f",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 120,
+      "total_deletions": 13,
+      "accepted_lines": 120,
+      "overriden_lines": 0
+    }
+  }
+}
