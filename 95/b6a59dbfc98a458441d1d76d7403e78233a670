@@ -1,0 +1,25 @@
+plugins/practices/skills/spec/SKILL.md
+  c9d649e61754aff1 3,63-65,92-93
+scripts/run-golden-task.sh
+  c9d649e61754aff1 149-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "95b6a59dbfc98a458441d1d76d7403e78233a670",
+  "prompts": {
+    "c9d649e61754aff1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "eddb4952-bd50-4211-a972-1856038f692b",
+        "model": "kimi-k3"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 3,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
