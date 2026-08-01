@@ -8,6 +8,7 @@ differently because they cost differently:
 | Deterministic | `scripts/validate.mjs`, `scripts/validate-evals.mjs`, guardrail unittests, review selector tests | green CI | every push and PR |
 | Routing | `routing/cases.json` scored by `scripts/eval-routing.mjs` against `policy.json` | thresholds in `policy.json` | when router vocabulary, AGENTS routing rules, or workflow descriptions change |
 | Judged golden tasks | `golden-tasks/*.md` via `scripts/run-golden-task.sh --judge` | accepted verdict baselines in `baselines/` | when a task's `## Target` contract changes |
+| Fix-pair recall | real mined defect pairs via `scripts/run-review-fixpairs.mjs` + `scripts/score-fixpairs.mjs` | none: each mined corpus is its own ground truth | when evaluating droid model candidates on real regressions |
 
 ## Verdict baselines, not transcript baselines
 
@@ -56,9 +57,35 @@ adherence, not deployed subagent behavior; every run records
 `"pinnedDroidExercised": false`. Treat single-run differences as noise: acceptance uses
 N repeats, and `repetitions.modelChange` governs model comparisons.
 
+## Fix-pair recall tier (real-world model evaluation)
+
+The golden tier measures contract adherence on curated tasks; the fix-pair tier measures
+defect recall against real regressions mined from a private monorepo's merged history.
+`scripts/mine-fix-pairs.mjs --repo <clone> --gh-repo <owner/name>` finds merged fix PRs,
+blames the pre-fix tree to attribute the introducing ("culprit") PR, and emits
+`tmp/fixpairs/corpus.json` plus a human review sheet.
+Both stay local: the corpus contains private repo content and is gitignored.
+
+`scripts/run-review-fixpairs.mjs --corpus <file> --repo <clone> --role <droid> --model <m>
+[--effort e] [--reps n] [--pairs fp-0001,...]` reviews each culprit diff in a detached
+worktree of the private clone and records findings, cost, and latency per run under
+`evals/runs/`.
+`scripts/score-fixpairs.mjs` classifies each finding (`hit` / `near-miss` / `outside` /
+`unlocated`) against the labeled defect regions and prints a role × model scorecard; its
+JSON output feeds `scripts/model-decision.mjs` under `policy.json` `modelDecision`
+thresholds exactly like the golden tier.
+
+Honesty limits specific to this tier: attribution is heuristic (fix authors most often fix
+their own PRs; `high` confidence means every blamed line resolved to one PR), pairs are
+defect-true but not defect-complete, so the metric is recall per labeled region plus
+outside-region noise, never precision against "all defects in the diff". Pairs below
+`medium` confidence never feed decisions.
+
 ## Layout
 
 - `golden-tasks/` — versioned task rubrics plus `JUDGE.md` (the scoring contract)
+- `scripts/mine-fix-pairs.mjs`, `run-review-fixpairs.mjs`, `score-fixpairs.mjs` — the
+  fix-pair tier; the mined corpus lives in `tmp/fixpairs/` and stays local
 - `baselines/` — accepted verdict baselines (committed); `baselines/transcripts/` (local only)
 - `routing/cases.json` — intent-routing cases (also asserted deterministically by the
   guardrails test suite)
