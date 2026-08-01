@@ -19,7 +19,9 @@
 #
 # Baselines are verdict-level, not transcript-level: accept with
 # scripts/accept-baseline.sh, compare with scripts/compare-baseline.mjs.
-# (For droid model A/Bs, do NOT use this script — see README "Fable-class models".)
+# (For droid model A/Bs, see evals/README.md "Honesty limits": --droid/--model runs are
+# source-contract execution, not deployed subagent behavior; decisions land via the
+# modelDecision path with scripts/model-decision.mjs and evals/model-decisions/ records.)
 #
 # Requires: droid CLI on PATH, the relevant plugins installed.
 set -euo pipefail
@@ -142,14 +144,22 @@ run_once() { # $1=run index
   [ -n "$EXEC_EFFORT" ] && EXEC_ARGS+=(--reasoning-effort "$EXEC_EFFORT")
   local STARTED_AT FINISHED_AT
   STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  if [ "${#EXEC_ARGS[@]}" -gt 0 ]; then
-    droid exec "${EXEC_ARGS[@]}" -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto high -o text \
-      | tee "$RUN_DIR/transcript.md"
-  else
-    droid exec -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto high -o text \
-      | tee "$RUN_DIR/transcript.md"
-  fi
+  # `-o json` returns one final result object: `.result` is the same final-message text that
+  # `-o text` prints, and `.usage`/`.duration_ms` carry cost and latency for model decisions.
+  droid exec "${EXEC_ARGS[@]}" -f "$RUN_DIR/prompt.md" --cwd "$SCRATCH" --auto high -o json \
+    > "$RUN_DIR/exec-result.json"
   FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+  node -e '
+    const fs = require("node:fs");
+    const [rawPath, transcriptPath] = process.argv.slice(1);
+    const raw = fs.readFileSync(rawPath, "utf8");
+    let parsed = null;
+    try { parsed = JSON.parse(raw); } catch { parsed = null; }
+    const text = parsed && typeof parsed.result === "string" ? parsed.result : raw;
+    fs.writeFileSync(transcriptPath, text.endsWith("\n") ? text : `${text}\n`);
+  ' "$RUN_DIR/exec-result.json" "$RUN_DIR/transcript.md"
+  cat "$RUN_DIR/transcript.md"
 
   TASK_NAME="$TASK_NAME" TARGET="$TARGET" STARTED_AT="$STARTED_AT" FINISHED_AT="$FINISHED_AT" \
   EXEC_MODEL="$EXEC_MODEL" EXEC_EFFORT="$EXEC_EFFORT" DROID_FILE="$DROID_FILE" \
@@ -174,8 +184,16 @@ run_once() { # $1=run index
       contractSha: process.env.CONTRACT_SHA || null,
       pinnedDroidExercised: false
     };
+    try {
+      const execResult = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+      metadata.usage = execResult.usage ?? null;
+      metadata.execDurationMs = execResult.duration_ms ?? null;
+    } catch {
+      metadata.usage = null;
+      metadata.execDurationMs = null;
+    }
     fs.writeFileSync(process.argv[1], `${JSON.stringify(metadata, null, 2)}\n`);
-  ' "$RUN_DIR/metadata.json"
+  ' "$RUN_DIR/metadata.json" "$RUN_DIR/exec-result.json"
 
   if [ "$JUDGE" = "--judge" ]; then
     {

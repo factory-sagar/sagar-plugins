@@ -32,6 +32,9 @@ const EFFORT_BY_MODEL = {
   'glm-5.2': ['off', 'high', 'max'],
   'glm-5.1': ['off', 'high'],
   'kimi-k2.6': ['off', 'high'],
+  // kimi-k3 documents off/high only (docs.factory.ai/models); 'max' is pinned by repo owner
+  // decision — the CLI accepts unlisted effort values silently rather than erroring.
+  'kimi-k3': ['off', 'high', 'max'],
   'gpt-5.5': ['low', 'medium', 'high', 'xhigh'],
   'gpt-5.4': ['low', 'medium', 'high', 'xhigh'],
   'gpt-5.2': ['off', 'low', 'medium', 'high', 'xhigh'],
@@ -299,7 +302,13 @@ if (guardrailHooks?.hooks) {
   const taskCommands = collectHookCommands(
     (guardrailHooks.hooks.PreToolUse ?? []).filter(({ matcher }) => matcher === 'Task'),
   );
-  if (!promptCommands.some((command) => command.includes('/review_budget.py'))) {
+  // Review budget initializes either as a direct hook command or inside the merged
+  // prompt_submit dispatcher; a dispatcher that no longer runs review_budget fails here.
+  const dispatcherFile = path.join(pluginsDir, 'guardrails', 'hooks', 'prompt_submit.py');
+  const budgetViaDispatcher =
+    promptCommands.some((command) => command.includes('/prompt_submit.py'))
+    && read(dispatcherFile).includes('review_budget');
+  if (!promptCommands.some((command) => command.includes('/review_budget.py')) && !budgetViaDispatcher) {
     fail(guardrailHooksFile, 'review budget must initialize on UserPromptSubmit');
   }
   if (!taskCommands.some((command) => command.includes('/review_budget.py'))) {
