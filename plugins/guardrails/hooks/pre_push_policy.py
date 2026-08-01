@@ -10,7 +10,7 @@ import shlex
 import subprocess
 import sys
 
-from delivery_ledger import parse_push_command
+from delivery_ledger import default_branch, parse_push_command
 from guardrails_log import log_decision
 
 PIPEFAIL_PREFIX = re.compile(r"^\s*set\s+-o\s+pipefail\s*(?:;|&&)")
@@ -77,17 +77,6 @@ def run(command: list[str], cwd: str) -> str | None:
 
 def current_branch(cwd: str) -> str | None:
     return run(["git", "branch", "--show-current"], cwd)
-
-
-def default_branch(cwd: str) -> str | None:
-    symbolic = run(["git", "symbolic-ref", "refs/remotes/origin/HEAD"], cwd)
-    if symbolic and symbolic.startswith("refs/remotes/origin/"):
-        return symbolic.removeprefix("refs/remotes/origin/")
-    for candidate in ("main", "master"):
-        found = run(["git", "show-ref", "--verify", f"refs/remotes/origin/{candidate}"], cwd)
-        if found is not None:
-            return candidate
-    return None
 
 
 def main() -> int:

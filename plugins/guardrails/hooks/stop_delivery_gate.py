@@ -12,6 +12,8 @@ Obligations are scoped to what this request actually authorized:
   agent's to report, not this gate's to block.
 - The PR-body stamp is enforced only for bodies that already carry a
   `pr-body-head` marker; PRs managed outside this workflow are not blocked.
+- A recorded push whose PR has merged closes delivery once local HEAD is
+  contained in the remote default branch; squash merges move HEAD to the merge commit.
 - When gh itself is unavailable the gate fails closed with one consolidated
   line instead of one line per unverifiable fact.
 - A continuation that changes nothing ends the session with the remaining
@@ -28,6 +30,7 @@ from dataclasses import dataclass
 from delivery_ledger import (
     classify_delivery_host,
     clear_push_state,
+    default_branch,
     load_state,
     locked_state,
     remote_host,
@@ -272,6 +275,26 @@ def run_json(command: list[str], cwd: str) -> object | None:
         return None
 
 
+def merged_delivery_closed(state: dict[str, object], repo_root: str) -> bool:
+    pr_number = state.get("pr_number")
+    if not isinstance(pr_number, int):
+        return False
+    pr_state = run_text(
+        ["gh", "pr", "view", str(pr_number), "--json", "state", "--jq", ".state"],
+        repo_root,
+    )
+    if pr_state is None or pr_state.upper() != "MERGED":
+        return False
+    default = default_branch(repo_root)
+    if not default:
+        return False
+    result = run(
+        ["git", "merge-base", "--is-ancestor", "HEAD", f"origin/{default}"],
+        repo_root,
+    )
+    return result is not None and result.returncode == 0
+
+
 def detect_delivery_host(repo_root: str) -> tuple[str, str]:
     remote_url = run_text(["git", "remote", "get-url", "origin"], repo_root)
     if remote_url is None:
@@ -478,6 +501,9 @@ def main() -> int:
     if state is None:
         return 0
     if not state.get("pushed_head"):
+        return 0
+    if merged_delivery_closed(state, repo_root):
+        clear_push_state(path, state)
         return 0
 
     intent = load_request_intent(intent_state_directory(), session_id)
