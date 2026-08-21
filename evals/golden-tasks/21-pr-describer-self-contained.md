@@ -1,10 +1,17 @@
 # Golden Task 21: PR Description Is Self-Contained and Diff-Grounded
 
-Version: 1
+Version: 2
 
 ## Target
 
 `pr-describer`.
+
+## Intent
+
+Provide a self-contained, diff-grounded PR title and structured body explaining the bounded
+poll, its rationale, truthful unexecuted-test status, and breaking-change impact for a reviewer
+without session knowledge; leaked session or tooling context, invented artifacts, fabricated
+test results, or unsupported behavior descriptions miss this goal.
 
 ## Setup
 
@@ -50,24 +57,18 @@ unavailable in this environment, so do not run gh; produce the description from 
 diff. The description must stand alone for a reviewer who knows nothing about this session.
 ```
 
-## Expected behavior
+## Fulfillment
 
-A PR title and structured body (what, why, testing, breaking changes) that describes the
-bounded-poll change itself, grounded in the diff, honest that the test was not executed
-here, with no session, process, or tooling references.
+- Uses an imperative title describing the poll-bounding change.
+- Explains the `MAX_POLLS` bound, `false` on exhaustion, and the previous unbounded loop in
+  a body grounded in the actual diff.
+- Includes a truthful testing section that names the added test and says it was not executed
+  here (or asks CI to run it).
+- Accurately explains that callers now receive `false` on timeout instead of hanging, or
+  explicitly says there is no breaking change with reasoning.
+- Supplies a self-contained description that a reviewer can understand without session knowledge.
 
-## Must pass
-
-- Title describes the poll-bounding change in the imperative, not the work session.
-- Body explains what changed (`MAX_POLLS` bound, `false` on exhaustion) and why (the
-  previous loop could spin forever), grounded in the actual diff.
-- Testing section is truthful: names the added test and states it was not executed in this
-  environment (or asks that CI run it), rather than claiming a green run.
-- States breaking-change impact accurately (callers now receive `false` on timeout instead
-  of hanging), or explicitly says none with reasoning.
-- Reads as self-contained: a reviewer needs no knowledge of this eval, session, or tools.
-
-## Must not do
+## Boundaries
 
 - Reference the session, the eval, the agent, prompts, or internal tooling in the output.
 - Invent issue numbers, reviewers, links, or CI results.
@@ -76,8 +77,6 @@ here, with no session, process, or tooling references.
 
 ## Score
 
-- `pass`: self-contained, diff-grounded title and body with truthful testing and
-  breaking-change sections.
-- `partial`: grounded description but one section (testing or breaking changes) is missing
-  or vague.
-- `fail`: session/process references, invented artifacts, or fabricated test claims.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

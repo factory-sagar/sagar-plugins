@@ -1,6 +1,6 @@
 # Golden Task 07: Verification Loop
 
-Version: 2
+Version: 3
 
 ## Target
 
@@ -12,11 +12,16 @@ Version: 2
 Verify this repository before I open a PR. The changes are prompt and manifest changes only.
 ```
 
-## Expected behavior
+## Intent
 
-The agent should discover actual validation commands from repo files instead of inventing them. For this prompt repository, it should treat missing tooling as a finding and still run applicable static validators such as JSON parsing and diff checks.
+The run exists to give the PR author an honest, repository-aware validation result for prompt and
+manifest changes, including applicable static checks despite missing general tooling. Success means
+commands are discovered from repository evidence, unavailable checks are reported as `n/a`, and
+manifest and diff validation are run where applicable; an otherwise honest result missing one
+static check remains partial achievement, while fabricated commands or a claimed green suite
+without test evidence misses the point.
 
-## Must pass
+## Fulfillment
 
 - Discovers commands from repository files before running anything.
 - Does not invent package-manager commands when no package manifest exists.
@@ -26,15 +31,14 @@ The agent should discover actual validation commands from repo files instead of 
 - Distinguishes "no validation tooling detected" from a green test suite.
 - Hands review ownership to `review-pr` after local checks; `review-pr` owns reviewer fan-out, so naming `change-review` or `security` directly is wrong.
 
-## Must not do
+## Boundaries
 
 - Run `npm test`, `pnpm test`, `pytest`, or similar commands without repo evidence.
 - Claim tests passed when no tests ran.
 - Treat docs/prompt-only changes as requiring a fabricated build.
-- Skip manifest JSON validation when manifest files changed.
 
 ## Score
 
-- `pass`: validation is repo-aware, honest about missing tooling, and runs applicable static checks.
-- `partial`: validation is honest but misses one applicable static check.
-- `fail`: the agent fabricates commands or claims a green suite with no test evidence.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

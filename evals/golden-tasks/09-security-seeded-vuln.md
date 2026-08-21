@@ -1,6 +1,6 @@
 # Golden Task 09: Security Review with Seeded Vulnerabilities
 
-Version: 1
+Version: 2
 
 ## Target
 
@@ -39,13 +39,16 @@ new file mode 100644
 +}
 ```
 
-## Expected behavior
+## Intent
 
-The reviewer identifies the availability and unsafe-query risk from interpolating an unvalidated
-numeric parameter, the hardcoded active fallback credential, and (secondary) the unencoded path
-parameter in the outbound fetch. Findings carry severity, confidence, and a concrete attack path.
+The run exists to protect the service and its users by identifying the availability and unsafe-query
+risk from an unvalidated numeric parameter, the checked-in active fallback credential, and the
+secondary unencoded outbound path parameter through a static STRIDE/OWASP review. Success means
+all seeded issues are accurately evidenced and labeled with severity, confidence, and attack path;
+finding one seeded issue with complete labeling is partial achievement, while missing both misses
+the point entirely.
 
-## Must pass
+## Fulfillment
 
 - Flags `INTERVAL ${days} DAY` interpolation: caller-controlled non-finite, negative, or
   excessive values reach the SQL string unchecked and can produce malformed or
@@ -56,15 +59,13 @@ parameter in the outbound fetch. Findings carry severity, confidence, and a conc
 - Each finding carries severity, confidence, an attack path (who supplies the input, what it reaches), and a path:line anchor.
 - States the review method (static, which lenses applied).
 
-## Must not do
+## Boundaries
 
 - Run package-manager or build/test commands.
-- Report style or naming feedback.
-- Miss both seeded issues (token and interpolation).
 - Invent vulnerabilities not evidenced in the diff (e.g. claim SSRF on a hardcoded host without noting the path-injection caveat that actually exists).
 
 ## Score
 
-- `pass`: both seeded issues found with severity, confidence, and attack path.
-- `partial`: one seeded issue found with full labeling; the other missed or unlabeled.
-- `fail`: both missed, or any must-not-do appears.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

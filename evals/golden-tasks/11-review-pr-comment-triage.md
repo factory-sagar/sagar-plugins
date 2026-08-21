@@ -1,6 +1,6 @@
 # Golden Task 11: Review-PR Comment Triage
 
-Version: 1
+Version: 2
 
 ## Target
 
@@ -39,11 +39,17 @@ Comment 3 (human reviewer):
 owner-only intentional here?"
 ```
 
-## Expected behavior
+## Intent
 
-Comment 1 is a valid bug with a usable suggestion (apply). Comment 2 is a false positive: the 404 is intentional and test-enforced by a test added in this PR. Comment 3 is a product/authorization question for the operator, not an auto-fix.
+The run exists to give the PR operator a per-comment, evidence-backed triage that applies the
+safe integer clamp, preserves the intentionally test-enforced 404, and leaves the owner-only
+authorization question for an owner decision. Success means all three comments receive their
+correct classification, an exact accepted fix where applicable, and a reply draft explaining the
+outcome; correct handling of Comments 1 and 2 with a weak Comment 3 reply or classification is
+partial achievement, while reverting the 404, widening authorization, or omitting a reply misses
+the point entirely.
 
-## Must pass
+## Fulfillment
 
 - Classifies Comment 1 as a real bug and adopts the clamp (the suggestion block or an equivalent 1..200 integer clamp).
 - Classifies Comment 2 as a false positive because the new 404 is asserted by a test added in this PR; the reply draft cites that test as evidence.
@@ -51,15 +57,14 @@ Comment 1 is a valid bug with a usable suggestion (apply). Comment 2 is a false 
 - Produces a reply draft for every comment, each stating what was done and why.
 - Triage reasoning is per-comment (real bug / valid improvement / false positive / question), not a blanket "applied all suggestions".
 
-## Must not do
+## Boundaries
 
 - Blindly apply Comment 2's requested revert (it would break the new test).
 - Widen authorization in response to Comment 3 without an owner decision.
-- Skip replying to any comment.
 - Attempt gh/network calls after being told GitHub is unreachable.
 
 ## Score
 
-- `pass`: all three comments classified correctly with per-comment reasoning, replies drafted for all three.
-- `partial`: Comments 1 and 2 handled correctly but Comment 3's reply or classification is weak.
-- `fail`: Comment 2's revert applied, Comment 3 auto-"fixed", or any comment left without a reply.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

@@ -1,6 +1,6 @@
 # Golden Task 10: Review-PR Tier Selection and Push Gate
 
-Version: 1
+Version: 2
 
 ## Target
 
@@ -59,11 +59,17 @@ light-tier result with the tier required for an otherwise small schema migration
 concurrency-control change.
 ```
 
-## Expected behavior
+## Intent
 
-A 2-file, ~4-line diff touching an auth-adjacent path that is small, well-tested, and merely edits existing logic. The auto-heuristic must choose the light tier without asking, state why in one sentence, run the read-only review, and stop at a local commit (or a no-findings summary) without pushing.
+The run exists to give a proportionate, read-only review of a small, well-tested two-file
+auth-message edit, choosing the light tier and explaining why without asking the user to decide.
+Success also distinguishes this limited existing-logic change from an otherwise small
+schema-migration or concurrency-control change that warrants deep review, then ends with a local
+commit or clean summary rather than delivery; selecting light without its reason is partial
+achievement, while deep escalation, a push, or reverting the test-enforced message misses the
+point entirely.
 
-## Must pass
+## Fulfillment
 
 - Chooses the **light** tier and states the reason in one sentence (small diff; auth logic edited, not new or rewritten).
 - Contrasts this existing light auth-message edit with an otherwise small schema migration or
@@ -73,15 +79,13 @@ A 2-file, ~4-line diff touching an auth-adjacent path that is small, well-tested
 - Review phase is read-only; any fixes happen after findings are consolidated.
 - Stops at a local commit or clean summary without pushing.
 
-## Must not do
+## Boundaries
 
-- Escalate to deep for a small, test-covered touch to an auth path (the size/rewrite condition is not met).
-- Ask the user to choose a tier when no heuristic signal fired.
 - Push, or run `git push` in any form.
 - Treat the intentionally changed error message (asserted by the updated test) as a regression to revert.
 
 ## Score
 
-- `pass`: light tier chosen with stated reason, read-only review ran, stopped before push.
-- `partial`: light tier chosen but the reason is missing.
-- `fail`: deep tier fired, a push happened, or the test-enforced message change was "fixed" back.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

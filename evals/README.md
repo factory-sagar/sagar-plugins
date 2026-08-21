@@ -7,7 +7,7 @@ differently because they cost differently:
 | --- | --- | --- | --- |
 | Deterministic | `scripts/validate.mjs`, `scripts/validate-evals.mjs`, guardrail unittests, review selector tests | green CI | every push and PR |
 | Routing | `routing/cases.json` scored by `scripts/eval-routing.mjs` against `policy.json` | thresholds in `policy.json` | when router vocabulary, AGENTS routing rules, or workflow descriptions change |
-| Judged golden tasks | `golden-tasks/*.md` via `scripts/run-golden-task.sh --judge` | accepted verdict baselines in `baselines/` | when a task's `## Target` contract changes |
+| Judged golden tasks | `golden-tasks/*.md` via `scripts/run-golden-task.sh --judge`; verdicts validated by `scripts/judge-contract.mjs` for axis coverage and derived-verdict recomputation | accepted verdict baselines in `baselines/` | when a task's `## Target` contract changes |
 | Fix-pair recall | real mined defect pairs via `scripts/run-review-fixpairs.mjs` + `scripts/score-fixpairs.mjs` | none: each mined corpus is its own ground truth | when evaluating droid model candidates on real regressions |
 
 ## Verdict baselines, not transcript baselines
@@ -17,10 +17,11 @@ compared. The comparable unit is the judged verdict:
 
 1. `scripts/run-golden-task.sh <task> --judge` writes `verdict.json` per run, stamped with
    the task `Version:`, the `JUDGE.md` `Version:`, the judge model, and the SHA-256 of the
-   governing contract file.
+   governing contract file. `scripts/judge-contract.mjs` validates axis coverage and
+   recomputes the derived verdict.
 2. `scripts/accept-baseline.sh <task>` runs the task N times (default:
    `policy.json` `repetitions.promptChange`), requires every verdict to parse, and writes
-   `baselines/<task>.json` plus the accepted transcripts under `baselines/transcripts/`.
+   `baselines/<task>.json` plus accepted local transcripts under `baselines/transcripts/`.
    Commit the JSON, which is the floor. The transcripts stay local and gitignored: they are
    model output produced on one machine and this repository is public. They remain the
    judge-recalibration corpus for whoever accepted them.
@@ -36,9 +37,9 @@ the baseline:
 
 - **Task version** — any golden-task edit bumps its `Version:` line (CI enforces this on
   PRs). Re-accept the baseline after the change.
-- **Judge version or judge model** — after changing `JUDGE.md` or the judge pin, first
-  re-judge your local baseline transcripts to recalibrate, then re-accept. Without a local
-  corpus, re-accept from scratch instead.
+- **Judge version or judge model** — after changing `JUDGE.md` or the judge pin, run
+  `scripts/rejudge-baseline-transcripts.sh` on your local baseline transcripts to recalibrate,
+  then re-accept. Without a local corpus, re-accept from scratch instead.
 - **Contract hash** — the target droid/skill file changed. Rerun only the tasks whose
   `## Target` maps to the changed file, then re-accept the ones that moved intentionally.
 
@@ -84,6 +85,8 @@ outside-region noise, never precision against "all defects in the diff". Pairs b
 ## Layout
 
 - `golden-tasks/` — versioned task rubrics plus `JUDGE.md` (the scoring contract)
+- `scripts/judge-contract.mjs` — validates judged-task axis coverage and derived verdicts
+- `scripts/rejudge-baseline-transcripts.sh` — recalibrates local baseline transcripts
 - `scripts/mine-fix-pairs.mjs`, `run-review-fixpairs.mjs`, `score-fixpairs.mjs` — the
   fix-pair tier; the mined corpus lives in `tmp/fixpairs/` and stays local
 - `baselines/` — accepted verdict baselines (committed); `baselines/transcripts/` (local only)

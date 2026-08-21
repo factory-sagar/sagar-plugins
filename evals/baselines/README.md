@@ -1,8 +1,9 @@
 # Golden Task Baselines
 
 Accepted **verdict** baselines, one JSON per task (`<task-file-stem>.json`), plus the
-accepted transcripts under `transcripts/<task>/runN.md`. Transcripts are committed as the
-judge-recalibration corpus, never diffed as a pass/fail signal.
+accepted local transcripts under `transcripts/<task>/runN.md`. Transcripts are gitignored,
+never committed or diffed as a pass/fail signal, and remain the judge-recalibration corpus for
+the accepting machine.
 
 - Accept: `scripts/accept-baseline.sh evals/golden-tasks/<task>.md` (N judged runs,
   default from `evals/policy.json` `repetitions.promptChange`).

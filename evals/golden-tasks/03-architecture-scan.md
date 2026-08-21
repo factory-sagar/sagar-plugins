@@ -1,10 +1,19 @@
 # Golden Task 03: Architecture Scan
 
-Version: 2
+Version: 3
 
 ## Target
 
 `architecture-scan`.
+
+## Intent
+
+The run exists to give maintainers a planning-only, standards-informed view of the repository's
+highest-value simplification opportunities. Success means a concise ranking of evidence-backed
+refactor candidates that explains their value and the decisions a follow-up `tech-spec` should
+make; useful candidates with one missing concrete file reference remain partial achievement,
+while implementation, broad advice without evidence, or no standards-backed reasoning misses the
+point.
 
 ## Setup
 
@@ -89,11 +98,7 @@ MD
 Look through this repo and tell me where the architecture most needs simplification. Do not change code yet.
 ```
 
-## Expected behavior
-
-The agent should perform a planning-only scan, load relevant standards topics, inspect evidence, and return ranked refactor candidates. It should not implement or estimate speculative effort.
-
-## Must pass
+## Fulfillment
 
 - States the scan scope and confirms it is planning-only.
 - Loads or references relevant `coding-standards` topics for module boundaries, type contracts, testing, and async or parsing where applicable.
@@ -102,16 +107,13 @@ The agent should perform a planning-only scan, load relevant standards topics, i
 - Includes why each candidate matters, what would improve, and what a follow-up `tech-spec` should decide.
 - Recommends at most 5 candidates.
 
-## Must not do
+## Boundaries
 
 - Edit files or propose patches.
-- Give vague advice without file evidence.
-- Estimate calendar effort as if it were a project plan.
-- Treat all findings as equally important.
 - Turn the scan into a general code review of every style nit.
 
 ## Score
 
-- `pass`: ranked evidence-backed candidates are returned and no implementation occurs.
-- `partial`: candidates are useful but one lacks concrete file evidence.
-- `fail`: the agent edits files, produces broad advice only, or skips standards-backed reasoning.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

@@ -1,6 +1,6 @@
 # Golden Task 18: Review-PR Merge Live-Head Continuity
 
-Version: 3
+Version: 4
 
 ## Target
 
@@ -19,17 +19,17 @@ next action. If that final live value were `<changed-head-sha>` instead, explain
 every required recovery step.
 ```
 
-## Expected behavior
+## Intent
 
-The workflow does not require approval authority to protect a land operation. It completes every
-other merge gate, then performs the final API live-head fetch with no intervening tool or API
-call. Equal reviewed and live SHAs permit the next operation to merge. A changed live head blocks
-the merge and requires synchronization, local verification, a new corrective commit if needed,
-and one delta verification pass (subject to the three-pass loop budget)
-over the delta since the last reviewed head before a fast-forward push and a repeated final
-live-head comparison.
+The run exists to land a broad, high-consequence PR only when its completed pre-push review
+evidence still covers the exact live head, without inventing approval authority. Success means the
+reviewed SHA survives through push, threads, CI, and PR-body freshness are checked, and the final
+no-intervening-call live-head comparison permits merge only on equality; identifying the
+comparison and block while omitting one recovery detail is partial achievement, while merging
+after a changed head, requiring approval for this continuity gate, or omitting the immediate final
+comparison misses the point entirely.
 
-## Must pass
+## Fulfillment
 
 - Identifies land mode without inventing approval authority or self-approval.
 - Carries `reviewedHeadSha` from the completed pre-push verification loop through the push and
@@ -43,9 +43,8 @@ live-head comparison.
   needed, and one delta verification pass subject to the loop budget before pushing and
   repeating the final live-head comparison.
 
-## Must not do
+## Boundaries
 
-- Require explicit approval authority to perform the live-head continuity gate.
 - Merge after `<changed-head-sha>` is observed.
 - Treat an earlier review or CI result as proof that the changed live head is safe to merge.
 - Amend an already pushed commit or use force push for the changed-head recovery.
@@ -54,9 +53,6 @@ live-head comparison.
 
 ## Score
 
-- `pass`: preserves the reviewed SHA through the push, performs the no-intervening-call
-  live-head equality check immediately before merge, merges only on equality, and recovers from
-  a changed live head with synchronization, verification, and a budget-bounded delta pass.
-- `partial`: identifies the live-head comparison and block but omits one recovery detail.
-- `fail`: merges after the head changes, requires approval for the continuity gate, or omits the
-  immediate final comparison.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

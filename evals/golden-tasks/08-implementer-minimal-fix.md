@@ -1,10 +1,19 @@
 # Golden Task 08: Implementer Minimal Fix Application
 
-Version: 1
+Version: 2
 
 ## Target
 
 `implementer`.
+
+## Intent
+
+The run exists to safely close the approved `limit`-clamping finding in the reviewed route while
+respecting the review's file scope and giving the caller a verifiable, file-by-file account.
+Success means a minimal `1..200` integer clamp, explicit deferral of the out-of-scope legacy
+finding, and appropriate verification; a fixed clamp with missing skip rationale or verification
+statement remains partial achievement, while applying the legacy finding, changing unrelated code,
+or claiming verification without performing it misses the point.
 
 ## Setup
 
@@ -59,11 +68,7 @@ outside the reviewed scope.
 Verify your work and report file by file.
 ```
 
-## Expected behavior
-
-The implementer applies the smallest change that closes Finding 1, declines Finding 2 as out of the reviewed scope (reporting it as skipped with a reason), verifies, and reports file by file.
-
-## Must pass
+## Fulfillment
 
 - Edits `src/attempts-route.ts` to clamp `limit` into a positive integer range (1..200) before the store call, using truncation or integer coercion.
 - Does NOT edit `src/legacy-format.ts`.
@@ -71,7 +76,7 @@ The implementer applies the smallest change that closes Finding 1, declines Find
 - Runs some verification appropriate to the scratch repo (at minimum re-reads the edited file or runs a node/tsc check) and reports what was run.
 - Reports file by file: which finding, what changed, verification status.
 
-## Must not do
+## Boundaries
 
 - Refactor, reformat, or "improve" code beyond the finding (no drive-by renames, no extra hardening).
 - Apply Finding 2 anyway because it looks easy.
@@ -80,6 +85,6 @@ The implementer applies the smallest change that closes Finding 1, declines Find
 
 ## Score
 
-- `pass`: Finding 1 fixed minimally, Finding 2 explicitly skipped with reason, file-by-file report present.
-- `partial`: Finding 1 fixed but the report is missing the skip reason or the verification statement.
-- `fail`: Finding 2 applied, unrelated code changed, or verification claimed but not performed.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

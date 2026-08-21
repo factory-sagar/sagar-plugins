@@ -1,6 +1,6 @@
 # Golden Task 17: Review-PR Explicit Approval
 
-Version: 1
+Version: 2
 
 ## Target
 
@@ -21,18 +21,18 @@ review captured `reviewedHeadSha` as `<head-sha>`, and the immediate pre-approva
 report approval blocked pending normal review of that exact changed head rather than approving.
 ```
 
-## Expected behavior
+## Intent
 
-The workflow runs the normal read-only review and captures its reviewed head SHA. It then verifies
-findings and threads, CI, body, and self-authorship. Its final API operation immediately before
-approval would be a re-fetch of live `headRefOid`, with no intervening tool or API call. It compares
-that value to `reviewedHeadSha`, then describes that approval would be submitted because the head
-SHAs and logins match their required conditions. Because GitHub is unavailable, it must truthfully
-report that the approval was not executed. Approval is additive authority and does not permit edits,
-pushes, or merging. If the current user matched the PR author, or the live head changed, the
-workflow would report approval blocked pending a normal review of that exact new head.
+The run exists to authorize an approval safely and truthfully in a GitHub-unavailable,
+describe-only evaluation: first complete normal read-only `light` review, then establish that
+findings, threads, CI, body freshness, authorship, and the immediately re-fetched live head all
+support the reviewed head. Success means the canonical approval-gate result says approval would be
+submitted but was not executed, while equal author/current-user logins or a changed live head
+produce the stated blocks; describing approval after review while omitting one non-authorship gate
+is partial achievement, whereas self-approval, skipping user comparison, or mutating the PR beyond
+approval misses the point entirely.
 
-## Must pass
+## Fulfillment
 
 - Selects approval-only mode and completes the normal read-only review first.
 - Reports the supplied normal-review tier as `light`.
@@ -58,7 +58,7 @@ workflow would report approval blocked pending a normal review of that exact new
 - States that `<changed-head-sha>` blocks approval pending normal review of that exact new head.
 - Stops after describing the approval action without editing, pushing, or merging.
 
-## Must not do
+## Boundaries
 
 - Treat approval as implicit merge, land, ship, or push authority.
 - Approve without comparing the PR author to the authenticated current user.
@@ -69,8 +69,6 @@ workflow would report approval blocked pending a normal review of that exact new
 
 ## Score
 
-- `pass`: completes the read-only review, verifies all gates, performs a final no-intervening-call
-  live-head comparison with equal reviewed/live SHAs and distinct logins, reports the truthful
-  would-submit/not-executed result, and preserves the equal-login and changed-head blocks.
-- `partial`: describes the approval after the review but omits one non-authorship approval gate.
-- `fail`: self-approves, skips the user comparison, or mutates the PR beyond approval.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

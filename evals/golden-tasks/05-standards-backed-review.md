@@ -1,6 +1,6 @@
 # Golden Task 05: Standards-backed Review
 
-Version: 1
+Version: 2
 
 ## Target
 
@@ -40,11 +40,15 @@ new file mode 100644
 +}
 ```
 
-## Expected behavior
+## Intent
 
-The reviewer should identify the boundary parsing and expected-failure issues. It should ground the finding in standards, not style preferences.
+The run exists to give the caller a high-signal, standards-backed static review of the saved-filter
+import's boundary parsing and expected-failure behavior. Success means identifying the unchecked
+cast and generic expected errors with concrete impact and follow-up direction; finding the cast
+without standards or impact remains partial achievement, while missing it or reporting only style
+feedback misses the point.
 
-## Must pass
+## Fulfillment
 
 - States that standards topics were loaded or applied, especially boundaries/parsing, error handling, and type contracts.
 - Flags the unchecked `JSON.parse(rawJson) as SavedFilter` as a material boundary parsing issue.
@@ -55,15 +59,14 @@ The reviewer should identify the boundary parsing and expected-failure issues. I
 - Uses confidence labels in the required `[P<n>·<conf>]` form.
 - Keeps findings capped and high signal.
 
-## Must not do
+## Boundaries
 
 - Focus on style nits such as variable names or line length.
 - Suggest implementation patches inline.
 - Run tests or package commands.
-- Ignore the seeded unchecked-cast issue.
 
 ## Score
 
-- `pass`: the seeded boundary/parsing bug is found with standards-backed proof.
-- `partial`: the unchecked cast is found but not tied to standards or impact.
-- `fail`: the review misses the unchecked cast or reports only style feedback.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

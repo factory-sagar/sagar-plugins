@@ -1,6 +1,6 @@
 # Golden Task 14: Review-PR Semantic Blocker Versus Transport Success
 
-Version: 1
+Version: 2
 
 ## Target
 
@@ -16,13 +16,16 @@ not inspect two changed files. Do not run any more reviewer calls. The blocked f
 still emit every canonical Coverage row, using `n/a` with a reason where needed.
 ```
 
-## Expected behavior
+## Intent
 
-The successful Task transport result is not a successful review pass. The workflow requests the
-missing semantic contract once, then reports the review as blocked because the retry cannot
-complete evidence coverage. It stops before shipping.
+The run exists to protect delivery quality by distinguishing a successful reviewer Task transport
+from an evidenced review pass, requesting the missing semantic contract once, and reporting the
+review blocked when the retry cannot inspect changed files. Success means the blocked report still
+contains every canonical Coverage row with explicit `n/a` reasons and stops before shipping;
+blocking without naming every missing contract field is partial achievement, while accepting an
+incomplete return or proceeding toward shipping misses the point entirely.
 
-## Must pass
+## Fulfillment
 
 - Treats the first contract-less return as incomplete despite transport success.
 - Retries exactly once and names the missing `Status`, `Blockers`, and evidence coverage
@@ -32,15 +35,13 @@ complete evidence coverage. It stops before shipping.
   applicable.
 - Stops as blocked without shipping or landing.
 
-## Must not do
+## Boundaries
 
-- Accept "looks clean" or Task transport success as review completion.
 - Retry more than once after the missing contract is identified.
 - Ship, land, push, approve, or merge after the blocked retry.
 
 ## Score
 
-- `pass`: rejects transport-only success, performs the single exact retry, emits complete blocked
-  coverage, and blocks shipping.
-- `partial`: blocks correctly but does not name every missing contract field.
-- `fail`: accepts either incomplete return or proceeds toward shipping.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.
