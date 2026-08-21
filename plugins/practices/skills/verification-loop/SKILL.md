@@ -1,6 +1,6 @@
 ---
 name: verification-loop
-version: 1.4.0
+version: 1.5.0
 description: |
   Verification policy for completed changes. Discovers repository gates, runs affected checks
   for fast feedback and the canonical milestone gate before hand-off, distinguishes introduced
@@ -11,34 +11,44 @@ user-invocable: false
 
 # Verification Loop
 
-Use after a non-trivial completed change, before a PR, after `tdd-workflow`, or when asked for
-readiness checks. Do not use it mid-debug or for prose-only changes with no prompt, manifest,
-config, generated-artifact, or plugin-discovery effect. Load `../coding-standards/SKILL.md` and
+Establish whether a completed change is gate-ready through repository-defined evidence. Success
+means the result records each applicable phase, separates introduced failures from baseline debt,
+and gives the next owner an exact hand-off. Use after a non-trivial completed change, before a
+PR, after `tdd-workflow`, or when asked for readiness checks. Load
+`../coding-standards/SKILL.md` and
 `../coding-standards/TESTING_AND_VERIFICATION.md`, plus the relevant contract, async, or
 observability standards.
 
+## Boundaries
+
+- Use a narrower workflow mid-debug and for prose-only changes with no prompt, manifest, config,
+  generated-artifact, or plugin-discovery effect.
+- Discover commands from repository evidence; never assume them. The repository's canonical gate
+  is its documented or CI-used umbrella command, not a name guessed from another repository.
+- A convenience aggregate such as `verify:quick` is not evidence that its standalone validators
+  ran: inspect what it invokes and run each applicable standalone validator or report it
+  unverified.
+- Ratchet and freeze gates are required; never raise a baseline to pass.
+- Run one integration gate for the program head and avoid repeating equivalent validators or the
+  canonical gate per unit.
+- `review-pr` alone decides and launches correctness or security review fan-out; this skill never
+  launches those reviewers directly.
+
 ## Discover the gate
 
-Discover commands from the repository, never assume them: manifests and task files, CI
-configuration, and development documentation are evidence, in that order of authority. Record
-each exact command and exit status. If a phase has no declared tooling, report `n/a (no tooling
-detected)`; an inferred framework command must be labeled inferred.
-
-The repository's canonical gate is its own documented or CI-used umbrella command, not a name
-guessed from another repository. A convenience aggregate such as `verify:quick` is not evidence
-that its standalone validators ran: inspect what it invokes and run each applicable standalone
-validator or report it unverified.
+Treat manifests and task files, CI configuration, and development documentation as evidence, in
+that order of authority. Record each exact command and exit status. If a phase has no declared
+tooling, report `n/a (no tooling detected)`; an inferred framework command must be labeled
+inferred.
 
 For prompt, plugin, configuration, or documentation changes, run applicable static checks even
 without a build: parse changed JSON and YAML, check Markdown links and `git diff --check`, and
-validate manifest discovery/counts. Ratchet and freeze gates are required; never raise a baseline
-to pass.
+validate manifest discovery/counts.
 
 ## Run applicable phases
 
 Reuse valid validated evidence for the current change scope. Each independently changed unit
-needs its targeted evidence; then run one integration gate for the program head. Do not repeat
-an equivalent validator or canonical gate per unit.
+needs its targeted evidence; then run one integration gate for the program head.
 
 | Phase | Pass condition | Failure handling |
 | --- | --- | --- |
@@ -62,7 +72,7 @@ elsewhere.
 
 When applicable phases and the program-head integration gate pass, the change is gate-ready, not
 merge-ready. Hand review ownership to `review-pr`; it alone decides and launches correctness or
-security review fan-out. This skill never launches those reviewers directly.
+security review fan-out.
 
 ## Report
 

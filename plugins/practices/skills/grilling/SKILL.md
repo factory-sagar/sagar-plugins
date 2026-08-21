@@ -1,6 +1,6 @@
 ---
 name: grilling
-version: 1.2.0
+version: 1.3.0
 description: |
   Stress-test a plan or design one architecture-changing question at a time. Invoke when
   unresolved product, ownership, boundary, or risk decisions would make implementation
@@ -11,11 +11,21 @@ user-invocable: false
 
 # Grilling
 
-Interview the user relentlessly about every aspect of the plan until you reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one by one. For each question, provide your recommended answer.
+Reach a shared understanding of the plan by resolving architecture-changing decisions one at a
+time. Success means the next artifact has a concrete outcome, named constraints and non-goals,
+and either a resolved riskiest decision or an explicit open question. Walk each branch of the
+design tree in dependency order and provide a recommended answer for every question.
 
-Ask the questions one at a time, waiting for feedback on each question before continuing. Asking multiple questions at once is bewildering. One question means one actual ask with one missing fact: the question line contains exactly one question mark and does not contain " and " or " or ". Do not append secondary asks, shopping lists, repo-path requests, stack-constraint lists, or "also tell me" bullets in the same turn.
+## Boundaries
 
-If a question can be answered by exploring the codebase, explore the codebase instead.
+- Ask exactly one actual question with one missing fact per turn; wait for feedback before the
+  next question. Its question line contains exactly one question mark and does not contain
+  " and " or " or ".
+- Do not append secondary asks, shopping lists, repo-path requests, stack-constraint lists, or
+  "also tell me" bullets in the same turn.
+- Resolve facts answerable through codebase exploration from the repository instead of asking.
+- Return the Grilling Summary before writing a full spec or implementation plan unless the user
+  asks after the summary.
 
 ## Procedure
 
@@ -50,5 +60,3 @@ When the interview is complete, return:
 **Recommended next step:**
 - <spec / tech-spec / architecture-scan / implementation / stop>
 ```
-
-Do not write a full spec or implementation plan inside this skill unless the user asks after the grilling summary.

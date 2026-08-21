@@ -1,6 +1,6 @@
 ---
 name: agentic-engineering
-version: 1.4.1
+version: 1.5.0
 description: |
   Route AI-assisted engineering work by risk and complexity to the workflow that owns its
   completion, delegation, model, evaluation, or review policy.
@@ -10,8 +10,16 @@ user-invocable: false
 
 # Agentic Engineering
 
-Route AI-assisted work to the owner of the relevant policy. The canonical outcome and
-authority routing table is [`docs/WORKFLOW.md`](../../../../docs/WORKFLOW.md).
+Route AI-assisted work to the owner of the relevant policy. Success means each work shape has
+the workflow that owns its completion, delegation, model, evaluation, or review decision. The
+canonical outcome and authority routing table is
+[`docs/WORKFLOW.md`](../../../../docs/WORKFLOW.md).
+
+## Boundaries
+
+- Keep the canonical outcome and authority routing table in
+  [`docs/WORKFLOW.md`](../../../../docs/WORKFLOW.md).
+- Preserve the selected workflow's ownership of its completion and authority decisions.
 
 ## Routing rules
 

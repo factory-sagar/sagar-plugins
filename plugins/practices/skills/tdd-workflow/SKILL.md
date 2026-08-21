@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-version: 1.5.0
+version: 1.6.0
 description: |
   Test-first execution policy for new or changed behavior: prove RED through the real seam,
   implement the smallest GREEN change, refactor only under the regression net, and preserve
@@ -11,12 +11,30 @@ user-invocable: false
 
 # TDD Workflow
 
-Use for new or changed behavior, bug fixes, public surfaces, and refactors without adequate
-coverage. Do not use it for prose, mechanical changes with verified coverage, or throwaway
-experiments. Always load `../coding-standards/SKILL.md`,
+Deliver new or changed behavior through a real-seam RED proof, the smallest GREEN change, and
+targeted refactoring. Success means each observable behavior slice has targeted checkpoint
+evidence before the program-level gate. Use for new or changed behavior, bug fixes, public
+surfaces, and refactors without adequate coverage. Load `../coding-standards/SKILL.md`,
 `../coding-standards/TESTING_AND_VERIFICATION.md`, `../coding-standards/DESIGNING_MODULES.md`,
 and `../coding-standards/TYPE_CONTRACTS.md`, because new behavior means a new module boundary and
 a new contract. Add the async or observability topic when those change.
+
+## Boundaries
+
+- Reserve this workflow for behavior-bearing work; prose, mechanical changes with verified
+  coverage, and throwaway experiments use their narrower workflow.
+- At RED, write the test before production code and prove failure through the real behavior seam;
+  a mock-satisfied test is not proof.
+- Keep RED and GREEN separate: the test-writing delegate must not implement, and the implementer
+  must not change tests. The orchestrator verifies the returned command result and minimality.
+- The implementation prompt must require the deviations contract: a minor territory contradiction
+  takes the conservative, reversible option and is logged with plan, repository evidence, choice,
+  and impact; a premise contradiction stops and reports. Never deviate silently.
+- In a git repository, RED and GREEN land as separate commits. Treat only the separate RED
+  commit as evidence that implementation was absent when the test failed; do not treat unrelated
+  commits as proof.
+- `review-pr` owns correctness and security reviewer fan-out; this skill does not launch
+  reviewers.
 
 ## Loop
 
@@ -27,8 +45,8 @@ the full suite or integration gate for program completion.
 
 | Checkpoint | Required action | Evidence |
 | --- | --- | --- |
-| RED | Write the next test before production code and run it through the real behavior seam. | It fails for the intended assertion or contract reason before implementation begins. A mock-satisfied test is not proof. |
-| GREEN | Change only the least code needed to turn that test green. Do not modify the test or add unasserted behavior. | The selected targeted test or validator passes. |
+| RED | Write the next test before production code and run it through the real behavior seam. | It fails for the intended assertion or contract reason before implementation begins. |
+| GREEN | Change the least code needed to turn that test green and add only asserted behavior. | The selected targeted test or validator passes. |
 | REFACTOR | Improve only an identified smell after GREEN. | The selected targeted test or validator remains green after every change. |
 
 Test observable outcomes, including applicable boundaries and error behavior, rather than
@@ -41,13 +59,7 @@ own cycle.
 ## Execution
 
 Delegate non-trivial test writing, implementation, and refactoring to `test-engineer` or
-`implementer` when available, otherwise a scoped `worker`. Keep RED and GREEN separate: the
-test-writing delegate must not implement, and the implementer must not change tests. The
-orchestrator verifies the returned command result and minimality.
-
-The implementation prompt must require the deviations contract: a minor territory contradiction
-takes the conservative, reversible option and is logged with plan, repository evidence, choice,
-and impact; a premise contradiction stops and reports. Never deviate silently.
+`implementer` when available, otherwise a scoped `worker`.
 
 In a git repository, RED and GREEN land as separate commits. The boundary is the evidence that
 implementation was absent when the test failed; a single diff containing both a test and the code
@@ -65,11 +77,9 @@ git commit -m "feat(<scope>): minimal implementation for <behavior>
 GREEN: targeted test or validator passing"
 ```
 
-Do not treat unrelated commits as proof.
-
 ## Completion
 
 GREEN makes a unit implementation-complete, not ship-ready. At program completion, run
 `verification-loop` once for the repository gate, then hand review ownership to `review-pr`.
-`review-pr` owns correctness and security reviewer fan-out; this skill does not launch
-reviewers. Use `pr-describer` or `commit-message-writer` only after that workflow.
+`review-pr` owns correctness and security reviewer fan-out. Use `pr-describer` or
+`commit-message-writer` only after that workflow.
