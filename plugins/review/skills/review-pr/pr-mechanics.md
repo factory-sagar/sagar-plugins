@@ -1,7 +1,7 @@
 # PR Mechanics
 
-Non-obvious API facts for operating on a pull request. Read this before verifying thread state,
-replying, resolving, or gating on the live head.
+Use these non-obvious API facts to operate a pull request correctly. Read this before verifying
+thread state, replying, resolving, or gating on the live head.
 
 ## Thread resolution state is GraphQL-only
 
@@ -50,7 +50,7 @@ mutation {
 }'
 ```
 
-Resolve only threads you have replied to and that are not open questions.
+Resolve threads after replying and once they are not open questions.
 
 ## Live head and base state
 

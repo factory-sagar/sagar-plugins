@@ -1,6 +1,6 @@
 ---
 name: review-pr
-version: 3.2.0
+version: 3.3.0
 description: |
   Review a PR, branch, commit, or staged change through the mandatory review policy. Plain
   "review" is read-only; explicit approve, fix, comment, ship, and merge wording grants only
@@ -9,11 +9,12 @@ description: |
 
 # Review PR
 
-Review the requested scope against [`review-policy.md`](./review-policy.md). Choose relevant
-lenses from changed responsibilities, not file type alone. Trace changed behavior, read
+Deliver an evidence-backed review of the requested scope under the authority the user explicitly
+granted. Review against [`review-policy.md`](./review-policy.md), choose relevant lenses from
+changed responsibilities rather than file type alone, trace changed behavior, read
 program-created untracked files, and run the repository's applicable validation commands.
 
-## Authority modes
+## Boundaries
 
 Choose the narrowest mode authorized by the user's words:
 
