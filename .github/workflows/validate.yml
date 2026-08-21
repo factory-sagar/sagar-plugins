@@ -23,7 +23,7 @@ jobs:
       - name: Eval definition invariants
         run: |
           node scripts/validate-evals.mjs
-          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/validate-evals.test.mjs scripts/validate.test.mjs scripts/mine-fix-pairs.test.mjs scripts/run-review-fixpairs.test.mjs scripts/score-fixpairs.test.mjs scripts/model-decision.test.mjs
+          node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/judge-contract.test.mjs scripts/validate-evals.test.mjs scripts/validate.test.mjs scripts/mine-fix-pairs.test.mjs scripts/run-review-fixpairs.test.mjs scripts/score-fixpairs.test.mjs scripts/model-decision.test.mjs
 
       - name: Deterministic policy tests
         run: |

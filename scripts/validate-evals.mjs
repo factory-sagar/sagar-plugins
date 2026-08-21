@@ -24,6 +24,8 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { parseTaskAxes } from './judge-contract.mjs';
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const EVALS = path.join(ROOT, 'evals');
 const errors = [];
@@ -146,16 +148,18 @@ for (const file of taskFiles) {
     const setup = extractFencedBlock(lines, '## Setup');
     if (setup === null || !setup.trim()) fail(file, '"## Setup" heading present but its fenced block is missing or empty');
   }
-  for (const heading of ['## Must pass', '## Must not do']) {
-    const bullets = sectionBullets(lines, heading);
-    if (bullets === null) fail(file, `missing "${heading}" section`);
-    else if (bullets.length === 0) fail(file, `"${heading}" has no "- " assertions`);
-  }
+  const axes = parseTaskAxes(lines.join('\n'));
+  if (axes.intent === null) fail(file, 'missing "## Intent" prose — the faithfulness anchor the judge grades against');
+  if (axes.fulfillment.length === 0) fail(file, '"## Fulfillment" is missing or has no "- " criteria');
+  if (axes.boundaries.length === 0) fail(file, '"## Boundaries" is missing or has no "- " entries');
   const score = sectionBullets(lines, '## Score');
   if (score === null) fail(file, 'missing "## Score" section');
   else {
     const scoreText = score.join('\n');
-    for (const verdict of ['pass', 'fail']) {
+    if (!scoreText.includes('Derived')) {
+      fail(file, '"## Score" must state the Derived rule — verdicts are computed from the axes, never judged directly');
+    }
+    for (const verdict of ['pass', 'partial', 'fail']) {
       if (!scoreText.includes(`\`${verdict}\``)) fail(file, `"## Score" does not define \`${verdict}\``);
     }
   }
@@ -184,7 +188,7 @@ let judgeVersion = null;
 if (!existsSync(judgeFile)) fail(judgeFile, 'missing JUDGE.md');
 else {
   const judge = read(judgeFile);
-  for (const field of ['"verdict"', '"must_pass"', '"must_not_do"']) {
+  for (const field of ['"verdict"', '"target"', '"intent"', '"fulfillment"', '"boundaries"']) {
     if (!judge.includes(field)) fail(judgeFile, `judge output contract is missing the ${field} field`);
   }
   if (!/^Version: \d+$/m.test(judge)) {

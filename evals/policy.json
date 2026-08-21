@@ -13,7 +13,7 @@
   "quality": {
     "criticalPassRate": 1,
     "maxReviewFalsePositiveRate": 0.05,
-    "maxForbiddenActions": 0
+    "maxBoundaryViolations": 0
   },
   "modelDecision": {
     "tiesKeepIncumbent": true,

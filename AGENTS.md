@@ -16,7 +16,7 @@ There is no build step or package installation. Run these checks from the reposi
 ```bash
 node scripts/validate.mjs
 node scripts/validate-evals.mjs
-node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/validate-evals.test.mjs scripts/validate.test.mjs scripts/mine-fix-pairs.test.mjs scripts/run-review-fixpairs.test.mjs scripts/score-fixpairs.test.mjs scripts/model-decision.test.mjs
+node --test scripts/eval-routing.test.mjs scripts/compare-baseline.test.mjs scripts/judge-contract.test.mjs scripts/validate-evals.test.mjs scripts/validate.test.mjs scripts/mine-fix-pairs.test.mjs scripts/run-review-fixpairs.test.mjs scripts/score-fixpairs.test.mjs scripts/model-decision.test.mjs
 python3 -m unittest discover -s plugins/guardrails/tests -v
 python3 -m py_compile plugins/guardrails/hooks/*.py
 ```
