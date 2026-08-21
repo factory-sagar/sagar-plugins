@@ -17,13 +17,13 @@ Tests should prove behavior through the same interfaces callers use. Confidence 
 ## Non-negotiables
 
 - Tests assert observable outcomes: returned values or failures, persisted state, emitted messages, rendered responses, sent fake-adapter records, or runtime effects.
-- Tests do not depend on private helpers, internal call order, or incidental implementation structure when behavior can be tested through the interface.
-- Do not use module-patching APIs such as `vi.mock`, `jest.mock`, or equivalents.
-- Do not use method-spy APIs such as `vi.spyOn`, `jest.spyOn`, or equivalents.
-- When replacing behavior, replace it through a real seam.
+- Tests observe behavior through interfaces rather than private helpers, internal call order, or incidental implementation structure, preserving refactor freedom.
+- Tests replace behavior through real seams rather than module-patching APIs such as `vi.mock`, `jest.mock`, or equivalents, exercising intentional production contracts.
+- Tests replace behavior through real seams rather than method-spy APIs such as `vi.spyOn`, `jest.spyOn`, or equivalents, preserving caller-visible evidence.
+- Replacement behavior enters through a real seam, so tests verify the same boundary callers use.
 - Production adapters are tested through the same service-facing interface callers use.
 - Tests that make deterministic claims control time, randomness, IDs, external dependencies, and cancellation when those inputs affect the outcome.
-- A test must fail when the claimed behavior is absent.
+- A test fails when the claimed behavior is absent, ensuring it provides real evidence.
 
 ## Verification completion criterion
 

@@ -17,13 +17,13 @@ Expected failures are part of the contract. Defects are not. Keep that line shar
 ## Non-negotiables
 
 - Expected failures are visible in the local return type through a typed value channel.
-- Promise rejection is equivalent to throwing; do not use it for ordinary expected failures in local code.
-- Domain and functional-core code do not use `try/catch` as normal expected-failure control flow.
-- External Adapter Modules may catch exception-based APIs, but they classify `unknown` before translating.
-- Catch variables and rejection reasons are treated as `unknown` until classified.
-- Cancellation or interruption is recognized before wrapping unknown failures as ordinary errors.
+- Ordinary expected failures travel through typed value channels rather than promise rejection, which is equivalent to throwing.
+- Domain and functional-core code represent expected-failure control flow as typed values rather than `try/catch`, keeping contracts visible.
+- External Adapter Modules classify `unknown` before translating exception-based APIs.
+- Catch variables and rejection reasons remain `unknown` until classified.
+- Cancellation or interruption is classified before unknown failures become ordinary errors.
 - Startup configuration failure is a defect, but its diagnostic still avoids secrets and unsafe raw values.
-- Broad `AppError`-style unions stay near orchestration, rendering, logging, and entrypoints; module interfaces expose precise local failures.
+- Broad `AppError`-style unions stay near orchestration, rendering, logging, and entrypoints; module interfaces expose precise local failures so callers retain semantic choices.
 
 ## Strong defaults
 

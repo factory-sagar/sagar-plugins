@@ -4,13 +4,13 @@ Type systems should preserve proof obligations instead of erasing them. Keep con
 
 ## Non-negotiables
 
-- Do not use `any`, non-`as const` assertions, or non-null assertions to erase unproven obligations; permitted escape hatches follow the local proof rule below.
+- Types preserve proven obligations; `any`, non-`as const` assertions, and non-null assertions remain limited to the permitted local escape hatches below.
 - Permitted type escape hatches are local, hidden behind precise interfaces, and justified with `SAFETY:`.
 - Rare `any` also gets a targeted lint suppression whose reason includes the safety justification.
 - Catch variables and rejection reasons are treated as `unknown` until classified.
-- Ordinary domain values, builders, interfaces, and classes do not expose callable `then` unless intentionally promise-like and documented.
-- Static checks and established compiler, lint, formatter, and test-runner contracts preserve strictness, exhaustive finite-variant handling, and existing safety checks; do not weaken them to admit changed code.
-- Caller-owned inputs are not mutated unless the function contract explicitly says it mutates a caller-provided builder or accumulator.
+- Ordinary domain values, builders, interfaces, and classes expose callable `then` only when they are intentionally promise-like and documented, avoiding accidental promise assimilation.
+- Static checks and established compiler, lint, formatter, and test-runner contracts preserve strictness, exhaustive finite-variant handling, and existing safety checks rather than weakening to admit changed code.
+- Functions preserve caller-owned inputs unless their contract explicitly owns mutation of a caller-provided builder or accumulator.
 - Direct exports and public methods on exported classes have standard JSDoc explaining their contract.
 
 ## Strong defaults

@@ -18,12 +18,12 @@ Every external, serialized, persisted, or framework-shaped value is less structu
 
 - Unknown boundary input stays `unknown` or boundary DTO-shaped until parsed.
 - External input is parsed in the adapter, handler, composition entrypoint, or receiving runtime-hop handler before service or core code sees it; correct-by-construction values are passed inward.
-- Decoded JSON, response bodies, env values, queue messages, storage JSON, and similar data are not cast into domain or service types.
-- A successful parse returns the refined value; do not validate and then keep passing the unrefined input.
-- Core or service code does not repeatedly downcast, shape-check, or defensively revalidate values already parsed, unless they crossed a new boundary.
+- Decoded JSON, response bodies, env values, queue messages, storage JSON, and similar data are refined through parsing rather than cast into domain or service types, preserving runtime proof.
+- A successful parse returns the refined value, which flows onward instead of the unrefined input.
+- Core and service code trust values that were already parsed until those values cross a new boundary, keeping boundary checks at the seam that owns them.
 - Storage or ORM rows are boundary input and are parsed before service logic sees them.
 - Runtime-hop payloads satisfy the transport serialization contract and are parsed or reconstructed on receipt.
-- Protocol DTOs and persistence records are different projections; do not reuse one as the other by convenience.
+- Protocol DTOs and persistence records remain distinct projections, preserving each boundary's consumer-specific contract.
 - Environment or runtime config is parsed at startup or the earliest composition seam into typed config.
 
 ## Strong defaults

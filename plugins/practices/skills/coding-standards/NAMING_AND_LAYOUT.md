@@ -4,15 +4,15 @@ Use naming and layout to make intent obvious before a reader inspects implementa
 
 ## Naming
 
-| Kind | Strong default | Prefer | Avoid |
+| Kind | Strong default | Prefer | Over / because |
 | --- | --- | --- | --- |
-| Variables | Descriptive nouns | `totalRevenue`, `pendingItems`, `apiKeyHash` | `x`, `data`, `result`, `obj` |
-| Booleans | `is`, `has`, `should`, `can`, `did`, `will` prefix | `isAuthenticated`, `hasItems`, `shouldRetry` | `flag`, `auth`, `check`, `active` |
-| Functions | Verb plus noun | `fetchUserProfile`, `validateEmail`, `parseSemver` | `process`, `handle`, `do`, `manage` |
-| Classes and types | Domain noun | `User`, `OrderRepository`, `RateLimitDecision` | `Manager`, `Helper`, `Util`, `Processor` |
-| Constants | Project convention, often screaming snake | `MAX_RETRIES`, `DEFAULT_TIMEOUT_MS` | `max`, `value`, `cfg` |
-| Files | Match the dominant export or responsibility | `user-profile.tsx`, `order_repository.py`, `rate-limit.ts` | `index.ts`, `utils.py`, `helpers.js` |
-| Tests | Mirror source plus test suffix | `rate-limit.test.ts`, `test_rate_limit.py` | `tests.ts`, `misc_spec.rb` |
+| Variables | Descriptive nouns | `totalRevenue`, `pendingItems`, `apiKeyHash` | `x`, `data`, `result`, `obj` — because names should reveal the value's role |
+| Booleans | `is`, `has`, `should`, `can`, `did`, `will` prefix | `isAuthenticated`, `hasItems`, `shouldRetry` | `flag`, `auth`, `check`, `active` — because call sites should read as predicates |
+| Functions | Verb plus noun | `fetchUserProfile`, `validateEmail`, `parseSemver` | `process`, `handle`, `do`, `manage` — because the operation should be specific |
+| Classes and types | Domain noun | `User`, `OrderRepository`, `RateLimitDecision` | `Manager`, `Helper`, `Util`, `Processor` — because the owned concept should be clear |
+| Constants | Project convention, often screaming snake | `MAX_RETRIES`, `DEFAULT_TIMEOUT_MS` | `max`, `value`, `cfg` — because constants need recognizable intent |
+| Files | Match the dominant export or responsibility | `user-profile.tsx`, `order_repository.py`, `rate-limit.ts` | `index.ts`, `utils.py`, `helpers.js` — because file ownership should be discoverable |
+| Tests | Mirror source plus test suffix | `rate-limit.test.ts`, `test_rate_limit.py` | `tests.ts`, `misc_spec.rb` — because source-test relationships should be discoverable |
 
 Prefer names that describe what a thing does or owns, not where it sits in a vague architecture. `findUserByEmail` is usually clearer than `UserService`.
 
@@ -28,7 +28,7 @@ Prefer names that describe what a thing does or owns, not where it sits in a vag
 ## Comments
 
 - Comments explain why, not what.
-- Delete stale comments that merely restate code or contradict it.
+- Keep comments current and constraint-bearing rather than merely restating or contradicting code.
 - Add comments for non-obvious invariants, compatibility seams, and justified type or lint escape hatches.
 
 ## Review checklist

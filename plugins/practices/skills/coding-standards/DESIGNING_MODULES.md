@@ -67,16 +67,16 @@ Despite the word "service," pure domain behavior that does not depend on externa
 
 ## Non-negotiables
 
-- A module owns one cohesive capability, concept, or policy.
+- A module owns one cohesive capability, concept, or policy, concentrating related behavior and verification.
 - A module interface provides leverage by hiding implementation choices, invariants, ordering, and incidental steps.
-- Interfaces do not force callers to understand unrelated methods, raw DTOs, hidden side effects, nullable state bags, or implementation ordering that the module can own.
-- Dependency-bearing modules accept dependencies through intentional seams rather than hidden globals.
+- Interfaces let callers avoid unrelated methods, raw DTOs, hidden side effects, nullable state bags, and implementation ordering that the module can own, reducing interface burden.
+- Dependency-bearing modules receive dependencies through intentional seams rather than hidden globals, making ownership and substitution explicit.
 - Modules depend on the smallest meaningful behavior they use.
-- New service or domain designs compose behavior through modules and explicit dependencies rather than inheritance, except for framework-required or genuine substitutability cases.
-- New libraries, patterns, adapters, service modules, and abstractions require a project convention audit first.
-- Raw framework or platform bindings stay at composition seams or tightly local adapters.
-- Entrypoints do not duplicate business or domain policy that should be shared across protocols.
-- Domain logic and pure decisions live in a functional core without hidden I/O.
+- New service or domain designs compose behavior through modules and explicit dependencies; inheritance is reserved for framework-required or genuine substitutability cases, keeping variation intentional.
+- New libraries, patterns, adapters, service modules, and abstractions follow a project convention audit, preventing parallel architecture.
+- Raw framework or platform bindings stay at composition seams or tightly local adapters, so core contracts remain portable.
+- Entrypoints delegate shared business or domain policy to reusable behavior across protocols.
+- Domain logic and pure decisions live in a functional core with explicit, isolated I/O.
 - The imperative shell owns I/O sequencing, persistence, external calls, telemetry, time, randomness, and dependency failure classification.
 
 ## Strong defaults
