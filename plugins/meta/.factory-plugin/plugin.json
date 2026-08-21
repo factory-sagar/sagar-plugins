@@ -1,6 +1,6 @@
 {
   "name": "meta",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Meta droids and skills for working on agentic configs themselves: apply approved edits (doc-generator) with the audit-and-apply-loop methodology skill.",
   "author": {
     "name": "Sagar",

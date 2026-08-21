@@ -1,6 +1,6 @@
 ---
 name: audit-and-apply-loop
-version: 1.2.0
+version: 1.3.0
 description: |
   Prompt evolution policy: capture observed behavior, audit the prompt, apply the smallest
   justified change, rerun the same case, and keep only measured improvement. Invoke for prompt,
@@ -16,6 +16,10 @@ A repeatable six-step cycle for evolving droid and skill prompts. Audit in-sessi
 This skill describes how to audit and revise droid or skill prompts, including prompts in
 the meta plugin.
 
+## Intent
+
+Evolve prompts through observed behavior, evidence-backed findings, minimal edits, and a repeatable re-test. Success is a measured improvement that preserves the prompt's role and avoids accumulating unverified directives.
+
 ## When to Activate
 
 - Authoring a new droid prompt for the first time and you want a quality pass before shipping.
@@ -25,12 +29,26 @@ the meta plugin.
 - Adopting droids from another marketplace into your own.
 - Auditing a project's `.factory/droids/**` or `AGENTS.md` for quality and consistency.
 
-## When NOT to Activate
+## Choose Another Approach When
 
-- The prompt is fine and the parent task is unrelated.
-- The audit target is **structural** — questions about which droid owns which role, plugin granularity decisions, model strategy across the whole set. That's `deep-understanding`'s remit (in the `investigation` plugin), not this loop's.
-- Single trivial edit (fixing a typo in a description, adding a missing comma). Just edit it directly with `doc-generator` or by hand.
-- The droid hasn't been invoked yet — start with running it once on a real target, then audit. Audits without observed output are inference-only and converge slowly.
+- Continue with the parent task when the prompt is already sound and unrelated.
+- Route structural questions about droid ownership, plugin granularity, or marketplace-wide model strategy to `deep-understanding` in the `investigation` plugin.
+- Apply a single trivial correction, such as a description typo or missing comma, directly with `doc-generator` or by hand.
+- Invoke an untested droid on a real target first; audits without observed output are inference-only and converge slowly.
+
+## Quality guidance
+
+- Does the loop begin with observed output from a representative real target?
+- Are findings scoped to prompt-local behavior, recorded with priority, confidence, and Risk-of-edit, and applied only when the evidence supports them?
+- Does each iteration retain the prompt's role while producing measured improvement rather than directive growth?
+- Does re-testing the same target confirm the audit's prediction and expose regressions?
+
+## Boundaries
+
+- Keep structural decisions—including droid ownership, plugin granularity, and model strategy—outside this loop; hand them to `deep-understanding`.
+- Keep model swaps outside prompt-local audit application. Do not let `doc-generator` change a droid's frontmatter `model` field from an audit finding alone.
+- Route approved prompt edits through `doc-generator`, the marketplace droid with edit tools, so the pass has its required syntactic verification.
+- Treat a prompt as locked only after Step 6 re-testing; syntactically applied edits are not behavioral evidence.
 
 ## The Loop
 
@@ -93,13 +111,13 @@ the meta plugin.
 ### Step 1 — Author or modify the prompt
 
 Use the prompt structure below for any new droid:
-- Identity (`When to Use Me` / `When NOT to Use Me`).
-- Hard constraints (read-only, tool boundaries, confidence labels, findings caps).
+- Identity and intent block (who the agent is, what it exists to achieve, what success means).
+- Positive obligations and outcome questions for quality.
 - Phased procedure (numbered phases, not flat rules).
-- Anti-patterns (concrete forbidden behaviors with examples).
+- One `## Boundaries` section holding only true invariants: tool limits, authority gates, forbidden commands, fabrication bans, scope contracts, regression scars — deontic on purpose.
 - Edge cases (named scenarios with handling rules).
 - Self-check (numbered pre-return verifications).
-- Output template (the literal shape, with example).
+- Output template (the literal shape).
 
 **Common authoring trap: fighting a model prior.** If a model has a strong trained format (e.g., gpt models emit `Summary:` inline for code review), prompt directives won't override it. Embrace the model's natural format and constrain the substance.
 
@@ -130,7 +148,7 @@ Audit in-session with:
 - The observed output from Step 2
 - The audit type (`new-droid review` | `adherence diagnosis` | `version comparison` | `cross-reference sweep`)
 
-The audit lens is prompt-local: identity, hard constraints, anti-pattern coverage,
+The audit lens is prompt-local: identity and intent, quality guidance, boundaries,
 output-template adherence, and verbosity. Compare what the prompt directs against what the
 observed output actually did.
 
@@ -214,17 +232,17 @@ Mark these as Hand-off; the loop continues with `deep-understanding` instead.
 - `deep-understanding` (in `investigation`) — for structural decisions that aren't prompt-local.
 - target droid being evolved — used in steps 2 and 6.
 
-## Anti-Patterns
+## Methodology guidance
 
-- **Auditing without observed output.** All findings are `inference`; the loop can't converge cleanly. Run the droid first.
-- **Applying high-Risk-of-edit findings blindly without re-test.** Those exist because the model may fight the directive; you need to verify the fight didn't backfire.
-- **Letting the audit make structural calls.** The audit is prompt-local. Structural goes to `deep-understanding`.
-- **Skipping the re-test in step 6.** Without re-test, you don't know if the apply actually worked or just looked clean in the diff.
-- **Flip-flopping** — applying a finding, then undoing it next loop, then re-applying. Root-cause why the finding keeps coming back before applying again.
-- **Letting the prompt grow indefinitely.** Every loop iteration tends to add directives. Periodically run a "trim" pass — what can be removed without quality loss?
-- **Targeting too many droids in one audit.** Pair audits work for cross-reference correctness; full-marketplace audits should hand off to `deep-understanding`.
-- **Treating doc-generator's "applied" as evidence of correctness.** doc-generator verifies that edits landed syntactically (JSON parses, grep finds the new text); only step 6 verifies that the BEHAVIOR is right.
-- **Bypassing doc-generator and editing prompts inline.** You lose verification (rename sweep, frontmatter check) and you risk drift between project copy and personal copy.
+- **Audit observed output.** Without it, all findings are `inference` and the loop cannot converge cleanly; invoke the droid first.
+- **Re-test high-Risk-of-edit findings.** The model may fight the directive, so verification establishes whether the change backfired.
+- **Keep structural calls with `deep-understanding`.** The audit is prompt-local, while structural questions need its broader remit.
+- **Run Step 6 after every apply.** The re-test distinguishes a behaviorally successful apply from a clean-looking diff.
+- **Root-cause recurring findings before another apply.** This avoids flip-flopping between applying, undoing, and re-applying the same finding.
+- **Run periodic trim passes.** Each iteration tends to add directives; remove what does not preserve quality.
+- **Keep audit scope small.** Pair audits work for cross-reference correctness; route full-marketplace audits to `deep-understanding`.
+- **Use Step 6 as the correctness evidence.** `doc-generator` verifies syntactic application (for example, JSON parsing and grep results), while re-invocation verifies behavior.
+- **Use `doc-generator` for edits.** Its rename sweep and frontmatter checks prevent drift between project and personal copies.
 
 ## Edge Cases
 
