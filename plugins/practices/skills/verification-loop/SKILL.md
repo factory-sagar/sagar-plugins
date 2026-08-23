@@ -1,6 +1,6 @@
 ---
 name: verification-loop
-version: 1.5.0
+version: 1.5.1
 description: |
   Verification policy for completed changes. Discovers repository gates, runs affected checks
   for fast feedback and the canonical milestone gate before hand-off, distinguishes introduced
@@ -19,21 +19,6 @@ PR, after `tdd-workflow`, or when asked for readiness checks. Load
 `../coding-standards/TESTING_AND_VERIFICATION.md`, plus the relevant contract, async, or
 observability standards.
 
-## Boundaries
-
-- Use a narrower workflow mid-debug and for prose-only changes with no prompt, manifest, config,
-  generated-artifact, or plugin-discovery effect.
-- Discover commands from repository evidence; never assume them. The repository's canonical gate
-  is its documented or CI-used umbrella command, not a name guessed from another repository.
-- A convenience aggregate such as `verify:quick` is not evidence that its standalone validators
-  ran: inspect what it invokes and run each applicable standalone validator or report it
-  unverified.
-- Ratchet and freeze gates are required; never raise a baseline to pass.
-- Run one integration gate for the program head and avoid repeating equivalent validators or the
-  canonical gate per unit.
-- `review-pr` alone decides and launches correctness or security review fan-out; this skill never
-  launches those reviewers directly.
-
 ## Discover the gate
 
 Treat manifests and task files, CI configuration, and development documentation as evidence, in
@@ -43,7 +28,9 @@ inferred.
 
 For prompt, plugin, configuration, or documentation changes, run applicable static checks even
 without a build: parse changed JSON and YAML, check Markdown links and `git diff --check`, and
-validate manifest discovery/counts.
+validate manifest discovery/counts. Execute these checks and record their exit statuses even when
+the tree looks clean or empty; a clean `git diff --check` exit `0` is verification evidence, not a
+reason to skip execution.
 
 ## Run applicable phases
 
@@ -60,8 +47,9 @@ needs its targeted evidence; then run one integration gate for the program head.
 
 Run fast checks inline; delegate slow or noisy read-only commands to a `worker`, but verify its
 reported exit status. Scope commands to changed packages when supported. A missing build or
-type-checker is `n/a`; a missing test suite is a finding, not a green test phase. If environment
-requirements prevent a command, report it `blocked` with prerequisites.
+type-checker is `n/a`; a missing test suite is a finding, not a green test phase. Missing tooling
+is always `n/a (no tooling detected)`, never `blocked`: reserve `blocked` for a command that
+exists but cannot run here, reported with its prerequisites.
 
 ## Baselines and hand-off
 
@@ -72,7 +60,22 @@ elsewhere.
 
 When applicable phases and the program-head integration gate pass, the change is gate-ready, not
 merge-ready. Hand review ownership to `review-pr`; it alone decides and launches correctness or
-security review fan-out.
+security review fan-out. Name that hand-off in every report, whichever recommendation it carries.
+
+## Boundaries
+
+- Use a narrower workflow mid-debug and for prose-only changes with no prompt, manifest, config,
+  generated-artifact, or plugin-discovery effect.
+- Discover commands from repository evidence; never assume them. The repository's canonical gate
+  is its documented or CI-used umbrella command, not a name guessed from another repository.
+- A convenience aggregate such as `verify:quick` is not evidence that its standalone validators
+  ran: inspect what it invokes and run each applicable standalone validator or report it
+  unverified.
+- Ratchet and freeze gates are required; never raise a baseline to pass.
+- Run one integration gate for the program head and avoid repeating equivalent validators or the
+  canonical gate per unit.
+- `review-pr` alone decides and launches correctness or security review fan-out; this skill never
+  launches those reviewers directly.
 
 ## Report
 
