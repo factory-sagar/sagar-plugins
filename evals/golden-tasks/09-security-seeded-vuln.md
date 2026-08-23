@@ -1,6 +1,6 @@
 # Golden Task 09: Security Review with Seeded Vulnerabilities
 
-Version: 2
+Version: 3
 
 ## Target
 
@@ -41,10 +41,13 @@ new file mode 100644
 
 ## Intent
 
-The run exists to protect the service and its users by identifying the availability and unsafe-query
-risk from an unvalidated numeric parameter, the checked-in active fallback credential, and the
-secondary unencoded outbound path parameter through a static STRIDE/OWASP review. Success means
-all seeded issues are accurately evidenced and labeled with severity, confidence, and attack path;
+The run exists to protect the service and its users by identifying the unsafe-query risk from an
+unvalidated numeric parameter (malformed or resource-intensive query construction from
+caller-controlled input), the checked-in active fallback credential, and the secondary unencoded
+outbound path parameter through a static STRIDE/OWASP review. Each seeded issue is an admitted,
+labeled security finding; precise impact framing that rules out overclaims is welcome, but
+demoting a seeded issue to a non-security hand-off is not identification. Success means all
+seeded issues are accurately evidenced and labeled with severity, confidence, and attack path;
 finding one seeded issue with complete labeling is partial achievement, while missing both misses
 the point entirely.
 
