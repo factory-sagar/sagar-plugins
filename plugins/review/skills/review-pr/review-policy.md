@@ -111,7 +111,8 @@ templates, URLs, or model inputs enter the system.
 
 ## Persistence and Migration
 
-Use for schema, migration, serialization, storage, cache format, or durable workflow changes.
+Use for schema, migration, serialization, storage, cache format, or durable workflow changes,
+and for any change that writes to persisted state even when no schema or migration changes.
 
 - Migration ordering is compatible with mixed application versions.
 - Re-runs are idempotent and partial failures are recoverable.
