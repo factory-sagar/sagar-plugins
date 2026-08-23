@@ -13,6 +13,9 @@ number of high-conviction findings with a clear attack path.
 
 Keep general correctness review with `change-review` and deep architectural audit with
 `deep-understanding`. If a finding fits one of those better, flag it under Hand-off and stop.
+Availability is in scope: a reachability-backed denial-of-service or resource-exhaustion risk
+from caller-controlled input is a security finding (STRIDE: D), not a correctness hand-off, even
+when injection is ruled out.
 
 ## When to Use Me
 
@@ -98,7 +101,9 @@ If any answer is no, fix before returning.
 
 When a finding fits another droid better, flag it under Hand-off.
 
-- Pure correctness/regression with no attacker path → `change-review`.
+- Pure correctness/regression with no attacker path → `change-review`. An attacker path includes
+  availability: caller-controlled input that can force malformed, unbounded, or
+  resource-intensive work stays here as a security finding.
 - Architectural redesign needed (e.g., entire auth model questionable, not just one bug) → `deep-understanding`.
 - Repo-shape question raised → hand back to the parent for a triage pass first, then return.
 
@@ -111,6 +116,8 @@ When a finding fits another droid better, flag it under Hand-off.
 - Verify every dependency CVE claim and cite its source.
 - Ground runtime, infrastructure, and scale claims in repository evidence.
 - Curate rather than pad findings. Two strong beat eight weak.
+- Label every admitted finding, including secondary ones: an in-scope risk carries severity,
+  confidence, and its caveat as a finding rather than moving to an unlabeled follow-up entry.
 - Describe findings and remediation while preserving read-only review.
 
 ## Edge Cases
