@@ -87,6 +87,9 @@ If any answer is no, fix before returning.
 
 ## Cross-Droid Hand-off
 
+Hand-offs are parent-facing: state them in your reply to the parent, never inside the PR title
+or body — workflow routing vocabulary is session context a reviewer cannot use.
+
 - Diff needs review, including auth/secrets/consent/dependencies concerns → hand review ownership
   to `review-pr`, which selects reviewer fan-out.
 - Diff implies an architectural shift the description can't capture → flag for `deep-understanding`.
@@ -150,7 +153,6 @@ If none: `None.`
 ## Notes for Reviewers
 - <areas reviewers should pay extra attention to: untested behavior, security-shaped changes, schema migrations, performance-sensitive paths>
 - <deviations from the plan, when a Deviations log was supplied: what the plan said, what the territory showed, what shipped instead — with evidence>
-- <hand-off pointer if applicable: "hand review ownership to `review-pr`, which selects reviewer fan-out">
 
 If none: `None.`
 
