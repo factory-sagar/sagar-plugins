@@ -14,11 +14,11 @@ Observability should make failures diagnosable without leaking secrets or coupli
 
 ## Non-negotiables
 
-- Secrets never enter errors, logs, traces, metrics, snapshots, panic summaries, test snapshots, or serialized diagnostics.
-- Sensitive values are wrapped in a redacted value at the boundary and unwrapped only where the raw value is needed.
-- Unknown thrown values and arbitrary payloads are not `JSON.stringify`'d for diagnostics.
-- New adapters and error translations preserve established tracing, logging, metrics, and error-reporting behavior.
-- Domain decisions do not depend on a logger or telemetry mechanism.
+- Errors, logs, traces, metrics, snapshots, panic summaries, test snapshots, and serialized diagnostics contain only safe values, preventing secret disclosure.
+- Sensitive values are wrapped in a redacted value at the boundary and unwrapped only where the raw value is needed, limiting their exposure.
+- Diagnostics summarize unknown thrown values and arbitrary payloads through safe fields rather than `JSON.stringify`, preventing accidental serialization.
+- New adapters and error translations preserve established tracing, logging, metrics, and error-reporting behavior, maintaining operational continuity.
+- Domain decisions remain independent of logger and telemetry mechanisms, keeping the core pure.
 
 ## Apply this file
 

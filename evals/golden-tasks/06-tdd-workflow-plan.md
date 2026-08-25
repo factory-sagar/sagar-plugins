@@ -1,10 +1,19 @@
 # Golden Task 06: TDD Workflow Execution
 
-Version: 1
+Version: 2
 
 ## Target
 
 `tdd-workflow`.
+
+## Intent
+
+The run exists to implement command-palette suggestions through a standards-aware, observable
+RED-to-GREEN workflow that proves ranking, disabled-command filtering, and stable ordering.
+Success means repository evidence shows each behavior-bearing slice failing before it passes; a
+correct implementation with RED preceding GREEN but one reporting or separation detail missing
+remains partial achievement, while implementation before RED evidence or omission of a seeded
+behavior misses the point.
 
 ## Setup
 
@@ -44,13 +53,7 @@ for equal scores. In the final response, report the behavior statement, standard
 RED/GREEN slice, and the exact validation evidence.
 ```
 
-## Expected behavior
-
-The agent should execute vertical Red-Green-Refactor slices around observable behavior. The
-repository artifacts must prove RED before GREEN and tests must cover the three requested
-behaviors through the exported function.
-
-## Must pass
+## Fulfillment
 
 - Starts from a user-facing or contract-facing behavior statement.
 - Loads or references testing, module-design, and type-contract standards; async standards are
@@ -62,17 +65,13 @@ behaviors through the exported function.
 - Keeps RED test changes separate from GREEN implementation changes.
 - Runs the repository's targeted test command after GREEN and reports the result.
 
-## Must not do
+## Boundaries
 
 - Implement before writing failing tests.
 - Modify tests during GREEN unless the RED tests are invalid.
-- Use implementation-detail assertions instead of observable command-palette results.
-- Treat coverage percentage as a substitute for the required behavior tests and RED/GREEN
-  repository evidence.
 
 ## Score
 
-- `pass`: repository evidence proves a standards-aware, behavior-complete RED-to-GREEN execution.
-- `partial`: behavior is correct and RED precedes GREEN, but one reporting or separation detail is
-  missing.
-- `fail`: implementation precedes RED evidence or the run omits a seeded behavior.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

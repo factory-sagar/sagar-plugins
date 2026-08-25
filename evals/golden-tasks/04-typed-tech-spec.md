@@ -1,10 +1,19 @@
 # Golden Task 04: Typed Tech Spec
 
-Version: 1
+Version: 2
 
 ## Target
 
 `tech-spec`.
+
+## Intent
+
+The run exists to deliver a design-only typed handoff for saved-filter import and export that lets
+implementers safely handle malformed input, unsupported versions, and deleted fields. Success
+means a concrete, repository-aware design with alternatives, contracts, boundary parsing, failure
+flows, call stacks, file ownership, and vertical RGR slices; an implementation-ready handoff
+missing one non-critical flow remains partial achievement, while prose without contracts or an
+invented implementation without design misses the point.
 
 ## Prompt
 
@@ -16,11 +25,7 @@ implementation-ready tech spec now, state repository-dependent details as assump
 questions, and do not stop to ask for a repository path.
 ```
 
-## Expected behavior
-
-The agent should produce a design-only typed handoff. It should include alternatives before choosing, concrete contracts, boundary parsing, failure types, call stacks, file map, and vertical RGR test slices.
-
-## Must pass
+## Fulfillment
 
 - Includes exact `Standards applied:` evidence naming only the topic docs or workflow that
   shaped this design.
@@ -33,16 +38,13 @@ The agent should produce a design-only typed handoff. It should include alternat
 - Maps contracts and call-stack steps to files or modules.
 - Provides vertical Red-Green-Refactor test slices.
 
-## Must not do
+## Boundaries
 
 - Implement code.
-- Skip alternatives.
 - Trust imported JSON via unchecked casts.
-- Hide expected import failures as generic thrown exceptions.
-- Ask the user to approve implementation by default.
 
 ## Score
 
-- `pass`: all required handoff sections are present with concrete typed contracts.
-- `partial`: the spec is implementation-ready but misses one non-critical flow.
-- `fail`: the spec is prose-only, lacks contracts, or invents implementation without design.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

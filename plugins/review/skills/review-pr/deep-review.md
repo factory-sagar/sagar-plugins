@@ -1,8 +1,8 @@
 # Deep Review
 
-Use deep review for a broad or high-consequence change as defined in `SKILL.md`, or when the
-user explicitly asks for it. Authority remains in `SKILL.md`; depth never upgrades a read-only
-request.
+Use deep review to deliver independent coverage for a broad or high-consequence change as
+defined in `SKILL.md`, or when the user explicitly asks for it. Authority remains in
+`SKILL.md`; depth changes review coverage without changing a read-only request.
 
 Spawn a second independent `change-review` context that has not seen the first reviewer's
 findings. Give both reviewers the same scope, diff, relevant untracked-file list, and applicable

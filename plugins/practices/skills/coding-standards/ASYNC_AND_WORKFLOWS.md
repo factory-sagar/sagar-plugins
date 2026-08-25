@@ -19,15 +19,15 @@ Async code needs clear ownership: cancellation lifetime, promise lifetime, concu
 ## Non-negotiables
 
 - A received cancellation signal reaches every downstream cancellable operation.
-- Lower-level modules do not replace the caller's cancellation lifetime with a hidden `AbortController` or timeout.
+- Lower-level modules preserve the caller's cancellation lifetime rather than replacing it with a hidden `AbortController` or timeout, so cancellation ownership remains visible.
 - New cancellable interfaces accept cancellation in a final options object, not positional signals or boolean flags.
 - Every promise is awaited, returned, collected, or handed to explicit detached-work machinery.
 - Detached work identifies owner, lifetime, cancellation behavior, rejection handling, and observability.
 - Independent async work starts concurrently unless ordering, backpressure, rate limit, transaction, workflow, or external contract requires serialization.
 - User-sized, database-sized, file-sized, queue-sized, or otherwise unbounded collections use bounded concurrency.
 - Retried mutating commands define how repeated execution avoids duplicate resources, transitions, messages, and external side effects.
-- Retried create operations do not allocate a fresh logical identity.
-- Do not hold database transactions open across network calls or long-running work.
+- Retried create operations reuse the same logical identity, preventing duplicate resources.
+- Database transactions cover local atomic work and close before network calls or long-running work, protecting lock and connection capacity.
 
 ## Cancellation
 

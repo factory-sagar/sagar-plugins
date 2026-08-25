@@ -1,6 +1,6 @@
 ---
 name: implement
-version: 1.3.1
+version: 1.4.0
 description: |
   Build approved work. Routes explicit change sets to the implementer, new behavior through
   test-first execution, and small mechanical changes inline; every path records deviations
@@ -9,8 +9,11 @@ description: |
 
 # Implement
 
-Given a task (from the invocation arguments or the conversation), route it to the right
-executor. If no task is in hand, ask for one.
+Turn a task from the invocation arguments or conversation into an appropriately scoped,
+verified implementation path. Success means approved changes reach the right executor, new
+behavior follows test-first execution, small mechanical work stays bounded, and every completed
+program reaches the repository's verification gate with recorded deviations. If no task is in
+hand, ask for one.
 
 ## Routing
 
@@ -47,8 +50,12 @@ milestones, the main agent remains the program manager:
    `review-pr` owns all review fan-out. The review must cover the complete
    program diff and every changed or untracked implementation file.
 
-Never hand a multi-unit program to one implementer task. A subagent's completion report is
-evidence to verify, not authority to mark the program complete.
+## Boundaries
+
+- **One independently verifiable unit per `implementer` task.** Never hand a multi-unit program
+  to one implementer task.
+- **Completion evidence remains with the parent.** A subagent's completion report is evidence to
+  verify, not authority to mark the program complete.
 
 ## Deviations contract
 
@@ -56,7 +63,7 @@ In every path, carry the Deviations contract from the `discovering-unknowns` ski
 
 - Minor territory contradiction → take the conservative option and log the deviation.
 - Premise contradiction → stop and report.
-- Never deviate silently.
+- Record every deviation explicitly.
 
 ## Verification
 

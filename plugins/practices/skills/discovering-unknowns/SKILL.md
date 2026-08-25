@@ -1,6 +1,6 @@
 ---
 name: discovering-unknowns
-version: 1.2.0
+version: 1.3.0
 description: |
   Map the gap between the user's request and repository reality. Invoke for unfamiliar
   territory, taste-shaped criteria, blind spots, or worker hand-offs; returns evidence-backed
@@ -11,10 +11,20 @@ user-invocable: false
 
 # Discovering Unknowns
 
-Use before scoping unfamiliar territory, when acceptance criteria are taste-shaped, when the
-user requests a blind-spot pass, before delegating a plan, or for a large-change comprehension
-check. Skip small work in known territory. Use `grilling` for a full interview and an
-investigation droid when the agent, rather than the operator, lacks repository context.
+Map the gap between a request and repository reality before unfamiliar or large-change work,
+taste-shaped acceptance criteria, blind-spot passes, or plan delegation. Success means the
+result identifies the evidence that binds the work, the highest-leverage unresolved choices, and
+the shared deviations contract for its executors. Small work in known territory can proceed
+without this pass. Use `grilling` for a full interview and an investigation droid when the
+agent, rather than the operator, lacks repository context.
+
+## Boundaries
+
+- Resolve architecture-changing answers before implementation.
+- Ask no more than three inline questions, one at a time, and record answers as resolved
+  decisions in the plan.
+- Attach the Deviations contract below to delegated prompts. An optional three-to-five-question
+  quiz after long work is a comprehension check, never a release gate.
 
 ## Find the gap
 
@@ -26,10 +36,10 @@ example, CI gate, or baseline. Report:
 2. Historical decisions, TODOs, or reverts that invalidate an obvious approach.
 3. The strongest comparable implementation and what it establishes as good.
 4. Two to four unresolved questions, ordered by architectural leverage, with a recommended
-   answer. Do not implement until architecture-changing answers are resolved.
+   answer.
 
-For known unknowns, ask one question at a time and no more than three inline; record answers as
-resolved decisions in the plan. For recognize-on-sight criteria, present three or four genuinely
+For known unknowns, record answers as resolved decisions in the plan. For recognize-on-sight
+criteria, present three or four genuinely
 different, cheaply comparable variants with a tradeoff, then select one. Lead plans with
 decisions most likely to change, not file order.
 
@@ -51,5 +61,4 @@ Every implementer carries this rule:
   impact: <behavior/scope effect, one line>
 ```
 
-If none, report `Deviations: none.` Attach this contract to delegated prompts. An optional
-three-to-five-question quiz after long work is a comprehension check, never a release gate.
+If none, report `Deviations: none.`

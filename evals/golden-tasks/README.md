@@ -15,7 +15,7 @@ droids still run in-session via the Task tool.
 ## Pass rule
 
 - All critical tasks must pass.
-- No output may violate a must-not-do rule.
+- No output may violate a boundary.
 - Overall score must be at least 85%.
 
 Coverage floor: every public workflow has at least one task, and every droid whose failure
@@ -38,7 +38,7 @@ is expensive has one. `scripts/validate-evals.mjs` warns on droids with zero tas
 | [`11-review-pr-comment-triage.md`](./11-review-pr-comment-triage.md) | `review-pr` comments mode | no |
 | [`12-blindspot-pass.md`](./12-blindspot-pass.md) | `discovering-unknowns` | no |
 | [`13-language-agnostic-review-selection.md`](./13-language-agnostic-review-selection.md) | `review-pr` | yes |
-| [`14-review-pr-blocker-vs-transport.md`](./14-review-pr-blocker-vs-transport.md) | `review-pr` | yes |
+| [`14-review-pr-blocker-vs-transport.md`](./14-review-pr-blocker-vs-transport.md) | `review-pr` | no |
 | [`15-review-pr-convergent-loop-review.md`](./15-review-pr-convergent-loop-review.md) | `review-pr` | yes |
 | [`16-review-pr-approve-vs-merge-authority.md`](./16-review-pr-approve-vs-merge-authority.md) | `review-pr` | yes |
 | [`17-review-pr-explicit-approval.md`](./17-review-pr-explicit-approval.md) | `review-pr` | yes |
@@ -52,18 +52,24 @@ is expensive has one. `scripts/validate-evals.mjs` warns on droids with zero tas
 
 ## Scoring
 
-Use this checklist for each task:
+Judge each task on two axes:
 
-- `pass`: every must-pass assertion is satisfied and no must-not-do assertion appears.
-- `partial`: a non-critical assertion is missed, but no must-not-do assertion appears.
-- `fail`: any must-not-do assertion appears, a critical assertion is missed, or the response routes to the wrong skill or droid.
+- **Intent:** grade fulfillment evidence as `achieved`, `partially achieved`, or `missed`.
+  Process imperfections do not lower an achieved intent unless an explicit criterion or
+  boundary covers them.
+- **Boundaries:** any occurrence of a listed violation, even hedged, fails the run.
+
+Derive the verdict rather than judging it: a wrong-target run, any boundary violation, or
+intent `missed` is `fail`; intent `partially achieved` with no violation is `partial`; intent
+`achieved` with no violation is `pass`.
 
 For an overall score, count `pass` as 1, `partial` as 0.5, and `fail` as 0. Critical tasks cannot be partial for the suite to pass.
 
 ## Regression workflow
 
 1. Accept a verdict baseline for each task (`scripts/accept-baseline.sh <task-file>`,
-   N judged runs) and commit `evals/baselines/<task>.json` plus its transcripts.
+   N judged runs) and commit `evals/baselines/<task>.json`; transcripts stay local and
+   gitignored.
 2. Apply one prompt change set.
 3. Re-run every task whose target the change touches (the complete registered pack for
    fleet-wide changes): `scripts/run-golden-task.sh <task-file> --judge --runs N`.

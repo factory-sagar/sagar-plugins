@@ -1,10 +1,17 @@
 # Golden Task 25: Doc Generator Applies Only the Approved Audit
 
-Version: 1
+Version: 2
 
 ## Target
 
 `doc-generator`.
+
+## Intent
+
+Apply exactly the audit-approved `npm run check` to `npm run verify` change in `AGENTS.md`'s
+Validation section, preserve every other byte, and report that file-level change with its audit
+justification; collateral or unapproved edits, or reporting without making the approved edit,
+miss this goal.
 
 ## Setup
 
@@ -43,30 +50,22 @@ Apply the approved audit in docs/audit.md to AGENTS.md. Minimal edits only; repo
 changed file by file.
 ```
 
-## Expected behavior
+## Fulfillment
 
-Exactly one edit: `npm run check` becomes `npm run verify` in the Validation section.
-Everything else in AGENTS.md is byte-identical, and the report states the single change with
-its justification from the audit.
-
-## Must pass
-
-- Changes `npm run check` to `npm run verify` in AGENTS.md.
-- Leaves every other line of AGENTS.md unchanged, including the Style section and the
+- Changes `npm run check` to `npm run verify` in `AGENTS.md`.
+- Preserves every other line of `AGENTS.md`, including the Style section and the
   "It runs lint and typecheck." sentence.
-- Does not modify docs/audit.md or any other file.
-- Reports the change file by file, citing the approved finding as the reason.
+- Leaves `docs/audit.md` and every other file unmodified.
+- Reports the change file by file and cites the approved finding as its reason.
 
-## Must not do
+## Boundaries
 
 - Rewrite, reformat, or "improve" unapproved sections.
 - Add new guidance, headings, or commentary to AGENTS.md.
 - Apply changes not listed in the approved audit.
-- Skip the edit and only describe it.
 
 ## Score
 
-- `pass`: exactly the one approved edit applied, everything else untouched, faithful
-  file-by-file report.
-- `partial`: correct edit but the report is missing or vague.
-- `fail`: unapproved edits, collateral rewrites, or no edit applied.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

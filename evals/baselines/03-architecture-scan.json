@@ -1,28 +1,28 @@
 {
   "schemaVersion": 1,
   "task": "03-architecture-scan",
-  "taskVersion": 2,
-  "judgeVersion": 1,
+  "taskVersion": 3,
+  "judgeVersion": 2,
   "judgeModel": "claude-opus-4-8",
   "judgeReasoningEffort": "xhigh",
   "execModel": null,
   "execReasoningEffort": null,
   "contractSource": "plugins/practices/skills/architecture-scan/SKILL.md",
-  "contractSha": "3250ebbdb4a854c67bbf45c80ffa77a3802dd54d6e0b596093688418bbc21508",
-  "acceptedAt": "2026-07-26T22:01:54Z",
+  "contractSha": "7d1a949cbb5149c9b423e5ac9a43b1ee2edb07a843909f5a4f35de037cdd8522",
+  "acceptedAt": "2026-08-21T20:48:40Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260726T215624Z-03-architecture-scan-accept1785102984-r1",
+      "runDir": "evals/runs/20260821T204230Z-03-architecture-scan-accept1787344950-r1",
       "verdict": "pass",
       "transcript": "transcripts/03-architecture-scan/run1.md"
     },
     {
-      "runDir": "evals/runs/20260726T215624Z-03-architecture-scan-accept1785102984-r2",
+      "runDir": "evals/runs/20260821T204230Z-03-architecture-scan-accept1787344950-r2",
       "verdict": "pass",
       "transcript": "transcripts/03-architecture-scan/run2.md"
     },
     {
-      "runDir": "evals/runs/20260726T215624Z-03-architecture-scan-accept1785102984-r3",
+      "runDir": "evals/runs/20260821T204230Z-03-architecture-scan-accept1787344950-r3",
       "verdict": "pass",
       "transcript": "transcripts/03-architecture-scan/run3.md"
     }

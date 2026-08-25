@@ -1,6 +1,6 @@
 # Golden Task 13: Language-Agnostic Review Selection
 
-Version: 1
+Version: 2
 
 ## Target
 
@@ -57,12 +57,17 @@ membership cache, updates tenant roles in SQL, retries failed jobs, and logs the
 Return the selected review lenses before any findings.
 ```
 
-## Expected behavior
+## Intent
 
-The workflow selects policy from changed responsibilities rather than looking for a specific
-language or framework.
+The run exists to give a Python worker the review coverage its changed responsibilities require,
+selecting policy from its input handling, shared state, authorization, persistence, retries, and
+token logging rather than from language or framework. Success means every required general and
+responsibility-specific lens is explicit without unrelated language-specific lenses and the review
+remains read-only; omitting one non-critical required lens is partial achievement, while widening
+authority, allowing language-specific assumptions to dominate, or omitting multiple critical
+lenses misses the point entirely.
 
-## Must pass
+## Fulfillment
 
 - Selects mandatory correctness, tests, failures, ownership, boundaries, and rollback review.
 - Selects mutation/state ownership, authentication/authorization, external input/injection,
@@ -70,15 +75,12 @@ language or framework.
 - Does not require React, TypeScript, or another unrelated language-specific lens.
 - Remains read-only because the user asked only for review.
 
-## Must not do
+## Boundaries
 
 - Edit files, commit, push, approve, or merge.
-- Skip mutation or authorization review because the code is Python.
-- Select every available lens without evidence.
 
 ## Score
 
-- `pass`: all required lenses and read-only authority are explicit, with no unrelated lens.
-- `partial`: one non-critical required lens is missing.
-- `fail`: authority is widened, language-specific assumptions dominate, or multiple critical
-  lenses are absent.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

@@ -1,6 +1,6 @@
 ---
 name: architecture-scan
-version: 1.3.0
+version: 1.4.0
 description: |
   Architecture scan for ownership, boundary, module, state, failure, and test-seam
   opportunities. Invoke when planning asks where code should live or whether an existing
@@ -11,9 +11,9 @@ user-invocable: false
 
 # Architecture Scan
 
-Scan existing code for evidence-backed refactor candidates. This is planning-only: do not edit,
-refactor, update docs or ADRs, run tests, or run static checks. Do not estimate effort or add
-migration, compatibility, rollout, backfill, or dual-read/write design unless requested.
+Identify and rank evidence-backed refactor candidates in existing code. Success means the
+selected candidate gives `tech-spec` a focused, evidence-grounded architectural decision to
+resolve.
 
 Scan before planning when the request asks where code belongs, which refactor target has the best
 leverage, or whether an existing design should change. Planning is enough when the target,
@@ -24,12 +24,27 @@ Load `../coding-standards/SKILL.md`, `VOCABULARY.md`, `DESIGNING_MODULES.md`,
 async, or observability guidance when relevant. Inspect local context, ADRs, entrypoints,
 modules, adapters, parsers, errors, and tests before recommending a new pattern.
 
+## Boundaries
+
+- This is planning-only: do not edit, refactor, update docs or ADRs, run tests, or run static
+  checks.
+- Read and search code only.
+- Do not estimate effort or add migration, compatibility, rollout, backfill, or dual-read/write
+  design unless requested.
+- Keep the scan to at most five globally ranked candidates and exclude aesthetic cleanup,
+  unsupported claims, speculative flexibility, and work contradicted by sound local convention.
+- If no candidate clears the evidence threshold, report the checked scope and standards rather
+  than manufacturing a recommendation.
+- Hand the selected candidate to `../tech-spec/`; do not write the technical spec or
+  implementation here.
+
 ## Scope and evidence
 
 Use explicit scope. Otherwise infer a focused scope from repository shape and the request; ask
-one question only when a large repository has no credible focus. Read and search code only. Each
-candidate needs concrete paths, call paths, leaked representations, repeated policy, invalid
-state path, test contortion, or runtime seam. Evidence beats aesthetic preference.
+one question only when a large repository has no credible focus. Ground each candidate in
+concrete paths, call paths, leaked representations, repeated policy, invalid state paths, test
+contortions, or runtime seams. Let evidence, rather than aesthetic preference, determine the
+recommendation.
 
 ## Scan questions
 
@@ -49,11 +64,10 @@ Use a small ASCII flow only when it clarifies ownership or a boundary.
 
 ## Rank and hand off
 
-Rank at most five candidates globally by leverage. Prefer changes that remove caller burden,
+Rank candidates globally by leverage. Prefer changes that remove caller burden,
 make invalid states unconstructable, concentrate policy, make boundary trust explicit, replace
 implicit runtime knowledge with a seam, improve behavior testing, or eliminate repeated parsing,
-translation, authorization, or projection. Drop aesthetic cleanup, unsupported claims, speculative
-flexibility, and work contradicted by sound local convention.
+translation, authorization, or projection.
 
 ```md
 ### <Candidate>: <Strong | Worth exploring | Speculative>
@@ -71,10 +85,7 @@ flexibility, and work contradicted by sound local convention.
 Top recommendation: <candidate and why>
 ```
 
-If no candidate clears the evidence threshold, say so and summarize scope and standards checked.
-Do not manufacture a recommendation.
-
 When the user selects a candidate, prepare a brief for `../tech-spec/`: title, paths, current
 friction, evidence, standards, constraints, invariants, suspected seams and flows, open questions,
 and any durable context or ADR note. Invoke `grilling` first if material product, domain, or
-ownership decisions remain. Do not write the technical spec or implementation here.
+ownership decisions remain.

@@ -1,6 +1,6 @@
 {
   "name": "investigation",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Investigation droids: thorough repo investigation (deep-understanding), external web research (deep-research), and root-cause debugging (debugger).",
   "author": {
     "name": "Sagar",

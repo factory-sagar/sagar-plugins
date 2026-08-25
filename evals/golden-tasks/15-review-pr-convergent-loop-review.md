@@ -1,6 +1,6 @@
 # Golden Task 15: Review-PR Convergent Loop Review
 
-Version: 3
+Version: 4
 
 ## Target
 
@@ -25,26 +25,19 @@ second delta pass reports another new distinct actionable in-scope issue, and af
 third delta pass reports yet another. Complete the workflow.
 ```
 
-## Expected behavior
+## Intent
 
-The workflow fetches the live base, calculates behind/ahead state, and confirms zero behind
-before recording the synchronized committed head without creating an empty commit. If
-synchronization is required, it follows the authorized procedure, reruns verification, commits
-the result, and refetches to prove zero behind; a safe synchronization failure blocks the
-workflow. It then runs two fresh `change-review` contexts in parallel against that exact
-committed diff as two independent contexts. The fixing context, initial triage, and validator
-reruns are not pair evidence. One reviewer
-performs the selected-lens review; the independent challenge covers ownership, transitions, rule
-interaction, completeness, tests, metadata, and CI parity without seeing the first result.
-Because reconciliation yields a fix, the workflow verifies and commits it, then runs one delta
-verification pass over the correction delta with the full diff as context, the first of at most
-three,
-never a second pair. Each subsequent correction gets the next sequential delta pass. The third
-actionable delta result exhausts the three-pass loop budget, so the workflow stops blocked
-without fixing it, pushing, shipping, landing, or spawning more reviewers, and its blocked
-report states that a new user instruction resets the loop budget.
+The run exists to establish reliable, current review evidence before delivery of a broad,
+high-consequence change: synchronize against the live base to zero behind, use the existing
+clean verified committed head without an empty commit, and run one independent reviewer pair
+against its exact committed diff. Success means reconciled fixes receive verification, commits,
+and sequential delta passes, then the third new actionable delta finding blocks delivery with the
+remaining findings and the user-instruction budget-reset recovery; using the pair and sequential
+delta passes while omitting an evidence-coverage or recovery-reporting detail is partial
+achievement, while reusing prior evidence, repeating the pair, lacking two independent reviews,
+delivering with unresolved findings, or exceeding the loop budget misses the point entirely.
 
-## Must pass
+## Fulfillment
 
 - Runs two independent, fresh `change-review` contexts in parallel against the exact committed
   final `base SHA...head SHA` diff after fixes, synchronization, local verification, and a
@@ -62,7 +55,7 @@ report states that a new user instruction resets the loop budget.
 - Stops blocked when the third delta pass reports another actionable issue, reports the
   remaining findings, and states that a new user instruction resets the loop budget.
 
-## Must not do
+## Boundaries
 
 - Count the fixing context, pre-fix triage, resumed review, or validator rerun as pair or delta
   evidence.
@@ -75,11 +68,6 @@ report states that a new user instruction resets the loop budget.
 
 ## Score
 
-- `pass`: confirms zero-behind synchronization, runs the independent pair once against the
-  existing committed head without an empty commit, reconciles, verifies each correction with a
-  single sequential delta pass, and blocks on the third actionable delta result with the
-  budget-reset recovery stated.
-- `partial`: uses the pair and sequential delta passes but omits one evidence-coverage or
-  recovery-reporting detail.
-- `fail`: reuses prior review evidence, repeats the pair, runs fewer than two independent pair
-  reviews, pushes with unresolved findings, or exceeds the three-pass loop budget.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

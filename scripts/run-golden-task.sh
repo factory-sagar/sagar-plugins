@@ -13,9 +13,10 @@
 #      so this is contract execution, not a true subagent invocation or model A/B.
 #   4. Invokes `droid exec` against the scratch repo with the composed prompt.
 #   5. Writes the transcript to evals/runs/<timestamp>-<task>[-<label>][-rN]/transcript.md.
-#   6. With --judge: scores the transcript against the task rubric via JUDGE.md and writes
-#      the parsed verdict, stamped with task/judge versions and the contract hash, to
-#      verdict.json (the comparable unit for baselines - see scripts/compare-baseline.mjs).
+#   6. With --judge: scores the transcript against the task rubric via JUDGE.md, then
+#      scripts/judge-contract.mjs validates axis coverage, recomputes the derived verdict,
+#      and writes verdict.json stamped with task/judge versions and the contract hash
+#      (the comparable unit for baselines - see scripts/compare-baseline.mjs).
 #
 # Baselines are verdict-level, not transcript-level: accept with
 # scripts/accept-baseline.sh, compare with scripts/compare-baseline.mjs.
@@ -218,62 +219,12 @@ run_once() { # $1=run index
     droid exec --model "$JUDGE_MODEL" --reasoning-effort "$JUDGE_EFFORT" \
       -f "$RUN_DIR/judge-prompt.md" -o text | tee "$RUN_DIR/verdict.md"
 
-    RUN_DIR="$RUN_DIR" TASK_NAME="$TASK_NAME" TASK_VERSION="$TASK_VERSION" \
+    TASK_NAME="$TASK_NAME" TASK_VERSION="$TASK_VERSION" \
     JUDGE_VERSION="$JUDGE_VERSION" JUDGE_MODEL="$JUDGE_MODEL" JUDGE_EFFORT="$JUDGE_EFFORT" \
     EXEC_MODEL="$EXEC_MODEL" EXEC_EFFORT="$EXEC_EFFORT" CONTRACT_SOURCE="$CONTRACT_SOURCE" \
     CONTRACT_SHA="$CONTRACT_SHA" STARTED_AT="$STARTED_AT" FINISHED_AT="$FINISHED_AT" \
-    python3 - <<'PYEOF'
-import json
-import os
-import re
-import sys
-
-run_dir = os.environ["RUN_DIR"]
-text = open(f"{run_dir}/verdict.md", encoding="utf-8").read()
-fenced = re.findall(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.S)
-candidate = fenced[-1] if fenced else None
-if candidate is None:
-    start = text.rfind('{\n  "task"')
-    if start == -1:
-        start = text.rfind("{")
-    depth = 0
-    end = None
-    for index in range(start, len(text)):
-        if text[index] == "{":
-            depth += 1
-        elif text[index] == "}":
-            depth -= 1
-            if depth == 0:
-                end = index + 1
-                break
-    candidate = text[start:end] if start != -1 and end else None
-try:
-    verdict = json.loads(candidate) if candidate else None
-except json.JSONDecodeError:
-    verdict = None
-if not isinstance(verdict, dict) or verdict.get("verdict") not in {"pass", "partial", "fail"}:
-    sys.stderr.write("could not parse a judge verdict JSON block from verdict.md\n")
-    sys.exit(1)
-record = {
-    "schemaVersion": 1,
-    "task": os.environ["TASK_NAME"],
-    "taskVersion": int(os.environ["TASK_VERSION"]),
-    "judgeVersion": int(os.environ["JUDGE_VERSION"]) if os.environ.get("JUDGE_VERSION") else None,
-    "judgeModel": os.environ["JUDGE_MODEL"],
-    "judgeReasoningEffort": os.environ["JUDGE_EFFORT"],
-    "execModel": os.environ.get("EXEC_MODEL") or None,
-    "execReasoningEffort": os.environ.get("EXEC_EFFORT") or None,
-    "contractSource": os.environ.get("CONTRACT_SOURCE") or None,
-    "contractSha": os.environ.get("CONTRACT_SHA") or None,
-    "startedAt": os.environ["STARTED_AT"],
-    "finishedAt": os.environ["FINISHED_AT"],
-    "judge": verdict,
-}
-with open(f"{run_dir}/verdict.json", "w", encoding="utf-8") as stream:
-    json.dump(record, stream, indent=2)
-    stream.write("\n")
-print(f"verdict: {verdict['verdict']} -> {run_dir}/verdict.json")
-PYEOF
+    node "$ROOT/scripts/judge-contract.mjs" --task "$TASK_FILE" \
+      --verdict-md "$RUN_DIR/verdict.md" --out "$RUN_DIR/verdict.json"
   fi
 }
 

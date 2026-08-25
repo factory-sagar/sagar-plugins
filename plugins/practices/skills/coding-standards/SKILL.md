@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-version: 1.3.0
+version: 1.4.0
 description: |
   Standards router for modules, boundaries, failures, async ownership, tests, observability,
   naming, and type contracts. Invoke from design, implementation, and review when changed
@@ -26,18 +26,18 @@ This skill is a router. Load the topic files that match the code you are touchin
 - Verify observable behavior through real seams.
 - Keep type contracts strict, local, documented, and boring.
 - Improve changed paths without forcing broad migrations unless explicitly requested.
-- Do not add backwards-compatibility, rollout, backfill, dual-write/read, or deployment sequencing work unless the user explicitly asks.
+- Add backwards-compatibility, rollout, backfill, dual-write/read, or deployment sequencing work only when the user explicitly asks, so changed paths stay scoped to the requested behavior.
 
 ## Non-negotiables
 
-- Untrusted, serialized, persisted, or framework-shaped input is parsed before core logic sees it.
-- Decoded data is not trusted with `as SomeType`.
+- Untrusted, serialized, persisted, or framework-shaped input is parsed before core logic sees it, so core contracts retain runtime proof.
+- Decoded data is refined through parsing rather than `as SomeType`, so serialized input cannot impersonate a domain value.
 - Expected failures are visible in typed return channels, not hidden throws or rejected promises.
-- Secrets do not enter errors, logs, traces, metrics, snapshots, or panic summaries.
-- Raw platform and framework bindings stay at composition seams or tightly local adapters.
-- Dependencies are explicit; hidden globals and ambient time/randomness/IDs do not drive service behavior.
-- Tests prove observable behavior through module interfaces or real seams; module mocks and method spies are out.
-- Type escape hatches are local, justified with `SAFETY:`, and hidden behind precise interfaces.
+- Errors, logs, traces, metrics, snapshots, and panic summaries contain only safe values, preventing secret disclosure.
+- Raw platform and framework bindings stay at composition seams or tightly local adapters, keeping core contracts portable.
+- Service behavior receives explicit dependencies, time, randomness, and IDs, keeping it controllable and testable.
+- Tests prove observable behavior through module interfaces or real seams rather than module mocks or method spies, preserving confidence through caller-visible contracts.
+- Type escape hatches are local, justified with `SAFETY:`, and hidden behind precise interfaces, confining proof-obligation exceptions.
 - Promises are owned: awaited, returned, collected, or handed to explicit detached-work machinery.
 - Broad migrations require explicit user intent.
 

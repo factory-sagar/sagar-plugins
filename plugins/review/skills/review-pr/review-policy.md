@@ -1,7 +1,7 @@
 # Review Policy
 
 Choose lenses from changed responsibilities and operations. Languages and frameworks are signals
-only; no language receives privileged review treatment.
+only; apply the same review treatment across languages.
 
 ## Mandatory
 
@@ -11,15 +11,15 @@ Apply every item to every changed behavior:
 - **Correctness and invariants**: boundaries, empty states, limits, ordering, and state
   transitions preserve caller-visible guarantees.
 - **Tests and evidence**: changed behavior has a regression net through the real seam; tests
-  fail when the behavior breaks and do not merely restate mocks. Exercise the real initiating
+  fail when the behavior breaks and exercise behavior beyond restated mocks. Exercise the real initiating
   owner or entrypoint rather than calling an internal callback as a substitute.
 - **Program completeness**: when implementation follows an approved program, every unit maps
   to changed paths, behavior evidence, and its declared validator. A completion report without
-  matching repository evidence is not accepted.
-- **Failures**: expected failures are classified and observable; defects are not swallowed
-  or converted into misleading success.
+  matching repository evidence is rejected.
+- **Failures**: classify expected failures visibly and preserve defect signals rather than
+  converting them into misleading success.
 - **Ownership and mutation**: every write has one owner; aliases, shared mutable state, and
-  partial updates cannot violate invariants.
+  partial updates preserve invariants.
 - **Transition timeline**: when a change alters lifetime, cleanup, reset, or deferred work,
   enumerate state and observers before, during, and after the terminal event. Required values
   must remain valid until their last consumer is finished.
@@ -28,16 +28,16 @@ Apply every item to every changed behavior:
 - **Async and workflow safety**: work is awaited, returned, collected, or explicitly
   detached; cancellation, retry, concurrency, and idempotency are handled where reachable.
 - **Boundaries and contracts**: external values are parsed before core logic; protocol,
-  persistence, and domain shapes do not leak across their owning boundary.
-- **Scope and structure**: no drive-by behavior, duplicated policy, unearned abstraction,
-  dead compatibility path, or weakened gate entered with the change.
-- **Correction authority**: severity does not authorize new product behavior or architecture.
-  A correction that requires a new subsystem, migration, backfill, rollback mechanism,
+  persistence, and domain shapes remain within their owning boundary.
+- **Scope and structure**: the change keeps a focused behavior scope, one policy owner,
+  earned abstractions, live compatibility paths, and intact gates.
+- **Correction authority**: classify correction scope independently from severity. A correction
+  that requires a new subsystem, migration, backfill, rollback mechanism,
   compatibility layer, dependency, or product decision is quarantined as a scope-expanding
   proposal until the user explicitly approves it.
 - **File coverage**: review tracked changes, staged changes, and every untracked
   implementation file. Separate pre-existing user-owned artifacts from files created by the
-  program; never treat untracked as automatically out of scope. Every changed source, test,
+  program; decide untracked-file scope from its ownership and relevance. Every changed source, test,
   and metadata path appears in the review evidence ledger.
 - **Repository claims**: for every changed directory, read the governing `AGENTS.md`,
   README, manifest, registry, or generated-file declaration and reconcile claims such as test
@@ -53,7 +53,8 @@ hooks, event listeners, or derived UI state.
 - Effects synchronize with external systems rather than derive render state.
 - Derived values are computed from canonical state instead of mirrored.
 - Subscriptions and listeners have symmetric cleanup and stable ownership.
-- Dependency changes cannot create loops, stale closures, duplicate requests, or lost work.
+- Dependency changes preserve stable effect behavior without loops, stale closures, duplicate
+  requests, or lost work.
 - User-visible state remains consistent across loading, empty, error, and retry transitions.
 - Accessibility, focus, keyboard behavior, and semantics survive the state change.
 - Trace every external and internal writer of state. A local callback is not assumed to
@@ -75,12 +76,12 @@ frameworks receive the same questions.
 Use when collections, caches, objects, records, transactions, files, or persisted state are
 modified.
 
-- Mutation does not escape its owner through aliases.
-- Atomic changes cannot leave half-applied state.
+- Mutation remains with its owner despite aliases.
+- Atomic changes cannot leave half-applied state behind on any failure path.
 - Updates preserve immutability contracts expected by observers or memoization.
 - Cache writes and invalidation share one source of truth.
-- Retries and duplicate delivery cannot apply a mutation twice.
-- Rollback restores all coupled state, not just the first write.
+- Retries and duplicate delivery apply a mutation at most once.
+- Rollback restores all coupled state, including every write.
 
 ## Authentication and Authorization
 
@@ -90,8 +91,9 @@ operations change.
 - Authentication proves identity at the correct boundary.
 - Authorization checks the fetched object, not only client-supplied scope.
 - Tenant identity is carried through storage queries and side effects.
-- Client-controlled roles, ownership, or scope are never trusted.
-- Error differences do not expose cross-tenant existence.
+- Client-controlled roles, ownership, or scope are never trusted; the owning boundary derives
+  them from verified identity.
+- Error responses preserve cross-tenant non-disclosure.
 - Audit records attribute the verified actor, resource, and tenant.
 
 ## External Input and Injection
@@ -101,14 +103,16 @@ templates, URLs, or model inputs enter the system.
 
 - Parsing establishes the canonical type and rejects non-finite, ambiguous, or oversized
   values.
-- SQL, shell, template, path, URL, and prompt sinks do not interpolate untrusted content.
+- SQL, shell, template, path, URL, and prompt sinks never interpolate untrusted content; it
+  reaches them through parameterization or the sink's safe encoding boundary.
 - Allowlists are applied at the owning boundary.
-- Error output does not echo secrets, credentials, or sensitive payloads.
+- Error output uses safe summaries that omit secrets, credentials, and sensitive payloads.
 - Resource limits bound attacker-controlled work.
 
 ## Persistence and Migration
 
-Use for schema, migration, serialization, storage, cache format, or durable workflow changes.
+Use for schema, migration, serialization, storage, cache format, or durable workflow changes,
+and for any change that writes to persisted state even when no schema or migration changes.
 
 - Migration ordering is compatible with mixed application versions.
 - Re-runs are idempotent and partial failures are recoverable.
@@ -127,7 +131,7 @@ delivery.
 - Shared state has an atomicity or serialization boundary.
 - Retry policy distinguishes transient failure from permanent rejection.
 - Commands are idempotent or deduplicated.
-- Timeouts do not abandon state-changing work without reconciliation.
+- Timeouts reconcile state-changing work before ending ownership.
 - Events are emitted only after the state they claim is committed.
 
 ## Dependencies and Supply Chain
@@ -145,9 +149,9 @@ Use for manifests, lockfiles, downloaded tools, build plugins, images, or genera
 
 Use for credentials, configuration, logs, traces, metrics, analytics, PII, or customer data.
 
-- Secrets exist only in approved secret stores and never in source fallbacks.
+- Secrets exist only in approved secret stores, never in source fallbacks.
 - Logs and errors use safe summaries and bounded cardinality.
-- Metrics do not encode user or tenant identifiers in labels.
+- Metrics use labels without user or tenant identifiers.
 - Consent, retention, deletion, and access boundaries remain enforced.
 - Success telemetry occurs after success; failure telemetry preserves the actual cause.
 - Debug paths cannot expose production-sensitive content.
@@ -167,12 +171,12 @@ Use for APIs, SDKs, exported types, CLI surfaces, file formats, shared packages,
 Use for loops, queries, render paths, large collections, network fan-out, caches, or hot
 request paths.
 
-- No new N+1, unbounded fan-out, repeated parsing, or quadratic operation is introduced.
+- New work remains free of N+1, unbounded fan-out, repeated parsing, and quadratic operations.
 - Memory, handles, listeners, and temporary files are released.
 - Expensive work is bounded, cached, paginated, or moved off the critical path where
   appropriate.
 - Performance claims carry measurements tied to a representative workload.
-- Optimization does not weaken correctness, consistency, or observability.
+- Optimization preserves correctness, consistency, and observability.
 
 ## CI, Build, and Release
 
@@ -181,7 +185,7 @@ Use for workflows, build scripts, deployment configuration, permissions, or rele
 - Jobs are deterministic and safe to re-run.
 - Permissions and credentials use the narrowest scope.
 - Gates are not weakened, skipped, or given raised baselines to admit the diff.
-- Cache keys cannot restore incompatible artifacts.
+- Cache keys restore only compatible artifacts.
 - Deployment and rollback operate on the same versioned artifact.
 - Required checks represent the behavior the PR actually changes.
 - Build a CI-parity matrix from every required workflow job. For each command, record the
@@ -199,4 +203,4 @@ Use for prompts, skills, droids, MCP, hooks, automation, or model routing.
 - External content and tool results are treated as untrusted instructions.
 - Model claims have current evaluation evidence.
 - Hooks fail safely and cannot exfiltrate credentials or overwrite user work.
-- Public artifacts contain no private session context.
+- Public artifacts omit private session context.

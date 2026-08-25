@@ -1,28 +1,28 @@
 {
   "schemaVersion": 1,
   "task": "15-review-pr-convergent-loop-review",
-  "taskVersion": 3,
-  "judgeVersion": 1,
+  "taskVersion": 4,
+  "judgeVersion": 2,
   "judgeModel": "claude-opus-4-8",
   "judgeReasoningEffort": "xhigh",
   "execModel": null,
   "execReasoningEffort": null,
   "contractSource": "plugins/review/skills/review-pr/SKILL.md",
-  "contractSha": "2e23f331d1328dd7947aeea4cdbc8f85254c679307d85cc021203318907bd87d",
-  "acceptedAt": "2026-07-26T22:06:18Z",
+  "contractSha": "70ead458d5f2879b4b38c8bd4730f08f2e7c7f00f3718629e2df1a25346166e1",
+  "acceptedAt": "2026-08-23T20:56:24Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260726T215628Z-15-review-pr-convergent-loop-review-accept1785102988-r1",
+      "runDir": "evals/runs/20260823T204406Z-15-review-pr-convergent-loop-review-accept1787517846-r1",
       "verdict": "pass",
       "transcript": "transcripts/15-review-pr-convergent-loop-review/run1.md"
     },
     {
-      "runDir": "evals/runs/20260726T215628Z-15-review-pr-convergent-loop-review-accept1785102988-r2",
+      "runDir": "evals/runs/20260823T204406Z-15-review-pr-convergent-loop-review-accept1787517846-r2",
       "verdict": "pass",
       "transcript": "transcripts/15-review-pr-convergent-loop-review/run2.md"
     },
     {
-      "runDir": "evals/runs/20260726T215628Z-15-review-pr-convergent-loop-review-accept1785102988-r3",
+      "runDir": "evals/runs/20260823T204406Z-15-review-pr-convergent-loop-review-accept1787517846-r3",
       "verdict": "pass",
       "transcript": "transcripts/15-review-pr-convergent-loop-review/run3.md"
     }

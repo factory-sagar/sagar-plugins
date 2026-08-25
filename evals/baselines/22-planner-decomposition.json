@@ -1,28 +1,28 @@
 {
   "schemaVersion": 1,
   "task": "22-planner-decomposition",
-  "taskVersion": 1,
-  "judgeVersion": 1,
+  "taskVersion": 2,
+  "judgeVersion": 2,
   "judgeModel": "claude-opus-4-8",
   "judgeReasoningEffort": "xhigh",
   "execModel": "gpt-5.6-sol",
   "execReasoningEffort": "xhigh",
   "contractSource": "plugins/practices/droids/planner.md",
-  "contractSha": "e0e3a2c9353f21d7416096d994b232d86d79c77ec8c27719f75bd2be8f76cdb7",
-  "acceptedAt": "2026-07-26T21:56:20Z",
+  "contractSha": "4d608925c3b5a1cb6e62a294f32b07c34cd43c245936ec8cb78756feb4642b5f",
+  "acceptedAt": "2026-08-23T21:41:58Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260726T214310Z-22-planner-decomposition-accept1785102190-r1",
+      "runDir": "evals/runs/20260823T212801Z-22-planner-decomposition-accept1787520481-r1",
       "verdict": "pass",
       "transcript": "transcripts/22-planner-decomposition/run1.md"
     },
     {
-      "runDir": "evals/runs/20260726T214310Z-22-planner-decomposition-accept1785102190-r2",
+      "runDir": "evals/runs/20260823T212801Z-22-planner-decomposition-accept1787520481-r2",
       "verdict": "pass",
       "transcript": "transcripts/22-planner-decomposition/run2.md"
     },
     {
-      "runDir": "evals/runs/20260726T214310Z-22-planner-decomposition-accept1785102190-r3",
+      "runDir": "evals/runs/20260823T212801Z-22-planner-decomposition-accept1787520481-r3",
       "verdict": "pass",
       "transcript": "transcripts/22-planner-decomposition/run3.md"
     }

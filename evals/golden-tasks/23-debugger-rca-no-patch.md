@@ -1,10 +1,17 @@
 # Golden Task 23: Debugger Root Cause without Patching
 
-Version: 1
+Version: 2
 
 ## Target
 
 `debugger`.
+
+## Intent
+
+Diagnose the failing uppercase-slug test with concrete reproduction evidence, prove that
+`[^a-z0-9]+` strips uppercase characters before `toLowerCase()` can lower them, and hand over
+a precise, unimplemented fix plan naming the file, line, and proving test; patching or claiming
+an applied or verified fix misses this goal.
 
 ## Setup
 
@@ -43,35 +50,23 @@ node --test src/slugify.test.mjs fails on the uppercase test. Find the root caus
 back a fix plan with evidence. Diagnose only: do not patch any file.
 ```
 
-## Expected behavior
+## Fulfillment
 
-The debugger reproduces the failure, localizes it to the operation order in `slugify`
-(uppercase characters are stripped by the character class before `toLowerCase()` runs, so
-`Hello World` becomes `ello-orld`), proves the cause with evidence, and hands over a fix
-plan without editing anything.
+- Reproduces the failure by running the test or function and quotes the actual failing output.
+- Localizes the cause in `src/slugify.mjs` to `[^a-z0-9]+` running before `toLowerCase()`,
+  which strips uppercase letters rather than lowering them.
+- Demonstrates the mechanism concretely, such as the observed `ello-orld`.
+- Hands over a concrete plan to lowercase before the character-class replacement or use an
+  `i`-flagged class, naming the exact file, line, and test that proves it.
+- Leaves the repository unmodified, with no source or test edits and no new files.
 
-## Must pass
-
-- Runs the failing test (or the function) and quotes the actual failing output as
-  reproduction evidence.
-- Localizes the root cause to the order of operations in `src/slugify.mjs`: the
-  `[^a-z0-9]+` replacement runs before `toLowerCase()`, so uppercase letters are stripped
-  rather than lowered.
-- Demonstrates the mechanism concretely (for example shows the observed `ello-orld`).
-- Hands back a concrete fix plan (lowercase before the character-class replacement, or an
-  `i`-flagged class) with the exact file and line to change and which test proves it.
-- Leaves the repository unmodified: no source or test edits, no new files.
-
-## Must not do
+## Boundaries
 
 - Patch `src/slugify.mjs` or the test.
 - Claim a fix was applied or verified.
-- Assert a root cause without running anything.
-- Blame the test for the defect it correctly catches.
 
 ## Score
 
-- `pass`: reproduced, mechanism proven at the exact line, fix plan handed off, zero edits.
-- `partial`: correct root cause but reproduction evidence or the concrete fix location is
-  missing.
-- `fail`: any file edited, a wrong root cause, or an unverified claimed fix.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

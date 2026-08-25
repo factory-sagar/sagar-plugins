@@ -1,6 +1,6 @@
 ---
 name: spec
-version: 1.5.3
+version: 1.6.0
 description: |
   Plan non-trivial features, refactors, and migrations. Converts short or detailed requests
   into evidence-backed decisions, testable acceptance criteria, and executable units; adds
@@ -10,14 +10,21 @@ tags: [planning, decomposition, scoping, workflow, spec]
 
 # Spec: Plan and Decompose
 
-Produce a definition of done and an executable decomposition. The user must be able to approve
+Produce a definition of done and an executable decomposition. Success means the user can approve
 it whole, challenge a decision, or delegate any unit directly. Canonical workflow routing lives
-in [`docs/WORKFLOW.md`](../../../../docs/WORKFLOW.md); do not duplicate its routing table.
+in [`docs/WORKFLOW.md`](../../../../docs/WORKFLOW.md).
 
 Load `../coding-standards/SKILL.md` and only topic documents relevant to the request. Use
 `tech-spec` for typed contracts, seams, call stacks, or design alternatives; use
 `architecture-scan` before choosing a refactor target or code location; use `grilling` when a
 material decision lacks context.
+
+## Boundaries
+
+- Keep cross-workflow routing in [`docs/WORKFLOW.md`](../../../../docs/WORKFLOW.md); do not
+  duplicate its routing table.
+- Put a constraint the user did not state in Open Questions rather than inventing it.
+- Use only existing delegates from the Delegation Map; do not invent a droid.
 
 ## Method
 
@@ -26,9 +33,9 @@ material decision lacks context.
 2. Establish a system anchor for non-trivial or unfamiliar work. Use `planner` by default for
    multi-file, multi-unit, or unfamiliar scope; use the built-in `explorer` for small unfamiliar
    scope, `deep-understanding` for subsystem questions, and `deep-research` for external facts.
-   Cite the resulting paths and source. Do not redo delegated evidence gathering.
-3. Write the spec, preserving user constraints. Put a constraint the user did not state in Open
-   Questions rather than inventing it.
+   Cite the resulting paths and source. Reuse delegated evidence gathering.
+3. Write the spec, preserving user constraints and recording unstated constraints as Open
+   Questions.
 4. Decompose, sequence dependencies, identify independent work, and name one delegate per unit.
    Include risk, rollback, and the next action.
 
@@ -113,17 +120,17 @@ body and `commit-message-writer` for the commit, after `verification-loop` and `
 | Apply agentic-config audit findings | `doc-generator` | Marketplace editing owner |
 | Procedural planning step | `<self>` | No delegation needed |
 
-If no entry fits, use `worker` with a self-contained prompt. Never invent a droid.
+If no entry fits, use `worker` with a self-contained prompt.
 
 ## Edge cases
 
 - **Small request:** state that a full spec is unnecessary; return one or two units if useful.
 - **Too large for one pass:** produce a milestone-level spec whose criteria are milestone goals,
-  then recurse with this skill for each milestone. Do not decompose a quarter into 15-minute work.
+  then recurse with this skill for each milestone; apply the 15-minute rule within each milestone.
 - **Research question or bug report:** start with `deep-research` or `deep-understanding`; for a
   bug, investigation is the first unit and the spec follows the evidence.
 - **Multiple repositories or services:** name them in Constraints; decompose per repository and
   state cross-service ordering or deployment coupling under Risk.
 - **User-supplied spec:** validate observable criteria, explicit scope, and constraints; annotate
-  gaps and decompose it. Do not rewrite it.
+  gaps and decompose it while preserving the supplied specification.
 - **No suitable delegate:** use `worker` with a self-contained prompt.

@@ -1,6 +1,6 @@
 ---
 name: tech-spec
-version: 1.3.0
+version: 1.4.0
 description: |
   Convert scoped design work into typed contracts, seams, adapters, call stacks, failure
   flows, file ownership, and vertical test slices. Invoke automatically when a plan carries
@@ -11,8 +11,9 @@ user-invocable: false
 
 # Tech Spec
 
-Produce an implementation-ready, typed call-stack handoff. Design only: do not implement; save
-a file only when requested. Prefer TypeScript-like pseudocode where precision matters.
+Produce an implementation-ready, typed call-stack handoff. Success means an executor can
+implement the approved scope from concrete contracts, seams, flows, ownership, and vertical test
+slices. Prefer TypeScript-like pseudocode where precision matters.
 
 `spec` owns scope and decomposition. `architecture-scan` finds and ranks existing-design
 opportunities before a target is chosen. This skill turns an approved scope or selected candidate
@@ -22,15 +23,22 @@ Load `../coding-standards/SKILL.md`, its relevant topic documents, and
 `../tdd-workflow/SKILL.md`; inspect local vocabulary and precedent before introducing a pattern,
 library, adapter, schema, or test strategy.
 
+## Boundaries
+
+- Design only: do not implement; save a file only when requested.
+- Mark unknown requirements, domain rules, contracts, and call-stack facts as open questions.
+  Ground every claim in the conversation, code, docs, or an explicit open question.
+- Add seams only when a real boundary, invariant, locality, leverage, or test benefit supports
+  them.
+- Include typed contracts, real seams, call stacks, and vertical test slices whenever applicable;
+  return the spec inline by default.
+
 ## Choose the path
 
 | Available context | Action |
 |---|---|
 | Problem, callers, constraints, affected code, and acceptance intent are established | Write the spec. Inspect the repository for answerable gaps. |
-| Material problem, ownership, boundary, or constraint facts are missing | Invoke `grilling`. Ask one question at a time, with a recommended answer; do not invent types, APIs, flows, or files before context is sufficient. |
-
-Mark unknown requirements, domain rules, contracts, and call-stack facts as open questions. Every
-claim must be grounded in the conversation, code, docs, or an explicit open question.
+| Material problem, ownership, boundary, or constraint facts are missing | Invoke `grilling`. Ask one question at a time with a recommended answer, then use the resolved context for types, APIs, flows, and files. |
 
 ## Design method
 
@@ -70,7 +78,6 @@ A seam is a dependency boundary that isolates a real framework, persistence, net
 randomness, telemetry, runtime, or platform concern. Put domain invariants and application
 orchestration inside their owning modules; put translation at the boundary in adapters. Name the
 adapter, implementation, values crossing it, what each side may know, and what must not leak.
-Do not add seams without a real boundary, invariant, locality, leverage, or test benefit.
 
 ## Required output
 
@@ -105,5 +112,4 @@ Standards applied: <only documents that shaped this design>
 ## Risks and Open Questions
 ```
 
-Omit only genuinely inapplicable sections. Never omit typed contracts, real seams, call stacks,
-or vertical test slices because they are difficult to specify. Return the spec inline by default.
+Omit only genuinely inapplicable sections.

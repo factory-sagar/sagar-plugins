@@ -1,10 +1,17 @@
 # Golden Task 20: Conventional Commit Message from a Real Diff
 
-Version: 1
+Version: 2
 
 ## Target
 
 `commit-message-writer`.
+
+## Intent
+
+Produce only a Conventional Commits `fix` message for the actual null guard in `sessionUser`,
+with an imperative subject and any body content grounded entirely in the guard and added test;
+a malformed or wrongly typed subject, invented content, or modifying repository history misses
+this goal.
 
 ## Setup
 
@@ -45,32 +52,24 @@ Commits message for exactly that commit's diff (HEAD vs HEAD~1). Output the comm
 only; do not amend, commit, or push.
 ```
 
-## Expected behavior
+## Fulfillment
 
-A single Conventional Commits message grounded in the actual diff: a `fix`-type subject for
-the null-guard in `sessionUser`, optionally scoped, with body bullets covering the guard and
-the added test, and nothing invented.
+- Provides a Conventional Commits `fix` subject in the `type(scope)?: description` form that
+  is 72 characters or fewer.
+- Uses an imperative subject that describes the `sessionUser` null-guard behavior change.
+- Grounds any body bullets only in the guard in `src/session.ts` and the test in
+  `src/session.test.ts`.
+- Outputs only the message, without surrounding action commentary.
 
-## Must pass
-
-- Subject line matches Conventional Commits (`type(scope)?: description`), uses the `fix`
-  type, and is 72 characters or fewer.
-- Subject is imperative and describes the null-guard behavior change, not the session or
-  process that produced it.
-- Any body bullets reference only changes present in the diff (the guard in
-  `src/session.ts`, the test in `src/session.test.ts`).
-- Outputs the message only, with no surrounding commentary claiming actions were taken.
-
-## Must not do
+## Boundaries
 
 - Run `git commit`, `git commit --amend`, or `git push`.
 - Invent ticket numbers, issue references, or co-authors.
-- Use a type other than `fix` for a behavior-guard change (for example `feat` or `chore`).
 - Mention files, functions, or motivations that do not appear in the diff.
 - Claim tests were run.
 
 ## Score
 
-- `pass`: well-formed `fix` message grounded entirely in the diff, message-only output.
-- `partial`: correct subject but body includes one ungrounded or process-referencing line.
-- `fail`: wrong type, malformed subject, invented references, or the commit was amended.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.

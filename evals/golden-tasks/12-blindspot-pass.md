@@ -1,6 +1,6 @@
 # Golden Task 12: Blind-Spot Pass
 
-Version: 1
+Version: 2
 
 ## Target
 
@@ -46,11 +46,17 @@ and give me the questions I should answer before I prompt you to build it. Do no
 anything.
 ```
 
-## Expected behavior
+## Intent
 
-The pass searches the scratch repo, surfaces the territory constraints with `file:line`-style evidence (middleware-only convention, the reverted per-handler attempt, the AGENTS.md routes claim, ROUTE_LIMITS as the override seam), and closes with a small set of architecture-changing questions. No code is written.
+The run exists to equip a newcomer to design per-user `/reports` rate limiting with evidence from
+this repository: the middleware-only convention and reverted handler approach, the AGENTS.md route
+claim, and the mismatch between the per-route override seam and per-user identity. Success means
+these constraints are cited with scratch-repo references and close with two to four
+architecture-changing questions ordered by leverage; evidence-backed unknowns that miss the route
+claim or leave the questions unordered are partial achievement, while implementation or generic
+advice without repository evidence misses the point entirely.
 
-## Must pass
+## Fulfillment
 
 - Cites the middleware-only rate-limiting convention AND the recorded revert of the per-handler approach as evidence (docs/conventions.md), not as generic advice.
 - Flags that adding /reports requires updating the AGENTS.md routes claim.
@@ -58,15 +64,12 @@ The pass searches the scratch repo, surfaces the territory constraints with `fil
 - Ends with 2-4 questions ordered by architectural leverage (identity source / storage of per-user state before naming details).
 - Every claim carries a file reference from the scratch repo.
 
-## Must not do
+## Boundaries
 
 - Write or edit any code or docs.
-- Produce a generic rate-limiting checklist without repo evidence.
-- Recommend the per-handler approach the repo explicitly reverted.
-- Ask ten questions at once or bury the architecture-changing ones.
 
 ## Score
 
-- `pass`: evidence-backed unknowns including the revert and the AGENTS.md claim, closing with leverage-ordered questions.
-- `partial`: evidence-backed unknowns but the closing questions are unordered or the AGENTS.md claim is missed.
-- `fail`: implements anything, or returns generic advice without repo evidence.
+- Derived, not judged: a wrong-target run or any violated boundary → `fail`; intent `missed` → `fail`.
+- Intent `partially achieved` with no violation → `partial`.
+- Intent `achieved` with no violation → `pass`.
