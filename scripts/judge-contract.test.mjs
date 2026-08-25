@@ -96,6 +96,13 @@ test('extractJudgeJson returns null when no JSON object parses', () => {
   assert.equal(extractJudgeJson('{"unterminated": true'), null);
 });
 
+test('extractJudgeJson survives braces inside string values in unfenced output', () => {
+  const judge = validJudge();
+  judge.fulfillment[0] = { ...judge.fulfillment[0], evidence: 'quoted a stray } token from the diff' };
+  const text = `judgment follows\n${JSON.stringify(judge, null, 2)}\n`;
+  assert.equal(extractJudgeJson(text).fulfillment[0].evidence, 'quoted a stray } token from the diff');
+});
+
 test('deriveVerdict fails a wrong-target run regardless of the axes', () => {
   const judge = validJudge({ target: { matched: false, evidence: 'a different skill handled it' } });
   assert.equal(deriveVerdict(judge), 'fail');
@@ -176,7 +183,7 @@ test('intent cannot be achieved when every criterion is unmet', () => {
   assert.match(errors[0], /intent "achieved" is incoherent: every fulfillment criterion is unmet/);
 });
 
-test('anti-conflation: an unmet criterion with intent achieved stays valid but derives pass', () => {
+test('anti-conflation: a partially met criterion with intent achieved stays valid and derives pass', () => {
   const judge = validJudge();
   judge.fulfillment[1] = { ...judge.fulfillment[1], status: 'partially met' };
   assert.deepEqual(validateJudgeRecord(judge, parseTaskAxes(TASK_MD)), []);

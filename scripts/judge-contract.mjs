@@ -64,30 +64,46 @@ export function parseTaskAxes(markdown) {
 }
 
 export function extractJudgeJson(text) {
+  const parseObject = (candidate) => {
+    try {
+      const parsed = JSON.parse(candidate);
+      return typeof parsed === 'object' && parsed !== null ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+
   const fenced = [...text.matchAll(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/g)];
-  let candidate = fenced.length > 0 ? fenced[fenced.length - 1][1] : null;
-  if (candidate === null) {
-    // No fence: take the outermost object that ends at the final closing brace.
-    const end = text.lastIndexOf('}');
-    if (end === -1) return null;
-    let depth = 0;
-    let start = -1;
-    for (let i = end; i >= 0; i--) {
-      if (text[i] === '}') depth += 1;
-      else if (text[i] === '{') {
-        depth -= 1;
-        if (depth === 0) { start = i; break; }
+  if (fenced.length > 0) return parseObject(fenced[fenced.length - 1][1]);
+
+  // No fence: forward-scan for top-level balanced objects, tracking string state so
+  // braces inside quoted evidence never skew the depth, and keep the last one that parses.
+  let result = null;
+  let depth = 0;
+  let start = -1;
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"' && depth > 0) { inString = true; continue; }
+    if (ch === '{') {
+      if (depth === 0) start = i;
+      depth += 1;
+    } else if (ch === '}' && depth > 0) {
+      depth -= 1;
+      if (depth === 0 && start !== -1) {
+        result = parseObject(text.slice(start, i + 1)) ?? result;
+        start = -1;
       }
     }
-    if (start === -1) return null;
-    candidate = text.slice(start, end + 1);
   }
-  try {
-    const parsed = JSON.parse(candidate);
-    return typeof parsed === 'object' && parsed !== null ? parsed : null;
-  } catch {
-    return null;
-  }
+  return result;
 }
 
 export function deriveVerdict(judge) {

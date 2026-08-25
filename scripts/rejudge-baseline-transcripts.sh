@@ -52,6 +52,10 @@ for TASK_FILE in "${TASK_FILES[@]}"; do
     echo "skip $TASK_NAME: no local corpus" >&2
     continue
   fi
+  if ! compgen -G "$CORPUS/run*.md" > /dev/null; then
+    echo "skip $TASK_NAME: empty corpus" >&2
+    continue
+  fi
   OUT_DIR="$OUT_ROOT/$TASK_NAME"
   mkdir -p "$OUT_DIR"
   echo "=== rejudge $TASK_NAME (task v$TASK_VERSION, judge v$JUDGE_VERSION) ==="
