@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "21-pr-describer-self-contained",
+  "taskVersion": 2,
+  "judgeVersion": 2,
+  "judgeModel": "claude-opus-4-8",
+  "judgeReasoningEffort": "xhigh",
+  "execModel": "claude-opus-4-8",
+  "execReasoningEffort": "high",
+  "contractSource": "plugins/synthesis/droids/pr-describer.md",
+  "contractSha": "b868b1fd8d2460cf7177d22d6e1f7f1d93a0320617fde89fa2cfae3ea1c062a1",
+  "acceptedAt": "2026-08-24T23:22:08Z",
+  "runs": [
+    {
+      "runDir": "evals/runs/20260824T231659Z-21-pr-describer-self-contained-accept1787613419-r1",
+      "verdict": "pass",
+      "transcript": "transcripts/21-pr-describer-self-contained/run1.md"
+    },
+    {
+      "runDir": "evals/runs/20260824T231659Z-21-pr-describer-self-contained-accept1787613419-r2",
+      "verdict": "pass",
+      "transcript": "transcripts/21-pr-describer-self-contained/run2.md"
+    },
+    {
+      "runDir": "evals/runs/20260824T231659Z-21-pr-describer-self-contained-accept1787613419-r3",
+      "verdict": "pass",
+      "transcript": "transcripts/21-pr-describer-self-contained/run3.md"
+    }
+  ],
+  "passRate": 1.0,
+  "failCount": 0
+}

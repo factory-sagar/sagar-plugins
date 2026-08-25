@@ -1,28 +1,28 @@
 {
   "schemaVersion": 1,
   "task": "08-implementer-minimal-fix",
-  "taskVersion": 1,
-  "judgeVersion": 1,
+  "taskVersion": 2,
+  "judgeVersion": 2,
   "judgeModel": "claude-opus-4-8",
   "judgeReasoningEffort": "xhigh",
   "execModel": "gpt-5.6-terra",
   "execReasoningEffort": "high",
   "contractSource": "plugins/build/droids/implementer.md",
-  "contractSha": "73a9b72d7dd4da414480f6d0dc08f2196f50a71ea65279de73e696e4755b21f5",
-  "acceptedAt": "2026-07-26T08:27:45Z",
+  "contractSha": "fd3bdb0e5b4f44114340b6960c75de859fe4efb31b8d2e14190db0601b1caef9",
+  "acceptedAt": "2026-08-23T19:36:31Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260726T082316Z-08-implementer-minimal-fix-accept1785054196-r1",
+      "runDir": "evals/runs/20260823T193229Z-08-implementer-minimal-fix-accept1787513549-r1",
       "verdict": "pass",
       "transcript": "transcripts/08-implementer-minimal-fix/run1.md"
     },
     {
-      "runDir": "evals/runs/20260726T082316Z-08-implementer-minimal-fix-accept1785054196-r2",
+      "runDir": "evals/runs/20260823T193229Z-08-implementer-minimal-fix-accept1787513549-r2",
       "verdict": "pass",
       "transcript": "transcripts/08-implementer-minimal-fix/run2.md"
     },
     {
-      "runDir": "evals/runs/20260726T082316Z-08-implementer-minimal-fix-accept1785054196-r3",
+      "runDir": "evals/runs/20260823T193229Z-08-implementer-minimal-fix-accept1787513549-r3",
       "verdict": "pass",
       "transcript": "transcripts/08-implementer-minimal-fix/run3.md"
     }

@@ -1,28 +1,28 @@
 {
   "schemaVersion": 1,
   "task": "04-typed-tech-spec",
-  "taskVersion": 1,
-  "judgeVersion": 1,
+  "taskVersion": 2,
+  "judgeVersion": 2,
   "judgeModel": "claude-opus-4-8",
   "judgeReasoningEffort": "xhigh",
   "execModel": null,
   "execReasoningEffort": null,
   "contractSource": "plugins/practices/skills/tech-spec/SKILL.md",
-  "contractSha": "3d6a1555b8bcb080fa79444d92d71837c3b48c083dbf59dfc25254db0f7e65fd",
-  "acceptedAt": "2026-07-26T21:18:05Z",
+  "contractSha": "c6c9c07ac747f57a41730ee8f47d697a9de52af76a1abc9c8c6c1b1d39fad4f7",
+  "acceptedAt": "2026-08-21T20:59:54Z",
   "runs": [
     {
-      "runDir": "evals/runs/20260726T210853Z-04-typed-tech-spec-accept1785100133-r1",
+      "runDir": "evals/runs/20260821T204841Z-04-typed-tech-spec-accept1787345321-r1",
       "verdict": "pass",
       "transcript": "transcripts/04-typed-tech-spec/run1.md"
     },
     {
-      "runDir": "evals/runs/20260726T210853Z-04-typed-tech-spec-accept1785100133-r2",
+      "runDir": "evals/runs/20260821T204841Z-04-typed-tech-spec-accept1787345321-r2",
       "verdict": "pass",
       "transcript": "transcripts/04-typed-tech-spec/run2.md"
     },
     {
-      "runDir": "evals/runs/20260726T210853Z-04-typed-tech-spec-accept1785100133-r3",
+      "runDir": "evals/runs/20260821T204841Z-04-typed-tech-spec-accept1787345321-r3",
       "verdict": "pass",
       "transcript": "transcripts/04-typed-tech-spec/run3.md"
     }
