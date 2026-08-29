@@ -1,0 +1,114 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate marketplace runtime
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import ast
+          import json
+          import re
+          import sys
+          from urllib.parse import unquote
+
+          root = Path.cwd()
+          errors = []
+
+          def strings(value):
+              if isinstance(value, dict):
+                  for child in value.values():
+                      yield from strings(child)
+              elif isinstance(value, list):
+                  for child in value:
+                      yield from strings(child)
+              elif isinstance(value, str):
+                  yield value
+
+          for path in root.rglob("*.json"):
+              try:
+                  json.loads(path.read_text())
+              except Exception as exc:
+                  errors.append(f"{path}: invalid JSON: {exc}")
+
+          marketplace = json.loads(
+              (root / ".factory-plugin/marketplace.json").read_text()
+          )
+          for entry in marketplace["plugins"]:
+              source = root / entry["source"]
+              manifest_path = source / ".factory-plugin/plugin.json"
+              if not manifest_path.is_file():
+                  errors.append(f"missing manifest: {manifest_path}")
+                  continue
+              manifest = json.loads(manifest_path.read_text())
+              if manifest.get("name") != entry["name"]:
+                  errors.append(f"name mismatch: {entry['name']}")
+              if manifest.get("description") != entry["description"]:
+                  errors.append(f"description mismatch: {entry['name']}")
+
+          droids = list((root / "plugins").glob("*/droids/*.md"))
+          skills = list((root / "plugins").glob("*/skills/*/SKILL.md"))
+          actual = (len(marketplace["plugins"]), len(droids), len(skills))
+          expected = (7, 11, 12)
+          if actual != expected:
+              errors.append(
+                  f"expected {expected} plugins/droids/skills, found {actual}"
+              )
+
+          hooks_root = root / "plugins/guardrails/hooks"
+          hooks = json.loads((hooks_root / "hooks.json").read_text())
+          for path in hooks_root.glob("*.py"):
+              try:
+                  ast.parse(path.read_text(), filename=str(path))
+              except SyntaxError as exc:
+                  errors.append(f"{path}: invalid Python: {exc}")
+          for value in strings(hooks):
+              match = re.search(
+                  r"\$\{DROID_PLUGIN_ROOT\}/hooks/([^\" ]+)", value
+              )
+              if match and not (hooks_root / match.group(1)).is_file():
+                  errors.append(f"missing hook target: {match.group(1)}")
+
+          link_pattern = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+          for path in root.rglob("*.md"):
+              for raw in link_pattern.findall(path.read_text()):
+                  destination = raw.strip()
+                  if destination.startswith("<"):
+                      closing = destination.find(">")
+                      target = destination[1:closing] if closing > 0 else destination
+                  else:
+                      target = re.split(
+                          r"""\s+(?=["'])""", destination, maxsplit=1
+                      )[0]
+                  target = unquote(target).split("#", 1)[0]
+                  if not target or re.match(
+                      r"^[a-z][a-z0-9+.-]*:", target, re.I
+                  ):
+                      continue
+                  if not (path.parent / target).resolve().exists():
+                      errors.append(f"{path}: broken link {raw}")
+
+          for removed in (
+              "evals",
+              "scripts",
+              "plugins/guardrails/tests",
+          ):
+              if (root / removed).exists():
+                  errors.append(f"development-only path restored: {removed}")
+
+          if errors:
+              print("\n".join(f"ERROR {error}" for error in errors))
+              sys.exit(1)
+          print("Runtime marketplace validation passed")
+          PY
