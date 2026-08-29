@@ -31,7 +31,6 @@ The `spec` skill registers `/spec <task>` as the guaranteed entry for "spec this
 | `architecture-scan` | "architecture scan", "what should we refactor?", "where should this code live?" | Ranks standards-backed refactor candidates and prepares a brief for `tech-spec`. |
 | `grilling` | "grill this plan", "stress-test this design", "poke holes in this" | Interviews the user one question at a time to sharpen the plan, with a recommended answer for each question. |
 | `discovering-unknowns` | "blindspot pass", "unknown unknowns", "what am I missing?", "help me prompt better" | Map-territory discipline: blind-spot pass for unfamiliar areas, interview and brainstorm patterns for taste-shaped criteria, the shared Deviations contract for territory surprises mid-implementation, and an optional pre-merge quiz gate. |
-| `agentic-engineering` | "AI-assisted work", "model routing", "session strategy", "AI code review checklist" | Thin router: routes completion, agent sizing, model complexity, evaluation, review, and prompt iteration to their owning workflows. |
 | `tdd-workflow` | "TDD", "write tests first", "test-driven", "RED-GREEN-REFACTOR", "fix bug", "add feature" | Test-first discipline: RED checkpoint, GREEN checkpoint, optional REFACTOR. Loads the standards topics that govern tests, seams, async behavior, and observability. |
 | `coding-standards` | "coding standards", "code quality", "boundary parsing", "type contracts", "code review checklist" | Standards router that loads topic docs for modules, boundaries, errors, async workflows, testing, observability, and type contracts. |
 | `verification-loop` | "verify", "quality gates", "pre-merge checks", "is this ready", "check before commit" | Four-phase quality gate: build, type-check, lint, tests with coverage. Loads the standards topics that set the verification bar, then hands review ownership to `review-pr`. |
@@ -47,7 +46,7 @@ For the canonical cross-plugin routing contract, see [`docs/WORKFLOW.md`](../../
 - **[`investigation`](../investigation/)**: `spec`, `architecture-scan`, and `tech-spec` recommend `deep-understanding` and `deep-research` for investigation-shaped work.
 - **[`review`](../review/)**: `verification-loop` and `tdd-workflow` hand review ownership to `review-pr`.
 - **[`synthesis`](../synthesis/)**: once review passes, `pr-describer` and `commit-message-writer` complete the cycle.
-- **[`meta`](../meta/)**: `agentic-engineering` recommends the `audit-and-apply-loop` skill and `doc-generator` for evolving the prompts of the agents you delegate to.
+- **[`meta`](../meta/)**: `audit-and-apply-loop` and `doc-generator` own prompt and agentic-configuration evolution.
 - **[`build`](../build/)**: `tdd-workflow` delegates RED to `test-engineer` and GREEN or REFACTOR to `implementer`.
 
 Cross-plugin hand-offs are naming suggestions. If you haven't installed the companion plugin, the hand-off is a no-op recommendation, not an error.

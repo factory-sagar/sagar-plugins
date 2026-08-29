@@ -1,7 +1,7 @@
 {
   "name": "practices",
-  "version": "2.3.0",
-  "description": "The public spec workflow plus model-invoked planning and engineering policy: unknown discovery, architecture scan, grilling, typed tech specs, coding standards, TDD, verification, and agentic-engineering guidance.",
+  "version": "2.4.0",
+  "description": "The public spec workflow plus model-invoked planning and engineering policy: unknown discovery, architecture scan, grilling, typed tech specs, coding standards, TDD, and verification.",
   "author": {
     "name": "Sagar",
     "url": "https://github.com/factory-sagar"
