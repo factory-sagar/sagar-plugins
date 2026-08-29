@@ -2,7 +2,7 @@
 
 > Pre-merge gate droids plus a review-and-fix skill: strict correctness review, security review, and an end-to-end review-then-fix workflow.
 
-Three review droids support one public workflow. `review-pr` converts short review requests
+Two review droids support one public workflow. `review-pr` converts short review requests
 into mandatory and diff-selected policy, while explicit wording controls whether it may
 report, fix locally, address comments, ship, or merge.
 

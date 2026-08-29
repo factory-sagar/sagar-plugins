@@ -13,7 +13,7 @@ Behind them are specialist droids for investigation, planning, implementation, t
 review, security, prompt work, and release prose. Deterministic hooks enforce safe pushes
 and complete delivery.
 
-**At a glance:** 7 plugins, 11 droids, 13 skills, 4 public workflows, and 1 guarded
+**At a glance:** 7 plugins, 11 droids, 12 skills, 4 public workflows, and 1 guarded
 idea-to-merge path.
 
 ## Quick start
@@ -71,18 +71,14 @@ Each droid pins a model and reasoning effort suited to its job.
 sagar-plugins/
 ├── .factory-plugin/
 │   └── marketplace.json      # marketplace catalog
-├── .github/workflows/
-│   └── validate.yml          # structural checks and policy tests
 ├── docs/
 │   └── WORKFLOW.md           # detailed workflow contract
-├── scripts/
-│   └── validate.mjs          # marketplace validator
 └── plugins/
-    ├── investigation/        # 4 research and debugging droids
-    ├── practices/            # planning droid + 9 policy skills
+    ├── investigation/        # 3 research and debugging droids
+    ├── practices/            # planning droid + 8 policy skills
     ├── build/                # 2 execution droids + implement/ship
-    ├── review/               # 3 review droids + review-pr
+    ├── review/               # 2 review droids + review-pr
     ├── synthesis/            # commit and PR prose droids
-    ├── meta/                 # prompt audit/apply droids + loop skill
+    ├── meta/                 # prompt config editor + audit/apply loop
     └── guardrails/           # deterministic workflow hooks
 ```
