@@ -1,0 +1,176 @@
+scripts/run-golden-task.sh
+  a79e0f34a3e7b59a 4-6,27,30,37-40,94-98,100-118,126-127
+plugins/review/skills/review-pr/review-notes-format.md
+  a79e0f34a3e7b59a 3-4,12-13
+README.md
+  a79e0f34a3e7b59a 3-4,6-8,17,24,34,37-39,41-42,46-48,50,63-64,75-76,89-92,94-97,101-103,111-113,117-121,123-124,143-145
+plugins/investigation/.factory-plugin/plugin.json
+  a79e0f34a3e7b59a 3
+docs/WORKFLOW.md
+  a79e0f34a3e7b59a 22,24-27,38,48-49,51,54-66
+scripts/eval-routing.mjs
+  a79e0f34a3e7b59a 1-138
+plugins/guardrails/hooks/delivery_ledger.py
+  a79e0f34a3e7b59a 1-188
+plugins/meta/skills/audit-and-apply-loop/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,9
+scripts/eval-routing.test.mjs
+  a79e0f34a3e7b59a 1-120
+plugins/practices/skills/coding-standards/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,9
+plugins/investigation/droids/debugger.md
+  a79e0f34a3e7b59a 4
+plugins/build/.factory-plugin/plugin.json
+  a79e0f34a3e7b59a 3-4
+plugins/guardrails/hooks/stop_delivery_gate.py
+  a79e0f34a3e7b59a 1-244
+plugins/review/skills/review-pr/deep-review.md
+  a79e0f34a3e7b59a 1,3-5,7-10,17-18,24-25,83,92,117-118,328-330,374-375,389,401-403,406-408,414,446-447,456
+plugins/meta/droids/prompt-optimizer.md
+  a79e0f34a3e7b59a 4
+evals/golden-tasks/README.md
+  a79e0f34a3e7b59a 28-29,31
+plugins/investigation/droids/quick-analysis.md
+  a79e0f34a3e7b59a 4
+plugins/guardrails/hooks/pre_push_policy.py
+  a79e0f34a3e7b59a 1-112
+plugins/meta/README.md
+  a79e0f34a3e7b59a 17-18,35-36
+plugins/synthesis/droids/pr-describer.md
+  a79e0f34a3e7b59a 27-30,48,68-69,71,110-112,153-154
+evals/golden-tasks/10-review-pr-tier-selection.md
+  a79e0f34a3e7b59a 1
+plugins/practices/skills/verification-loop/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,9
+plugins/review/skills/review-pr/SKILL.md
+  a79e0f34a3e7b59a 1-171
+plugins/build/README.md
+  a79e0f34a3e7b59a 5-7,19-20,29,36-37,41-43,47
+evals/policy.json
+  a79e0f34a3e7b59a 1-26
+plugins/review/droids/review-worker.md
+  a79e0f34a3e7b59a 3-5,8,16-18,20
+evals/routing/cases.json
+  a79e0f34a3e7b59a 1-139
+plugins/review/skills/review-pr/fix-comments.md
+  a79e0f34a3e7b59a 1,3-5,222-226,336,338,348-349,351,356,362
+plugins/review/droids/security.md
+  a79e0f34a3e7b59a 4
+plugins/synthesis/README.md
+  a79e0f34a3e7b59a 18,27-28
+plugins/review/skills/review-pr/review-policy.md
+  a79e0f34a3e7b59a 1-169
+plugins/practices/.factory-plugin/plugin.json
+  a79e0f34a3e7b59a 3-4
+.gitignore
+  a79e0f34a3e7b59a 21-22
+plugins/build/droids/test-engineer.md
+  a79e0f34a3e7b59a 4
+plugins/practices/skills/discovering-unknowns/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,9,148
+plugins/practices/skills/spec/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,31-46
+plugins/synthesis/droids/commit-message-writer.md
+  a79e0f34a3e7b59a 4-5
+plugins/investigation/README.md
+  a79e0f34a3e7b59a 17-18,20,31-32
+plugins/build/skills/implement/SKILL.md
+  a79e0f34a3e7b59a 3,5-7
+evals/trials/2026-07-04-implementer-fable-ab.md
+  a79e0f34a3e7b59a 3-7
+plugins/practices/README.md
+  a79e0f34a3e7b59a 3,5-7,13,46
+evals/golden-tasks/13-language-agnostic-review-selection.md
+  a79e0f34a3e7b59a 1-39
+.github/workflows/validate.yml
+  a79e0f34a3e7b59a 23-29
+plugins/review/droids/change-review.md
+  a79e0f34a3e7b59a 3-5
+plugins/build/skills/ship/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,51-53,56-57,64-65
+plugins/guardrails/hooks/hooks.json
+  a79e0f34a3e7b59a 1-51
+plugins/guardrails/tests/test_delivery_guardrails.py
+  a79e0f34a3e7b59a 1-213
+plugins/review/skills/review-pr/review-worker.md
+  a79e0f34a3e7b59a 1,4,35-40,65,103
+plugins/build/droids/implementer.md
+  a79e0f34a3e7b59a 4-5
+plugins/synthesis/.factory-plugin/plugin.json
+  a79e0f34a3e7b59a 3
+plugins/practices/skills/agentic-engineering/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,9,57,59-69
+evals/model-assignments.json
+  a79e0f34a3e7b59a 1-89
+plugins/investigation/droids/deep-understanding.md
+  a79e0f34a3e7b59a 4
+plugins/review/.factory-plugin/plugin.json
+  a79e0f34a3e7b59a 3-4
+plugins/practices/droids/planner.md
+  a79e0f34a3e7b59a 4
+plugins/practices/skills/tdd-workflow/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,9
+plugins/guardrails/hooks/intent_router.py
+  a79e0f34a3e7b59a 1-95
+evals/golden-tasks/11-review-pr-comment-triage.md
+  a79e0f34a3e7b59a 1
+plugins/review/skills/review-pr/select-review-lenses.mjs
+  a79e0f34a3e7b59a 1-207
+plugins/guardrails/.factory-plugin/plugin.json
+  a79e0f34a3e7b59a 1-8
+plugins/practices/skills/architecture-scan/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,9,205
+plugins/meta/.factory-plugin/plugin.json
+  a79e0f34a3e7b59a 3
+plugins/review/skills/review-pr/discover-conventions.md
+  a79e0f34a3e7b59a 5
+plugins/meta/droids/doc-generator.md
+  a79e0f34a3e7b59a 4
+.factory-plugin/marketplace.json
+  a79e0f34a3e7b59a 17,35,41,44-49
+plugins/review/skills/review-pr/select-review-lenses.test.mjs
+  a79e0f34a3e7b59a 1-92
+plugins/review/README.md
+  a79e0f34a3e7b59a 5-7,19-21,27,29-30,40,44-46
+scripts/validate.mjs
+  a79e0f34a3e7b59a 29-31,89-97,115-116,153-174,182-186,218,222-224,233,235-339,403-407,421-422,424-425
+plugins/practices/skills/grilling/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,9
+evals/model-decisions/2026-07-11-role-routing.json
+  a79e0f34a3e7b59a 1-65
+plugins/practices/skills/tech-spec/SKILL.md
+  a79e0f34a3e7b59a 3,5-7,9,200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "527ca581d47e5307c62fbef1fae581d2bde46ab9",
+  "prompts": {
+    "a79e0f34a3e7b59a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a60280ff-fd65-42eb-868d-84ccbd5b481a",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 2826,
+      "total_deletions": 478,
+      "accepted_lines": 2705,
+      "overriden_lines": 0
+    },
+    "eeb4bd3c459ebd14": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "fb52cd85-bf1d-4c99-b80c-2888b855c79e",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 370,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}

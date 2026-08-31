@@ -1,0 +1,37 @@
+plugins/review/skills/review-pr/SKILL.md
+  1a7a5229541ec261 170-172,202,399
+  5c2b031a5954a181 203-204
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "e20c4e0fd5e1c32e9f406dc6098b7cfcab11b54e",
+  "prompts": {
+    "1a7a5229541ec261": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "e5120aa6-9bd5-430f-91c0-74aaa7f20d7d",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 1,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "5c2b031a5954a181": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "fdf08910-4bd2-48b2-9de2-5efe9aa3fd02",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}

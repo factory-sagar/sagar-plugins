@@ -1,0 +1,99 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "a8329a70c2180e71da5e36fcf282240584d60822",
+  "prompts": {
+    "039bf48ba0265064": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c5ebacfa-9964-4286-89c1-bfb36ddd8412",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 18,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    },
+    "1bcecb4798e50bdb": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3d21a89c-27c7-48d3-b59a-fe84b5646592",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 134,
+      "total_deletions": 26,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "42ef1700ec9a3fa2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "26b1319b-b8c3-4933-9be1-19947b8013fa",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 85,
+      "total_deletions": 7,
+      "accepted_lines": 470,
+      "overriden_lines": 0
+    },
+    "569515f3c6ec4b56": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "31c95b9b-5fb4-4e61-bb7f-a0794c618784",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 0,
+      "accepted_lines": 56,
+      "overriden_lines": 0
+    },
+    "83b39681bd0399dc": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4f7e6105-b66b-4d70-a7d0-5478e06e1843",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 23,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    },
+    "9291b0c6cb34d378": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3ddd1bd9-92ca-41ee-863c-e86a0e4258f6",
+        "model": "glm-5.2"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 284,
+      "total_deletions": 59,
+      "accepted_lines": 252,
+      "overriden_lines": 0
+    },
+    "ee4f4870cc41a170": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f1fa740a-8960-457a-9dd6-99d4c6fbd5cf",
+        "model": "claude-opus-4-8-fast"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 727,
+      "overriden_lines": 0
+    }
+  }
+}

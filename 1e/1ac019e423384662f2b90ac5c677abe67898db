@@ -1,0 +1,25 @@
+plugins/sagar/droids/change-review.md
+  42ef1700ec9a3fa2 30,91,123
+plugins/sagar/droids/deep-understanding.md
+  42ef1700ec9a3fa2 137,142,149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "1e1ac019e423384662f2b90ac5c677abe67898db",
+  "prompts": {
+    "42ef1700ec9a3fa2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "26b1319b-b8c3-4933-9be1-19947b8013fa",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 50,
+      "overriden_lines": 21
+    }
+  }
+}

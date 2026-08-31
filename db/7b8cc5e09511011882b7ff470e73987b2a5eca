@@ -1,0 +1,184 @@
+evals/golden-tasks/README.md
+  d19d272ebdcfb38a 1-39
+evals/golden-tasks/04-typed-tech-spec.md
+  d19d272ebdcfb38a 1-41
+plugins/meta/README.md
+  d19d272ebdcfb38a 17,35
+plugins/practices/skills/grill-me/SKILL.md
+  01628ff42ee031d8 1-13
+evals/golden-tasks/02-concrete-feature-spec.md
+  d19d272ebdcfb38a 1-38
+plugins/practices/README.md
+  01628ff42ee031d8 3,5,19-23,25-27,34-37,39-43,46,50-51,54,60
+plugins/meta/.factory-plugin/plugin.json
+  d19d272ebdcfb38a 3
+plugins/review/.factory-plugin/plugin.json
+  d19d272ebdcfb38a 3
+plugins/practices/skills/coding-standards/ERROR_HANDLING.md
+  01628ff42ee031d8 1-206
+plugins/practices/skills/coding-standards/BOUNDARIES_AND_PARSING.md
+  01628ff42ee031d8 1-205
+evals/golden-tasks/03-architecture-scan.md
+  d19d272ebdcfb38a 1-38
+plugins/practices/skills/grilling/SKILL.md
+  d19d272ebdcfb38a 17-52
+  01628ff42ee031d8 1-16
+plugins/practices/skills/coding-standards/SKILL.md
+  01628ff42ee031d8 8-9,11-12,17-61,63-84
+  d19d272ebdcfb38a 3,5-6,10,62
+plugins/build/droids/implementer.md
+  d19d272ebdcfb38a 4-5
+evals/golden-tasks/05-standards-backed-review.md
+  d19d272ebdcfb38a 1-64
+README.md
+  d19d272ebdcfb38a 66-69,77-80,90-91
+  01628ff42ee031d8 33,36,48,50-51,97
+plugins/meta/droids/prompt-optimizer.md
+  d19d272ebdcfb38a 4
+plugins/practices/skills/coding-standards/NAMING_AND_LAYOUT.md
+  d19d272ebdcfb38a 1-40
+plugins/practices/skills/verification-loop/SKILL.md
+  d19d272ebdcfb38a 37-38,61-68
+  01628ff42ee031d8 23-24
+plugins/build/.factory-plugin/plugin.json
+  d19d272ebdcfb38a 3
+plugins/practices/skills/coding-standards/OBSERVABILITY.md
+  01628ff42ee031d8 1-174
+evals/golden-tasks/01-ambiguous-feature-request.md
+  d19d272ebdcfb38a 1-36
+evals/golden-tasks/06-tdd-workflow-plan.md
+  d19d272ebdcfb38a 1-39
+plugins/practices/skills/coding-standards/TYPE_CONTRACTS.md
+  01628ff42ee031d8 1-337
+plugins/practices/skills/coding-standards/TESTING_AND_VERIFICATION.md
+  01628ff42ee031d8 1-172
+plugins/review/droids/change-review.md
+  d19d272ebdcfb38a 3
+  01628ff42ee031d8 12-13,23,41-52,87-94,172
+plugins/practices/skills/coding-standards/DESIGNING_MODULES.md
+  01628ff42ee031d8 1-235
+plugins/practices/skills/architecture-scan/SKILL.md
+  d19d272ebdcfb38a 136,152,154-155,168,220-228
+  01628ff42ee031d8 1-135,137-151,153,156-167,169-219
+evals/golden-tasks/07-verification-loop.md
+  d19d272ebdcfb38a 1-38
+plugins/practices/.factory-plugin/plugin.json
+  01628ff42ee031d8 3-4
+plugins/practices/skills/tech-spec/SKILL.md
+  01628ff42ee031d8 1-80,83-230,232,234-275
+  d19d272ebdcfb38a 81-82,231,233,276-285
+plugins/practices/skills/coding-standards/ASYNC_AND_WORKFLOWS.md
+  01628ff42ee031d8 1-232
+plugins/practices/skills/coding-standards/VOCABULARY.md
+  01628ff42ee031d8 1-81
+plugins/practices/skills/agentic-engineering/SKILL.md
+  d19d272ebdcfb38a 66-69
+plugins/practices/skills/tdd-workflow/SKILL.md
+  d19d272ebdcfb38a 24,64,88,109-110,118-119
+  01628ff42ee031d8 25
+plugins/practices/skills/spec/SKILL.md
+  01628ff42ee031d8 38,51,78,170
+  d19d272ebdcfb38a 26-37
+.factory-plugin/marketplace.json
+  01628ff42ee031d8 35
+plugins/build/README.md
+  d19d272ebdcfb38a 17,38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "db7b8cc5e09511011882b7ff470e73987b2a5eca",
+  "prompts": {
+    "01628ff42ee031d8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f2671ecf-83c5-4b71-9ef4-df7cb17c79fb",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 2308,
+      "total_deletions": 221,
+      "accepted_lines": 2293,
+      "overriden_lines": 0
+    },
+    "2e6681a29f5511f5": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "228b5803-5f8c-45e0-97b3-6d4545e365d0",
+        "model": "glm-5.2"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 336,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "5da0534f9c7a6d0a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d71df4a1-88e5-402c-8111-1f911e996826",
+        "model": "glm-5.2"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 795,
+      "total_deletions": 2,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "98545ff664679998": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1da26d77-578b-4e98-864b-138c8ba248fb",
+        "model": "glm-5.2"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 332,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "a67a5ee85e14c961": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c5f9ec40-d258-470f-88bb-5fd21b8f3859",
+        "model": "glm-5.2"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 803,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "d19d272ebdcfb38a": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "feebb660-7fff-4aae-9c43-71dbe8ecfb29",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 497,
+      "total_deletions": 33,
+      "accepted_lines": 497,
+      "overriden_lines": 0
+    },
+    "e3a8ed9237e08251": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c1b2ec59-77c8-4eda-8cba-aaba828aee5d",
+        "model": "glm-5.2"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 913,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,29 @@
+plugins/review/skills/review-fix/SKILL.md
+  1bcecb4798e50bdb 75-77,91-96,405-406,429-430,432-433,435-437,439-446,448-450,466-470
+plugins/build/.factory-plugin/plugin.json
+  1bcecb4798e50bdb 3
+plugins/build/skills/ship/SKILL.md
+  1bcecb4798e50bdb 79-81
+plugins/review/.factory-plugin/plugin.json
+  1bcecb4798e50bdb 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "1c19838c4debaec97b47fb978e0ec7ba86ad93cd",
+  "prompts": {
+    "1bcecb4798e50bdb": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3d21a89c-27c7-48d3-b59a-fe84b5646592",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 9,
+      "accepted_lines": 41,
+      "overriden_lines": 0
+    }
+  }
+}

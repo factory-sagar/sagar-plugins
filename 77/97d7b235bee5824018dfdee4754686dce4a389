@@ -1,0 +1,23 @@
+plugins/build/skills/fix-pr/SKILL.md
+  ee4f4870cc41a170 3,285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "7797d7b235bee5824018dfdee4754686dce4a389",
+  "prompts": {
+    "ee4f4870cc41a170": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f1fa740a-8960-457a-9dd6-99d4c6fbd5cf",
+        "model": "claude-opus-4-8-fast"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}

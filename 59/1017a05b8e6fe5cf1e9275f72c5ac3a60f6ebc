@@ -1,0 +1,103 @@
+.factory-plugin/marketplace.json
+  s_a79e0f34a3e7b5::t_3aebe33d297069 17
+plugins/review/skills/review-pr/deep-review.md
+  s_f514a3b6b24533::t_5256cb362d2871 219,273-277,301-305
+  s_f514a3b6b24533::t_9ec44cca65e51a 469-473
+  s_f514a3b6b24533::t_b6be166bb1d9f4 125-130,149-153,175
+  s_7e743e46d881eb::t_d0e54fdc9f0582 173-174,176-178,182-183,218,318-320
+  s_47df6d20b72419::t_65a16b093cd7ea 148
+  s_47df6d20b72419::t_a31036dab9b6b4 272,278-280,416-423,467
+  s_7e743e46d881eb::t_dc74bca97473e0 443-445,451,455,466,468,499-501
+  s_f514a3b6b24533::t_f0be2ff69ae44c 154
+  s_47df6d20b72419::t_2759463de607ab 424
+evals/golden-tasks/16-review-pr-approve-vs-merge-authority.md
+  s_7e743e46d881eb::t_b621a470e5cd4d 1-37
+plugins/review/skills/review-pr/review-worker.md
+  s_a79e0f34a3e7b5::t_dbfb71378c5851 44-45,54-58,92-94,197-199,248-250,257-259
+  s_f514a3b6b24533::t_e956c1e89ede08 240-242
+evals/golden-tasks/14-review-pr-blocker-vs-transport.md
+  s_7e743e46d881eb::t_259364ba1d63c7 1-40
+plugins/guardrails/tests/test_delivery_guardrails.py
+  s_a79e0f34a3e7b5::t_285c4e4db4251f 207
+evals/golden-tasks/15-review-pr-final-head-independent-review.md
+  s_7e743e46d881eb::t_c3e429647370ed 1-11,15-18,26-28,34,39-43,46-48,51-52
+  s_47df6d20b72419::t_6261354bacc4a7 12-14,19-25,29-33,35-38,44-45,49-50,53
+plugins/guardrails/hooks/intent_router.py
+  s_a79e0f34a3e7b5::t_c9b597117c7523 36,45
+evals/routing/cases.json
+  s_a79e0f34a3e7b5::t_1032f3260d135a 29-33
+  s_a79e0f34a3e7b5::t_22a729dd5b744b 28
+plugins/review/droids/review-worker.md
+  s_7e743e46d881eb::t_8473cdf1a70368 37-40,51-53,59-62
+plugins/review/.factory-plugin/plugin.json
+  s_7e743e46d881eb::t_70eaec1609d1e5 3
+  s_a79e0f34a3e7b5::t_79ab4191d4c9eb 4
+evals/golden-tasks/README.md
+  s_7e743e46d881eb::t_213e02738ecadb 32-34,51-52
+  s_f514a3b6b24533::t_8a1d29f099a8fa 35
+plugins/review/droids/security.md
+  s_f514a3b6b24533::t_4da9dc20999df3 136-140
+plugins/review/skills/review-pr/SKILL.md
+  s_7e743e46d881eb::t_2bc28ea2e225e1 3,31-35,137-138,156,197-199,213-214
+  s_f514a3b6b24533::t_6f09c38f61d9bc 22,36-40,143-155,240,250-270,276
+  s_a79e0f34a3e7b5::t_879767e3e21d90 6-7
+  s_47df6d20b72419::t_85b587de30492e 139-142,200-212,215-220,242
+  s_47df6d20b72419::t_70ce65ba62b0f4 298
+  s_47df6d20b72419::t_ed5808b0ce6474 221
+plugins/review/skills/review-pr/review-notes-format.md
+  s_a79e0f34a3e7b5::t_dc63bf2efc122f 17-19
+  s_f514a3b6b24533::t_b75dbf4938ce40 28-30,126-138
+  s_f514a3b6b24533::t_25586939ccb52b 139
+plugins/review/skills/review-pr/fix-comments.md
+  s_47df6d20b72419::t_ee6e6614b910ec 219-226
+  s_f514a3b6b24533::t_d4de276303ce2f 28,339-342,370-376,379,382-383
+  s_7e743e46d881eb::t_4da1d62fdd1022 9-10,368-369
+  s_47df6d20b72419::t_c933fb17a11eda 227
+plugins/guardrails/.factory-plugin/plugin.json
+  s_a79e0f34a3e7b5::t_1d0d67a2406f8a 3
+evals/golden-tasks/17-review-pr-explicit-approval.md
+  s_a79e0f34a3e7b5::t_c5e6a2c9311269 10-15,31-32
+  s_f514a3b6b24533::t_37963a38a72b6b 1-9,16-30,33-48
+plugins/review/README.md
+  s_a79e0f34a3e7b5::t_af44597e7ca96f 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "591017a05b8e6fe5cf1e9275f72c5ac3a60f6ebc",
+  "prompts": {},
+  "sessions": {
+    "s_47df6d20b72419": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d54513aa-898b-4b02-9f5f-7dbc492c841b",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan <sagar@factory.ai>"
+    },
+    "s_7e743e46d881eb": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "9e840527-9a5d-4350-a215-74fadbe07f1b",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan <sagar@factory.ai>"
+    },
+    "s_a79e0f34a3e7b5": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a60280ff-fd65-42eb-868d-84ccbd5b481a",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Sagar Narayan <sagar@factory.ai>"
+    },
+    "s_f514a3b6b24533": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3dadffac-6468-49b7-8f30-4bcbfe6ae426",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan <sagar@factory.ai>"
+    }
+  }
+}

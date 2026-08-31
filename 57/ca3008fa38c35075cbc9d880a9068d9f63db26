@@ -1,0 +1,33 @@
+plugins/build/commands/fix-pr.md
+  9291b0c6cb34d378 2,6,8,11-17
+plugins/build/skills/fix-pr/SKILL.md
+  9291b0c6cb34d378 2-3,5-7,11-14,17,19-21,31-69,71,78,84-88,91-126,128,131-132,136-138,140-141,143-144,146-160,162,167,171,173-174,178-182,184,186-190,193-297,299-304,306,308-317,321,324-330
+plugins/build/.factory-plugin/plugin.json
+  9291b0c6cb34d378 4
+.factory-plugin/marketplace.json
+  9291b0c6cb34d378 41
+plugins/build/README.md
+  9291b0c6cb34d378 3,5,33,42
+README.md
+  9291b0c6cb34d378 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "57ca3008fa38c35075cbc9d880a9068d9f63db26",
+  "prompts": {
+    "9291b0c6cb34d378": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3ddd1bd9-92ca-41ee-863c-e86a0e4258f6",
+        "model": "glm-5.2"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 284,
+      "total_deletions": 59,
+      "accepted_lines": 283,
+      "overriden_lines": 0
+    }
+  }
+}

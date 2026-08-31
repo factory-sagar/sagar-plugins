@@ -1,0 +1,27 @@
+docs/WORKFLOW.md
+  1bcecb4798e50bdb 1-2,6-12,15-22,25-29,32-33,36,38-44,48-53,55-58
+README.md
+  1bcecb4798e50bdb 45-47
+plugins/build/README.md
+  1bcecb4798e50bdb 40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "0b24252203503d47fc5640c6c8e34b21bc21454a",
+  "prompts": {
+    "1bcecb4798e50bdb": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3d21a89c-27c7-48d3-b59a-fe84b5646592",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 131,
+      "total_deletions": 17,
+      "accepted_lines": 46,
+      "overriden_lines": 16
+    }
+  }
+}

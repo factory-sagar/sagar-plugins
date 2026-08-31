@@ -1,0 +1,232 @@
+plugins/guardrails/.factory-plugin/plugin.json
+  ac09cb2cdb3886bd 3-4
+plugins/review/droids/change-review.md
+  5ee548271382629e 27
+plugins/review/skills/review-pr/deep-review.md
+  90d2d2509f85e2e8 119,286-287
+plugins/build/droids/test-engineer.md
+  34c704a8899252bc 70
+plugins/guardrails/hooks/review_budget.py
+  c1344c73c12e8fcd 19,37,180
+  922fa24da38346ab 20,30-36,38-43,133-134,140-167,181-182,187-203,211-214,249-258,264,304-308,313
+plugins/guardrails/tests/test_delivery_guardrails.py
+  3389f5746b7b8372 40-60,157-170,245-349
+  fe73a16f2bf6379d 924-998,1065-1094
+  049dcec02c41d924 1049-1064
+  8fabcef56be069c8 999-1048
+  950bfafb680a585b 1-3,25,61-79,171-244
+plugins/review/skills/review-pr/SKILL.md
+  90d2d2509f85e2e8 3,144,147-151
+  5ee548271382629e 137-142,153-154,189-191,250-255,258-264,266-270,284-288
+plugins/review/.factory-plugin/plugin.json
+  90d2d2509f85e2e8 3
+plugins/build/skills/implement/SKILL.md
+  cc02868ebb616a31 3,38-47,63-65
+plugins/practices/skills/agentic-engineering/SKILL.md
+  59f873b160d380c4 3,63-64,86,94-95,114,148,180,205
+plugins/practices/skills/verification-loop/SKILL.md
+  59f873b160d380c4 3,54,217,221-223,225,259,273,286,305,308
+plugins/practices/skills/tdd-workflow/SKILL.md
+  59f873b160d380c4 3,251-253,275,310
+plugins/build/.factory-plugin/plugin.json
+  cc02868ebb616a31 3
+plugins/review/skills/review-pr/fix-comments.md
+  5ee548271382629e 133,157-160,234-240
+plugins/practices/.factory-plugin/plugin.json
+  59f873b160d380c4 3
+.factory-plugin/marketplace.json
+  ac09cb2cdb3886bd 47
+plugins/practices/skills/spec/SKILL.md
+  59f873b160d380c4 3,62,184,210,283-285,295-297,302,308,326,348
+plugins/build/droids/implementer.md
+  4f9ec188cbadb398 82,104,116,152
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "0c9a1530d2d7cccb7a8541d7abd79889d77c275a",
+  "prompts": {
+    "049dcec02c41d924": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "d018a9cf-6da0-40ab-b7c2-ce451710d90c",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 0,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    },
+    "3389f5746b7b8372": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7d9a2650-d05e-4b37-9023-492a8697907c",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 260,
+      "total_deletions": 120,
+      "accepted_lines": 140,
+      "overriden_lines": 0
+    },
+    "34c704a8899252bc": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "e76e3349-6eb7-4d83-9deb-1fc53e3ce2d5",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "4f9ec188cbadb398": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "0c4fa759-7b7d-4598-b535-76b6c643c4f8",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "59f873b160d380c4": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "316a5210-80a3-4748-a82f-950a9d1859d2",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 61,
+      "accepted_lines": 44,
+      "overriden_lines": 0
+    },
+    "5ee548271382629e": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "059b620b-9082-483a-9ad2-c405c50340ae",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 57,
+      "total_deletions": 39,
+      "accepted_lines": 48,
+      "overriden_lines": 0
+    },
+    "8fabcef56be069c8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "7ec7a716-bf14-47bf-a17b-dcf4fec4ad37",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 50,
+      "total_deletions": 0,
+      "accepted_lines": 50,
+      "overriden_lines": 0
+    },
+    "90d2d2509f85e2e8": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c87f65df-533d-451d-8b3a-57b24c9d47bc",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 9,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    },
+    "922fa24da38346ab": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "5b793d91-53b9-49d6-906f-cdcc30e8b8b9",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 89,
+      "total_deletions": 10,
+      "accepted_lines": 87,
+      "overriden_lines": 0
+    },
+    "950bfafb680a585b": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "0f1a5f62-a733-4be2-8393-1afa79a05071",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 98,
+      "total_deletions": 1,
+      "accepted_lines": 97,
+      "overriden_lines": 0
+    },
+    "ac09cb2cdb3886bd": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a359d720-10d0-413c-802f-891ec885b884",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "c1344c73c12e8fcd": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "5c305e27-ff13-4993-ad6f-49154e5a4d9e",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "cc02868ebb616a31": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "bf9579c2-07ab-4bdd-9943-9c4333d9fe76",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 9,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    },
+    "fe73a16f2bf6379d": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "da6217bf-6ae2-4411-b22d-e4c9f17f51fd",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 108,
+      "total_deletions": 3,
+      "accepted_lines": 105,
+      "overriden_lines": 0
+    }
+  }
+}

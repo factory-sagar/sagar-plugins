@@ -1,0 +1,48 @@
+plugins/build/.factory-plugin/plugin.json
+  039bf48ba0265064 3
+README.md
+  039bf48ba0265064 93,103,105,107
+scripts/run-golden-task.sh
+  039bf48ba0265064 10-13,19
+evals/golden-tasks/README.md
+  039bf48ba0265064 7-8
+plugins/build/README.md
+  039bf48ba0265064 17,38
+plugins/build/droids/implementer.md
+  039bf48ba0265064 4
+evals/trials/2026-07-04-implementer-fable-ab.md
+  569515f3c6ec4b56 1-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "785dd31b9876fdcdc9b3ebb0a631845a35f2ab9f",
+  "prompts": {
+    "039bf48ba0265064": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "c5ebacfa-9964-4286-89c1-bfb36ddd8412",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 18,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    },
+    "569515f3c6ec4b56": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "31c95b9b-5fb4-4e61-bb7f-a0794c618784",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 0,
+      "accepted_lines": 56,
+      "overriden_lines": 0
+    }
+  }
+}

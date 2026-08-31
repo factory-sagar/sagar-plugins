@@ -1,0 +1,142 @@
+plugins/review/.factory-plugin/plugin.json
+  569515f3c6ec4b56 3
+scripts/validate.mjs
+  569515f3c6ec4b56 1-274
+.gitignore
+  569515f3c6ec4b56 21-23
+plugins/practices/.factory-plugin/plugin.json
+  569515f3c6ec4b56 3
+evals/baselines/README.md
+  569515f3c6ec4b56 1-13
+plugins/review/README.md
+  569515f3c6ec4b56 17
+evals/golden-tasks/08-implementer-minimal-fix.md
+  569515f3c6ec4b56 1-83
+scripts/run-golden-task.sh
+  569515f3c6ec4b56 1-74
+plugins/practices/skills/verification-loop/SKILL.md
+  569515f3c6ec4b56 3,61-64
+plugins/investigation/.factory-plugin/plugin.json
+  569515f3c6ec4b56 4
+.factory-plugin/marketplace.json
+  569515f3c6ec4b56 17
+plugins/investigation/README.md
+  569515f3c6ec4b56 35
+plugins/review/skills/review-fix/discover-conventions.md
+  569515f3c6ec4b56 33-35
+plugins/synthesis/.factory-plugin/plugin.json
+  569515f3c6ec4b56 4
+plugins/synthesis/README.md
+  569515f3c6ec4b56 17,27
+.github/workflows/validate.yml
+  569515f3c6ec4b56 1-25
+evals/golden-tasks/10-review-fix-tier-selection.md
+  569515f3c6ec4b56 1-80
+plugins/investigation/droids/quick-analysis.md
+  569515f3c6ec4b56 5
+evals/golden-tasks/11-fix-pr-comment-triage.md
+  569515f3c6ec4b56 1-63
+evals/golden-tasks/JUDGE.md
+  569515f3c6ec4b56 1-37
+plugins/synthesis/droids/commit-message-writer.md
+  569515f3c6ec4b56 5
+README.md
+  569515f3c6ec4b56 30,36,71-80,83,87,91-95,103-105,107-108,111
+plugins/review/droids/change-review.md
+  569515f3c6ec4b56 5,76-77
+plugins/investigation/droids/deep-research.md
+  569515f3c6ec4b56 4
+evals/golden-tasks/README.md
+  569515f3c6ec4b56 5-6,41,43-44
+plugins/synthesis/droids/pr-describer.md
+  569515f3c6ec4b56 128
+plugins/review/skills/review-fix/SKILL.md
+  569515f3c6ec4b56 215-216,353-355,361,364-367
+evals/golden-tasks/09-security-seeded-vuln.md
+  569515f3c6ec4b56 1-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "16ba26a576ebfb46e54ea4761f587603fff18422",
+  "prompts": {
+    "42ef1700ec9a3fa2": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "26b1319b-b8c3-4933-9be1-19947b8013fa",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 85,
+      "total_deletions": 7,
+      "accepted_lines": 470,
+      "overriden_lines": 0
+    },
+    "569515f3c6ec4b56": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "31c95b9b-5fb4-4e61-bb7f-a0794c618784",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 20,
+      "accepted_lines": 777,
+      "overriden_lines": 0
+    },
+    "83b39681bd0399dc": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4f7e6105-b66b-4d70-a7d0-5478e06e1843",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 23,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    },
+    "9291b0c6cb34d378": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3ddd1bd9-92ca-41ee-863c-e86a0e4258f6",
+        "model": "glm-5.2"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 284,
+      "total_deletions": 59,
+      "accepted_lines": 251,
+      "overriden_lines": 0
+    },
+    "ab4d4593f03dc9f5": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "4ae0d56c-1113-4f42-9c77-aa4f25dddad6",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 1,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "ee4f4870cc41a170": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f1fa740a-8960-457a-9dd6-99d4c6fbd5cf",
+        "model": "claude-opus-4-8-fast"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 727,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,48 @@
+plugins/guardrails/tests/test_emission_contract.py
+  af1b499383848f94 25,77,281
+plugins/guardrails/hooks/prompt_submit.py
+  af1b499383848f94 1-29
+plugins/guardrails/hooks/hooks.json
+  af1b499383848f94 9,29,52
+plugins/guardrails/.factory-plugin/plugin.json
+  57995556d955499c 3
+plugins/guardrails/tests/test_delivery_guardrails.py
+  af1b499383848f94 37-70
+plugins/guardrails/tests/test_prompt_submit.py
+  af1b499383848f94 1-76
+scripts/validate.mjs
+  57995556d955499c 305-311
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "532708b3c42f5fd7a928c1de1c6f0cd23769f4a6",
+  "prompts": {
+    "57995556d955499c": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "98751b6d-b3dc-45a7-8d8d-a28d375a9174",
+        "model": "kimi-k3"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 68,
+      "overriden_lines": 0
+    },
+    "af1b499383848f94": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "56b1af90-7db0-49eb-9439-efd86ae0a6fa",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 145,
+      "overriden_lines": 0
+    }
+  }
+}

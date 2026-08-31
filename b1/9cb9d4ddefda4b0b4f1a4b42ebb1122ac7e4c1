@@ -1,0 +1,31 @@
+plugins/resolve-pr-comments/commands/resolve-pr-comments.md
+  38e30cfa0fe7446d 1-15
+.factory-plugin/marketplace.json
+  38e30cfa0fe7446d 44-49
+plugins/resolve-pr-comments/.factory-plugin/plugin.json
+  38e30cfa0fe7446d 1-9
+plugins/resolve-pr-comments/README.md
+  38e30cfa0fe7446d 1-22
+plugins/resolve-pr-comments/skills/resolve-pr-comments/SKILL.md
+  38e30cfa0fe7446d 1-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "b19cb9d4ddefda4b0b4f1a4b42ebb1122ac7e4c1",
+  "prompts": {
+    "38e30cfa0fe7446d": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f61a7517-0cd6-4769-bb18-67c97311d9e8",
+        "model": "glm-5.2"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 161,
+      "total_deletions": 0,
+      "accepted_lines": 161,
+      "overriden_lines": 0
+    }
+  }
+}

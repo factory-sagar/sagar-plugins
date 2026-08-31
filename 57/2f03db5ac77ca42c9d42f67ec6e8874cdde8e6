@@ -1,0 +1,33 @@
+plugins/build/skills/implement/SKILL.md
+  s_a79e0f34a3e7b5::t_d8fb90b91faf65 3,34
+  s_a79e0f34a3e7b5::t_3217c0b9af3296 35
+plugins/review/skills/review-pr/deep-review.md
+  s_a79e0f34a3e7b5::t_e88bb1b8812714 91
+  s_a79e0f34a3e7b5::t_9e8466ea150021 92-95
+plugins/review/skills/review-pr/SKILL.md
+  s_a79e0f34a3e7b5::t_cacec64edd207b 56-64
+  s_a79e0f34a3e7b5::t_48b84092e151f4 3
+plugins/review/.factory-plugin/plugin.json
+  s_a79e0f34a3e7b5::t_ccd02a17863011 3
+plugins/build/.factory-plugin/plugin.json
+  s_a79e0f34a3e7b5::t_ea3ee14156db91 3
+plugins/review/skills/review-pr/fix-comments.md
+  s_a79e0f34a3e7b5::t_833cfcf43babdb 70,73,76-77,79-82,86-91
+  s_a79e0f34a3e7b5::t_cb38292d6160b7 92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "572f03db5ac77ca42c9d42f67ec6e8874cdde8e6",
+  "prompts": {},
+  "sessions": {
+    "s_a79e0f34a3e7b5": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "a60280ff-fd65-42eb-868d-84ccbd5b481a",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Sagar Narayan <sagar@factory.ai>"
+    }
+  }
+}

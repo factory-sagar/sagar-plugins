@@ -1,0 +1,29 @@
+README.md
+  ee4f4870cc41a170 81
+plugins/practices/skills/agentic-engineering/SKILL.md
+  ee4f4870cc41a170 71
+plugins/review/README.md
+  ee4f4870cc41a170 17,38,50
+plugins/review/droids/change-review.md
+  ee4f4870cc41a170 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "ce377e5a63321224ce7c230003d54832eb9cc1cc",
+  "prompts": {
+    "ee4f4870cc41a170": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f1fa740a-8960-457a-9dd6-99d4c6fbd5cf",
+        "model": "claude-opus-4-8-fast"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}

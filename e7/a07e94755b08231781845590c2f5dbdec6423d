@@ -1,0 +1,42 @@
+plugins/review/skills/review-pr/deep-review.md
+  96b7f2cdeed8ef39 605-610
+plugins/guardrails/.factory-plugin/plugin.json
+  5330b262145af67e 3
+plugins/guardrails/tests/test_delivery_guardrails.py
+  96b7f2cdeed8ef39 1698-1743
+plugins/review/README.md
+  96b7f2cdeed8ef39 34-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "e7a07e94755b08231781845590c2f5dbdec6423d",
+  "prompts": {
+    "5330b262145af67e": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "1fe0f0c6-40d6-4a16-a526-9afb034f551e",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "96b7f2cdeed8ef39": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "2b7184b8-5a68-4bfd-b24b-9e6aeb8b9069",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 70,
+      "total_deletions": 14,
+      "accepted_lines": 58,
+      "overriden_lines": 0
+    }
+  }
+}

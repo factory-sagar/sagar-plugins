@@ -1,0 +1,27 @@
+plugins/guardrails/README.md
+  9dc148e98c9eefaf 29
+plugins/guardrails/.factory-plugin/plugin.json
+  9dc148e98c9eefaf 3
+plugins/guardrails/hooks/stop-gate.py
+  9dc148e98c9eefaf 6-10,28,30,65,178-197
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "b648f1f22104bcc2fe8055c2287e8fec77e59834",
+  "prompts": {
+    "9dc148e98c9eefaf": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3dadea72-c632-4b01-9f50-698fdccd96ab",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 30,
+      "total_deletions": 5,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    }
+  }
+}

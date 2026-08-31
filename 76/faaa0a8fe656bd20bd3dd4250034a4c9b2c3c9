@@ -1,0 +1,77 @@
+plugins/review/skills/review-fix/SKILL.md
+  569515f3c6ec4b56 215-216,353-355,361,364-367
+plugins/investigation/README.md
+  569515f3c6ec4b56 35
+plugins/practices/.factory-plugin/plugin.json
+  569515f3c6ec4b56 3
+plugins/investigation/droids/quick-analysis.md
+  569515f3c6ec4b56 5
+evals/golden-tasks/11-fix-pr-comment-triage.md
+  569515f3c6ec4b56 1-63
+plugins/practices/skills/verification-loop/SKILL.md
+  569515f3c6ec4b56 3,61-64
+scripts/validate.mjs
+  569515f3c6ec4b56 1-274
+evals/golden-tasks/10-review-fix-tier-selection.md
+  569515f3c6ec4b56 1-80
+evals/golden-tasks/JUDGE.md
+  569515f3c6ec4b56 1-37
+evals/baselines/README.md
+  569515f3c6ec4b56 1-13
+evals/golden-tasks/08-implementer-minimal-fix.md
+  569515f3c6ec4b56 1-83
+scripts/run-golden-task.sh
+  569515f3c6ec4b56 1-74
+.gitignore
+  569515f3c6ec4b56 21-23
+plugins/review/.factory-plugin/plugin.json
+  569515f3c6ec4b56 3
+evals/golden-tasks/README.md
+  569515f3c6ec4b56 5-6,41,43-44
+.github/workflows/validate.yml
+  569515f3c6ec4b56 1-25
+README.md
+  569515f3c6ec4b56 30,36,71-80,83,87,91-95,103-105,107-108,111
+plugins/investigation/droids/deep-research.md
+  569515f3c6ec4b56 4
+plugins/review/droids/change-review.md
+  569515f3c6ec4b56 5,76-77
+plugins/synthesis/.factory-plugin/plugin.json
+  569515f3c6ec4b56 4
+plugins/review/skills/review-fix/discover-conventions.md
+  569515f3c6ec4b56 33-35
+plugins/synthesis/droids/pr-describer.md
+  569515f3c6ec4b56 128
+.factory-plugin/marketplace.json
+  569515f3c6ec4b56 17
+plugins/synthesis/README.md
+  569515f3c6ec4b56 17,27
+plugins/investigation/.factory-plugin/plugin.json
+  569515f3c6ec4b56 4
+plugins/review/README.md
+  569515f3c6ec4b56 17
+evals/golden-tasks/09-security-seeded-vuln.md
+  569515f3c6ec4b56 1-61
+plugins/synthesis/droids/commit-message-writer.md
+  569515f3c6ec4b56 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "76faaa0a8fe656bd20bd3dd4250034a4c9b2c3c9",
+  "prompts": {
+    "569515f3c6ec4b56": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "31c95b9b-5fb4-4e61-bb7f-a0794c618784",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 779,
+      "total_deletions": 28,
+      "accepted_lines": 778,
+      "overriden_lines": 0
+    }
+  }
+}

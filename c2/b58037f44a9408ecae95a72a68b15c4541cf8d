@@ -1,0 +1,27 @@
+plugins/review/skills/review-fix/SKILL.md
+  ee4f4870cc41a170 3,98-110,171-194,278-280,309-323,338-342,344-345,348-350,394-403,419-420,422-425
+plugins/review/README.md
+  ee4f4870cc41a170 30-31
+plugins/review/.factory-plugin/plugin.json
+  ee4f4870cc41a170 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "c2b58037f44a9408ecae95a72a68b15c4541cf8d",
+  "prompts": {
+    "ee4f4870cc41a170": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "f1fa740a-8960-457a-9dd6-99d4c6fbd5cf",
+        "model": "claude-opus-4-8-fast"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 86,
+      "total_deletions": 10,
+      "accepted_lines": 86,
+      "overriden_lines": 0
+    }
+  }
+}

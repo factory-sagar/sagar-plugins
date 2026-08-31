@@ -1,0 +1,35 @@
+README.md
+  s_7a66967e7993b1::t_1a5bf7b20bef25 91,99,116
+plugins/practices/.factory-plugin/plugin.json
+  s_7a66967e7993b1::t_25ff527f952b94 3
+.github/workflows/validate.yml
+  s_7a66967e7993b1::t_b72f7f2a3b3b62 25
+plugins/build/.factory-plugin/plugin.json
+  s_7a66967e7993b1::t_b9023e51ec1626 3
+scripts/validate.mjs
+  s_7a66967e7993b1::t_22d3a20d2afb35 224,269,308
+.gitignore
+  s_7a66967e7993b1::t_7d650c342f3b66 24-28
+plugins/practices/skills/agentic-engineering/SKILL.md
+  s_7a66967e7993b1::t_b3f2158b695ec2 3,59-68
+plugins/investigation/.factory-plugin/plugin.json
+  s_7a66967e7993b1::t_580f75c1412e20 3
+plugins/review/.factory-plugin/plugin.json
+  s_7a66967e7993b1::t_589a55ff9b0cea 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "f81be2ddcfba67fce1f7902ce5d0856816523917",
+  "prompts": {},
+  "sessions": {
+    "s_7a66967e7993b1": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "adf95bb2-355f-4332-8e98-deca017d4909",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Sagar Narayan <sagar@factory.ai>"
+    }
+  }
+}

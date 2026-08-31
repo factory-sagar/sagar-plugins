@@ -1,0 +1,23 @@
+plugins/guardrails/README.md
+  9dc148e98c9eefaf 43-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.2",
+  "base_commit_sha": "d61ae2fd505bc4eed91c602f6cf18fe49868e627",
+  "prompts": {
+    "9dc148e98c9eefaf": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "3dadea72-c632-4b01-9f50-698fdccd96ab",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Sagar Narayan",
+      "messages": [],
+      "total_additions": 26,
+      "total_deletions": 0,
+      "accepted_lines": 26,
+      "overriden_lines": 0
+    }
+  }
+}
