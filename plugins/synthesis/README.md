@@ -15,7 +15,7 @@ droid plugin install synthesis@sagar-plugins
 | Droid | When to delegate | Model | Reasoning | Tools |
 | --- | --- | --- | --- | --- |
 | `pr-describer` | Write a PR title and body from a diff. Structured what, why, testing, breaking changes, follow-ups, and notes for reviewers. | `claude-opus-4-8` | `high` | read-only + `Execute` |
-| `commit-message-writer` | Write a Conventional Commits message from staged or specified changes. | `glm-5.2` | `high` | read-only + `Execute` |
+| `commit-message-writer` | Write a Conventional Commits message from staged or specified changes. | `glm-5.3` | `high` | read-only + `Execute` |
 
 ## Usage
 
@@ -24,7 +24,7 @@ droid plugin install synthesis@sagar-plugins
 
 ## Models
 
-`commit-message-writer` uses `glm-5.2` for low-cost mechanical output.
+`commit-message-writer` uses `glm-5.3` for low-cost mechanical output.
 `pr-describer` uses `claude-opus-4-8` for template-aware prose synthesis.
 
 ## Related plugins

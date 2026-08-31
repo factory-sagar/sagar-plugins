@@ -1,7 +1,7 @@
 ---
 name: commit-message-writer
 description: Write a Conventional Commits message from staged or specified changes. Outputs a single subject line plus an optional body with bullets, anchored to the diff. Fast and format-mechanical.
-model: glm-5.2
+model: glm-5.3
 reasoningEffort: high
 tools: ["Read", "LS", "Grep", "Glob", "Execute"]
 ---
